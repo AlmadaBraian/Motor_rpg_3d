@@ -1,0 +1,27 @@
+{
+  "scene": "test",
+  "script": [
+    {
+      "action": "show_dialog",
+      "speaker": "Batman",
+      "text": [
+        "¡Epa!. \n¿Que hacemo?",
+        "Vo, no pode estar acá."
+      ]
+    },
+    {
+      "action": "wait",
+      "time": 500
+    },
+    {
+      "action": "show_dialog",
+      "speaker": "Marisa",
+      "text": [
+        "¡No me digas lo que puedo y no puedo hacer!"
+      ]
+    },
+    {
+      "action": "start_combat"
+    }
+  ]
+}

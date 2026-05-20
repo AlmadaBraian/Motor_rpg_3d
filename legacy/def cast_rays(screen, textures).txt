@@ -1,0 +1,154 @@
+def cast_rays(screen, textures):
+    w = VIEW_W
+    h = VIEW_H
+
+    posX = editor.cam_x
+    posY = editor.cam_y
+
+    dirX = math.cos(editor.cam_angle)
+    dirY = math.sin(editor.cam_angle)
+
+    planeX = -dirY * math.tan(FOV / 2)
+    planeY =  dirX * math.tan(FOV / 2)
+
+    proj_plane = (h / 2) / math.tan(FOV / 2)
+    horizon = (h / 2) + editor.pitch
+    camera_z = editor.cam_height * TILE_SIZE
+
+    col_width = w // NUM_RAYS
+
+    for ray in range(NUM_RAYS):
+
+        cameraX = 2 * ray / float(NUM_RAYS) - 1
+
+        rayDirX = dirX + planeX * cameraX
+        rayDirY = dirY + planeY * cameraX
+
+        mapX = int(posX)
+        mapY = int(posY)
+
+        deltaDistX = abs(1 / rayDirX) if rayDirX != 0 else 1e30
+        deltaDistY = abs(1 / rayDirY) if rayDirY != 0 else 1e30
+
+        if rayDirX < 0:
+            stepX = -1
+            sideDistX = (posX - mapX) * deltaDistX
+        else:
+            stepX = 1
+            sideDistX = (mapX + 1.0 - posX) * deltaDistX
+
+        if rayDirY < 0:
+            stepY = -1
+            sideDistY = (posY - mapY) * deltaDistY
+        else:
+            stepY = 1
+            sideDistY = (mapY + 1.0 - posY) * deltaDistY
+
+        visible_segments = [(0, h)]
+
+        hit = False
+        depth = 0
+
+        while not hit and visible_segments:
+
+            if sideDistX < sideDistY:
+                sideDistX += deltaDistX
+                mapX += stepX
+                side = 0
+            else:
+                sideDistY += deltaDistY
+                mapY += stepY
+                side = 1
+
+            if mapX < 0 or mapY < 0 or mapX >= GRID_W or mapY >= GRID_H:
+                break
+
+            tile = editor.grid[mapY][mapX]
+            segments = tile.get("segments", [])
+
+            if not segments and tile["id"] == 0:
+                continue
+
+            # distancia perpendicular
+            if side == 0:
+                perpDist = (mapX - posX + (1 - stepX) / 2) / rayDirX
+            else:
+                perpDist = (mapY - posY + (1 - stepY) / 2) / rayDirY
+
+            perpDist = max(perpDist, 0.0001)
+            perpDist *= TILE_SIZE
+
+            # fallback si no hay segmentos
+            if not segments:
+                segments = [{
+                    "tex": tile["id"],
+                    "z0": 0,
+                    "z1": tile["h"],
+                    "solid": True
+                }]
+
+            # ordenar por altura
+            segments = sorted(segments, key=lambda s: s["z0"])
+
+            new_visible = visible_segments[:]
+
+            # cálculo de textura X
+            if side == 0:
+                wallX = posY + perpDist * rayDirY
+            else:
+                wallX = posX + perpDist * rayDirX
+
+            wallX -= math.floor(wallX)
+
+            for seg in segments:
+
+                seg_z0 = seg["z0"] * TILE_SIZE
+                seg_z1 = seg["z1"] * TILE_SIZE
+
+                proj_z0 = ((seg_z0 - camera_z) / perpDist) * proj_plane
+                proj_z1 = ((seg_z1 - camera_z) / perpDist) * proj_plane
+
+                screen_top = horizon - proj_z1
+                screen_bottom = horizon - proj_z0
+
+                if screen_top > screen_bottom:
+                    screen_top, screen_bottom = screen_bottom, screen_top
+
+                texture = textures[seg["tex"]]
+
+                tex_x = int(wallX * texture.get_width())
+                tex_x = max(0, min(texture.get_width() - 1, tex_x))
+
+                column = texture.subsurface(tex_x, 0, 1, texture.get_height())
+
+                temp = []
+
+                for vis_top, vis_bottom in new_visible:
+
+                    draw_top = max(screen_top, vis_top)
+                    draw_bottom = min(screen_bottom, vis_bottom)
+
+                    if draw_bottom <= draw_top:
+                        temp.append((vis_top, vis_bottom))
+                        continue
+
+                    height = int(draw_bottom - draw_top)
+
+                    if height > 0:
+                        col = pygame.transform.scale(column, (col_width, height))
+                        screen.blit(col, (ray * col_width, int(draw_top)))
+
+                    if seg.get("solid", True):
+                        if vis_top < draw_top:
+                            temp.append((vis_top, draw_top))
+                        if draw_bottom < vis_bottom:
+                            temp.append((draw_bottom, vis_bottom))
+                    else:
+                        temp.append((vis_top, vis_bottom))
+
+                new_visible = temp
+
+                if not new_visible:
+                    break
+
+            visible_segments = new_visible

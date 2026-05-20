@@ -1,0 +1,1 @@
+// Dreamcast KOS Scene Export void draw_scene() // TODO generated geometry}

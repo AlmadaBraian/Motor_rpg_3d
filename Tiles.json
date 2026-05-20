@@ -1,0 +1,86 @@
+{
+  "escombro_dere": [
+    {
+      "tex": 5,
+      "z0": 0,
+      "z1": 1,
+      "solid": true
+    }
+  ],
+  "escombro_izq": [
+    {
+      "tex": 4,
+      "z0": 0,
+      "z1": 1,
+      "solid": true
+    }
+  ],
+  "puerta_cerrada": [
+    {
+      "tex": 9,
+      "z0": 0,
+      "z1": 1,
+      "solid": true
+    },
+    {
+      "tex": 10,
+      "z0": 1,
+      "z1": 2,
+      "solid": true
+    },
+    {
+      "tex": 17,
+      "z0": 2,
+      "z1": 3,
+      "solid": true
+    }
+  ],
+  "ventana": [
+    {
+      "tex": 17,
+      "z0": 0,
+      "z1": 1,
+      "solid": true
+    },
+    {
+      "tex": 16,
+      "z0": 1,
+      "z1": 2,
+      "solid": true
+    },
+    {
+      "tex": 17,
+      "z0": 2,
+      "z1": 3,
+      "solid": true
+    }
+  ],
+  "pared": [
+    {
+      "tex": 17,
+      "z0": 0,
+      "z1": 1,
+      "solid": true
+    },
+    {
+      "tex": 17,
+      "z0": 1,
+      "z1": 2,
+      "solid": true
+    },
+    {
+      "tex": 17,
+      "z0": 2,
+      "z1": 3,
+      "solid": true
+    }
+  ],
+  "caja": [
+    {
+      "tex": 1,
+      "z0": 0,
+      "z1": 1,
+      "solid": true
+    }
+  ]
+}

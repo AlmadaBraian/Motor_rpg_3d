@@ -1,0 +1,6 @@
+ventana.png
+wall1.png
+caja.png
+a_mozaico.png
+puerta.png
+greystone.png

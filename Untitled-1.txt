@@ -1,0 +1,96 @@
+
+xpingesta@elaahmanla59:/home/enelint/pam-06rt> crontab -l | grep -i BI_AR_ORQUESTADOR_SAP_FICA
+#0 00 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA_OLD/orquestador/BI_AR_ORQUESTADOR_SAP_FICA_OLD/BI_AR_ORQUESTADOR_SAP_FICA_OLD_run.sh --context_param pwd_usrhana="HanaBI_2023"
+#0 8 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/orquestador/BI_AR_ORQUESTADOR_SAP_FICA/BI_AR_ORQUESTADOR_SAP_FICA_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param pwd_USRINGESTASARG="IngestasBI_2023" --context_param host_ssh="elaahmanla33.enelint.global" --context_param archivo_tablas_ingesta="/userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/bi_ar_redshift_in.txt"
+30 23 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/orquestador/BI_AR_ORQUESTADOR_SAP_FICA/BI_AR_ORQUESTADOR_SAP_FICA_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param pwd_USRINGESTASARG="IngestasBI_2023" --context_param host_ssh="elaahmanla33.enelint.global" --context_param archivo_tablas_ingesta="/userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/bi_ar_redshift_in.txt"
+
+
+nohup sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/orquestador/BI_AR_ORQUESTADOR_SAP_FICA/BI_AR_ORQUESTADOR_SAP_FICA_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param pwd_USRINGESTASARG="IngestasBI_2023" --context_param host_ssh="elaahmanla33.enelint.global" --context_param archivo_tablas_ingesta="/userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/bi_ar_redshift_in.txt"&
+
+
+xpingesta@elaahmanla59:~/scripts> crontab -l | grep -i BI_AR_ORQUESTADOR_SAP_FACTURACION
+#45 18 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FACTURACION/orquestador/BI_AR_ORQUESTADOR_SAP_FACTURACION/BI_AR_ORQUESTADOR_SAP_FACTURACION_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param host_ssh="elaahmanla33.enelint.global" --context_param MANDT="100" --context_param process_name="BI_AR_ORQUESTADOR_SAP_FACTURACION" --context_param queue="root.enel.critical.ar"
+#30 22 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FACTURACION/orquestador/BI_AR_ORQUESTADOR_SAP_FACTURACION/BI_AR_ORQUESTADOR_SAP_FACTURACION_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param host_ssh="elaahmanla33.enelint.global" --context_param MANDT="100" --context_param process_name="BI_AR_ORQUESTADOR_SAP_FACTURACION" --context_param queue="root.enel.critical.ar"
+30 22 * * * /bin/bash /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FACTURACION/orquestador/BI_AR_ORQUESTADOR_SAP_FACTURACION_crontab.sh
+xpingesta@elaahmanla59:~/scripts>
+
+nohup /bin/bash /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FACTURACION/orquestador/BI_AR_ORQUESTADOR_SAP_FACTURACION_crontab.sh&
+
+crontab -l | grep -i BI_AR_ORQUESTADOR_SAP_FICA
+
+
+#0 00 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA_OLD/orquestador/BI_AR_ORQUESTADOR_SAP_FICA_OLD/BI_AR_ORQUESTADOR_SAP_FICA_OLD_run.sh --context_param pwd_usrhana="HanaBI_2023"
+#0 8 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/orquestador/BI_AR_ORQUESTADOR_SAP_FICA/BI_AR_ORQUESTADOR_SAP_FICA_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param pwd_USRINGESTASARG="IngestasBI_2023" --context_param host_ssh="elaahmanla33.enelint.global" --context_param archivo_tablas_ingesta="/userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/bi_ar_redshift_in.txt"
+00 22 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/orquestador/BI_AR_ORQUESTADOR_SAP_FICA/BI_AR_ORQUESTADOR_SAP_FICA_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param pwd_USRINGESTASARG="IngestasBI_2023" --context_param host_ssh="elaahmanla33.enelint.global" --context_param archivo_tablas_ingesta="/userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/bi_ar_redshift_in.txt"&
+
+nohup sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/orquestador/BI_AR_ORQUESTADOR_SAP_FICA/BI_AR_ORQUESTADOR_SAP_FICA_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param pwd_USRINGESTASARG="IngestasBI_2023" --context_param host_ssh="elaahmanla33.enelint.global" --context_param archivo_tablas_ingesta="/userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_FICA/bi_ar_redshift_in.txt"&
+
+
+
+xpingesta@elaahmanla58:/userdata/talend_jobs/auto_logs_checks> crontab -l | grep -i A2_SIP_ARG_Con_ORQ1
+#30 02 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/A2_SIP_ARG_Con_ORQ1/A2_SIP_ARG_Con_ORQ1/A2_SIP_ARG_Con_ORQ1_run.sh --context_param pwd_usrhana="HanaBI_2023"
+30 02 * * * /bin/bash /userdata/talend_jobs/ENEL-ARG-BI/A2_SIP_ARG_Con_ORQ1/test_crontab_orq3.sh
+
+nohup /bin/bash /userdata/talend_jobs/ENEL-ARG-BI/A2_SIP_ARG_Con_ORQ1/test_crontab_orq3.sh&
+
+
+ps –fea | grep –i A2_SIP_ARG_Con_ORQ1
+
+ps -aux | grep -i BI_AR_ORQUESTADOR_CORTE
+
+
+xpingesta@elaahmanla59:/userdata/talend_jobs/auto_logs_checks> 00 6 1,15 * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_NO_REG_QUINCENAL/BI_AR_ORQUESTADOR_NO_REG_QUINCENAL/BI_AR_ORQUESTADOR_NO_REG_QUINCENAL_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param HivePassword="ingesta123"
+
+nohup sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_NO_REG_QUINCENAL/BI_AR_ORQUESTADOR_NO_REG_QUINCENAL/BI_AR_ORQUESTADOR_NO_REG_QUINCENAL_run.sh --context_param pwd_usrhana="HanaBI_2023" --context_param HivePassword="ingesta123"&
+
+
+
+
+crontab -l | grep -i BI_AR_ORQUESTADOR_CORTE
+
+#BI_AR_ORQUESTADOR_CORTE
+0 7 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_CORTE/orquestador/BI_AR_ORQUESTADOR_CORTE/BI_AR_ORQUESTADOR_CORTE_run.sh --context_param pwd_usrhana="HanaBI_2023"&
+
+crontab -l | grep -i BI_AR_ORQUESTADOR_SAP_BIMEN
+
+nohup sh /userdata/talend_jobs/ENEL-ARG-BI/BI_AR_ORQUESTADOR_SAP_BIMEN/BI_AR_ORQUESTADOR_SAP_BIMEN/BI_AR_ORQUESTADOR_SAP_BIMEN_run.sh&
+
+
+ps –fea | grep –i Recaudacion_diaria 
+
+crontab -l | grep -i Recaudacion_diaria 
+
+nohup sh /userdata/talend_jobs/ENEL-ARG-POST/Recaudacion_diaria/Recaudacion_diaria/Recaudacion_diaria_run.sh & 
+
+
+touch colombia.bt.cartera.20251210.001
+
+touch colombia.bt.maestro.clientes.20251218.001
+
+
+nohup sh bt_ar_bi_bam_control_duplicados.sh&
+
+nohup sh bt_ar_bi_gestion_solicitudes.sh & 
+
+nohup sh rd_ztbi_aparta_invo_run.sh &
+
+
+touch colombia.bt.bloqueos.20260122.001
+
+touch colombia.bt.facturacion.20260122.001
+
+#30 01 * * * sh /userdata/talend_jobs/ENEL-ARG-BI/A1_SIP_ARG_Sin_ORQ/A1_SIP_ARG_Sin_ORQ/A1_SIP_ARG_Sin_ORQ_run.sh --context_param pwd_usrhana="HanaBI_2023"
+30 01 * * * /bin/bash /userdata/talend_jobs/ENEL-ARG-BI/A1_SIP_ARG_Sin_ORQ/test_crontab_orq3.sh
+
+nohup /bin/bash /userdata/talend_jobs/ENEL-ARG-BI/A1_SIP_ARG_Sin_ORQ/test_crontab_orq3.sh&
+
+nohup sh bt_ar_bi_gestion_solicitudes.sh &
+
+
+xpinges+ 24656  0.0  0.0   8688  1924 ?        S    07:00   0:00 tee -a /userdata/talend_logs/20260304/BI_AR_ORQUESTADOR_CORTE_run.log
+xpinges+ 31752  0.0  0.0  10532  3292 pts/1    S+   08:00   0:00 grep --color=auto -i BI_AR_ORQUESTADOR_CORTE
+
+crontab -l | grep -i Reclamos_Comerciales_T1_Diario
+
+15 7 * * 1-5 nohup  sh /userdata/talend_jobs/ENEL-ARG-POST/Claims_ARG/Reclamos_Comerciales_T1_Diario/Reclamos_Comerciales_T1_Diario/Reclamos_Comerciales_T1_Diario_run.sh --context_param Login="hdfs" --context_param usr_ssh_ingestassh="ingestassh" --context_param key_usr_ssh="/userdata/utl_ssh/keys/id_rsa_xpingesta" --context_param queue="root.enel.critical.ar" --context_param ftpRemote_dir="/bi-ba/integration/ftp/arg/input/Claims/diario/"&
+

@@ -1,0 +1,156 @@
+def draw_auto_top_face_tile(self, x, y, fh, t, tm):
+        texid = self.resolve_texture(t.block_top_tex)
+        if texid is None:
+            return
+
+        idxs = self.toolkit_ref.get_autotile_indices(x, y, t.block_top_tex)
+
+
+        cols = 4  # 64 / 16
+        rows = 6  # 96 / 16
+        
+        q = 0.5 # Si el tile total mide 1.0, cada sub-tile mide 0.5
+        #fh = t.floor_height
+
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, texid)
+        glColor3f(1,1,1)
+
+
+
+        quads = [
+            (x,     y,     x+q,   y+q),   # NW
+            (x+q,   y,     x+1,   y+q),   # NE
+            (x,     y+q,   x+q,   y+1),   # SW
+            (x+q,   y+q,   x+1,   y+1)    # SE
+        ]
+
+
+
+        for i, idx in enumerate(idxs):
+            tx = idx % cols
+            ty = idx // cols
+
+            # 2. Convertimos a UV (0.0 a 1.0)
+            u0 = tx / float(cols)
+            u1 = (tx + 1) / float(cols)
+
+            # 3. Invertimos el eje V para OpenGL (Fila 0 arriba)
+            v0 = 1.0 - ((ty + 1) / float(rows)) # Borde inferior del sub-tile
+            v1 = 1.0 - (ty / float(rows))  
+
+            x1, z1, x2, z2 = quads[i]
+
+            glBegin(GL_QUADS)
+
+            # ESTE ORDEN ES EL IMPORTANTE
+            glTexCoord2f(u0, v1); glVertex3f(x1, fh, z1)
+            glTexCoord2f(u1, v1); glVertex3f(x2, fh, z1)
+            glTexCoord2f(u1, v0); glVertex3f(x2, fh, z2)
+            glTexCoord2f(u0, v0); glVertex3f(x1, fh, z2)
+
+            glEnd()
+
+        glBindTexture(GL_TEXTURE_2D, 0)
+
+    def draw_solid_block(self, x, y, t, grid, tm):
+        side_tex = self.resolve_texture(t.block_side_tex) if t.block_side_tex else None
+        top_tex = self.resolve_texture(t.block_top_tex) if t.block_top_tex else None
+
+        b = t.block_bottom
+        h = t.block_top
+
+        if t.block_uv_mode == "tile":
+            top_ru = 1
+            top_rv = 1
+            side_ru = 1
+            side_rv = h - b
+        else:
+            top_ru = top_rv = 1
+            side_ru = side_rv = 1
+
+        # ==========================
+        # TOP FACE
+        # ==========================
+        if t.block_top_tex and "_auto" in t.block_top_tex.lower():
+            self.draw_auto_top_face_tile(x, y, h, t, tm)
+
+        else:
+            self.textured_quad(
+                (x,   h, y),
+                (x+1, h, y),
+                (x+1, h, y+1),
+                (x,   h, y+1),
+                top_tex,
+                top_ru,
+                top_rv
+            )
+
+        # helper vecino bloque
+        def is_neighbor_block(nx, ny):
+            if nx < 0 or ny < 0 or nx >= GRID_W or ny >= GRID_H:
+                return False
+
+            nt = grid[ny][nx]
+
+            if not getattr(nt, "is_block", False):
+                return False
+
+            # si vecino llega al menos a la misma altura, oculta cara
+            return nt.block_top >= h and nt.block_bottom <= b
+
+        # ==========================
+        # NORTH
+        # ==========================
+        if not is_neighbor_block(x, y-1):
+            self.textured_quad(
+                (x,   b, y),
+                (x+1, b, y),
+                (x+1, h, y),
+                (x,   h, y),
+                side_tex,
+                side_ru,
+                side_rv
+            )
+
+        # ==========================
+        # SOUTH
+        # ==========================
+        if not is_neighbor_block(x, y+1):
+            self.textured_quad(
+                (x+1, b, y+1),
+                (x,   b, y+1),
+                (x,   h, y+1),
+                (x+1, h, y+1),
+                side_tex,
+                side_ru,
+                side_rv
+            )
+
+        # ==========================
+        # WEST
+        # ==========================
+        if not is_neighbor_block(x-1, y):
+            self.textured_quad(
+                (x, b, y+1),
+                (x, b, y),
+                (x, h, y),
+                (x, h, y+1),
+                side_tex,
+                side_ru,
+                side_rv
+            )
+
+        # ==========================
+        # EAST
+        # ==========================
+        if not is_neighbor_block(x+1, y):
+            self.textured_quad(
+                (x+1, b, y),
+                (x+1, b, y+1),
+                (x+1, h, y+1),
+                (x+1, h, y),
+                side_tex,
+                side_ru,
+                side_rv
+            )
