@@ -389,10 +389,7 @@ def start_charge_attack_animation(self):
 
     dx = target_pack["gx"] - user_pack["gx"]
 
-    if dx >= 0:
-        side = "izq"
-    else:
-        side = "dere"
+    side = self.attack_anim_side
 
     attack_anim = (
         "attack_dereX2"

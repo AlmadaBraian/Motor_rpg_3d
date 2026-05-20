@@ -1226,6 +1226,19 @@ class RuntimeCombat:
 
             if combat_result["critical_miss"]:
                 print("CRITICAL MISS!")
+                o.viewport.spawn_combat_popup(
+                    attacker,
+                    "CRITICAL MISS",
+                    color=(0.8,0.8,0.8,1)
+                )
+            else:
+                print("MISS")
+                o.viewport.spawn_combat_popup(
+                    attacker,
+                    "MISS",
+                    color=(0.8,0.8,0.8,1)
+                )
+
 
             # no aplicar daño
             return False
@@ -1238,6 +1251,21 @@ class RuntimeCombat:
 
         if combat_result["critical_hit"] and damage <=3:
             damage*=2
+            o.viewport.spawn_combat_popup(
+                target,
+                "CRITICAL!",
+                color=(1,0.2,0.2,1),
+                lifetime=2.0
+            )
+
+        else:
+            o.viewport.spawn_combat_popup(
+                target,
+                "HIT!",
+                color=(1,0.2,0.2,1),
+                lifetime=2.0
+            )
+
 
         target.hp -= damage
 
@@ -1247,6 +1275,12 @@ class RuntimeCombat:
             damage,
             "to",
             target.actor_name
+        )
+
+        o.viewport.spawn_combat_popup(
+            target,
+            str(damage),
+            color=(1,0.3,0.3,1)
         )
 
         if target.hp <= 0:

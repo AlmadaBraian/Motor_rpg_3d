@@ -455,6 +455,7 @@ class GLViewport(OpenGLFrame):
                 self.toolkit_ref.runtime_combat.update_battle_camera(dt)
                 Skills.update_charge_attack(self.toolkit_ref.runtime_combat, dt)
                 IA.update_enemy_ai(self.toolkit_ref.runtime_combat, dt)
+                self.update_combat_popups(self.toolkit_ref, dt)
                 
 
         # =====================================================
@@ -534,6 +535,8 @@ class GLViewport(OpenGLFrame):
                 glDisable(GL_BLEND)
 
                 glColor4f(1,1,1,1)
+
+            self.draw_combat_popups()
 
             self.showUI()
         glFlush()
@@ -2531,6 +2534,85 @@ class GLViewport(OpenGLFrame):
 
                 self.draw_actor_instance(sprite, inst, wx, wy, wz, cam)
 
+    def spawn_combat_popup(
+        self,
+        pack,
+        text,
+        color=(1,1,1,1),
+        lifetime=1.5,
+        rise_speed=40
+    ):
+
+        popup = {
+            "pack": pack,
+            "text": text,
+            "color": color,
+            "time": lifetime,
+            "max_time": lifetime,
+            "rise_speed": rise_speed,
+            "offset_y": 0
+        }
+
+        self.combat_text_popups.append(popup)
+
+    def update_combat_popups(self, dt):
+
+        alive = []
+
+        for p in self.combat_text_popups:
+
+            p["time"] -= dt
+
+            if p["time"] <= 0:
+                continue
+
+            p["offset_y"] -= p["rise_speed"] * dt
+
+            alive.append(p)
+
+        self.combat_text_popups = alive
+
+    def draw_combat_popups(self):
+
+        for p in self.combat_text_popups:
+
+            pack = p["pack"]
+
+            inst = pack["inst"]
+
+            wx = pack["gx"] + inst.offx
+            wy = inst.offz + 2.0
+            wz = pack["gy"] + inst.offy
+
+            screen = self.world_to_screen(
+                wx,
+                wy,
+                wz
+            )
+
+            if not screen:
+                continue
+
+            sx, sy = screen
+
+            alpha = p["time"] / p["max_time"]
+
+            color = (
+                p["color"][0],
+                p["color"][1],
+                p["color"][2],
+                alpha
+            )
+
+            self.draw_ui_text(
+                p["text"],
+                sx,
+                sy + p["offset_y"],
+                color=color,
+                centered=True,
+                scale=1.2
+            )
+
     def draw_ui_text(
         self,
         text,
@@ -3049,6 +3131,8 @@ class GLViewport(OpenGLFrame):
 
         glDepthMask(GL_TRUE)
 
+        self.draw_event_markers(tool)
+
         # runtime player opcional
         if hasattr(tool, "player"):
             self.draw_runtime_player(tool.player)
@@ -3072,8 +3156,6 @@ class GLViewport(OpenGLFrame):
 
             glEnable(GL_TEXTURE_2D)
             glColor3f(1,1,1)
-
-        self.draw_event_markers(tool)
 
         # gizmo
         if tool.selected_instance:
