@@ -164,6 +164,7 @@ class Toolkit:
         self.pending_combat_enemy = None
         self.combat_actor_moving = False
         self.battle_input_cooldown = 0
+        self.waiting_enemy_turn_start = False
 
         self.battle_cursor_x = 0
         self.battle_cursor_y = 0
@@ -172,6 +173,7 @@ class Toolkit:
 
         self.battle_selected_unit = None
         self.battle_attacker_unit = None
+        self.battle_target_unit = None
         self.combat_moving_unit = None
 
         self.battle_turn_index = 0

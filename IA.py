@@ -256,7 +256,12 @@ def update_enemy_ai(self, dt):
 
         o.enemy_ai_state = None
 
-        self.end_battle_turn()
+        o.viewport.after(
+            700,
+            lambda: self.end_battle_turn()
+            )
+
+        #self.end_battle_turn()
 
 def enemy_find_attack_target(self):
 

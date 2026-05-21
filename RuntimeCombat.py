@@ -44,6 +44,8 @@ class RuntimeCombat:
         self.counter_attack_in_progress = False
         self.counter_attack_used = False
         self.current_attack_is_counter = False
+        self.actual_damage = 0
+        self.combat_text_popups = []
 
     # =========================================================
     # START COMBAT
@@ -1067,6 +1069,8 @@ class RuntimeCombat:
         if isinstance(target_pack, dict):
 
             target = target_pack["inst"]
+            o.battle_target_unit = target_pack
+
 
         # =====================================
         # TARGET TILE
@@ -1205,11 +1209,14 @@ class RuntimeCombat:
 
     def apply_damage(
     self,
-    attacker,
-    target,
+    attacker_pack,
+    target_pack,
     combat_result
-    ):
+):
         o = self.owner
+
+        attacker = attacker_pack["inst"]
+        target = target_pack["inst"]
 
         if attacker.battle_dead:
             return False
@@ -1222,23 +1229,13 @@ class RuntimeCombat:
 
         if not combat_result["hit"]:
 
-            print("MISS")
-
             if combat_result["critical_miss"]:
+
+                self.attack_result_type = "critical_miss"
                 print("CRITICAL MISS!")
-                o.viewport.spawn_combat_popup(
-                    attacker,
-                    "CRITICAL MISS",
-                    color=(0.8,0.8,0.8,1)
-                )
+                
             else:
                 print("MISS")
-                o.viewport.spawn_combat_popup(
-                    attacker,
-                    "MISS",
-                    color=(0.8,0.8,0.8,1)
-                )
-
 
             # no aplicar daño
             return False
@@ -1251,22 +1248,9 @@ class RuntimeCombat:
 
         if combat_result["critical_hit"] and damage <=3:
             damage*=2
-            o.viewport.spawn_combat_popup(
-                target,
-                "CRITICAL!",
-                color=(1,0.2,0.2,1),
-                lifetime=2.0
-            )
 
-        else:
-            o.viewport.spawn_combat_popup(
-                target,
-                "HIT!",
-                color=(1,0.2,0.2,1),
-                lifetime=2.0
-            )
-
-
+        self.actual_damage = damage
+            
         target.hp -= damage
 
         print(
@@ -1275,12 +1259,6 @@ class RuntimeCombat:
             damage,
             "to",
             target.actor_name
-        )
-
-        o.viewport.spawn_combat_popup(
-            target,
-            str(damage),
-            color=(1,0.3,0.3,1)
         )
 
         if target.hp <= 0:
@@ -1302,6 +1280,8 @@ class RuntimeCombat:
     ):
 
         o = self.owner
+
+        self.actual_damage = 0
 
         attacker = attacker_pack["inst"]
         target = target_pack["inst"]
@@ -1374,7 +1354,7 @@ class RuntimeCombat:
 
             if critical_hit:
                 dmg_max *= 2
-                dmg_max -= 2
+                #dmg_max -= 2
 
             print("dmg_max", dmg_max)
 
@@ -1384,7 +1364,7 @@ class RuntimeCombat:
             print("base_damage", base_damage)
 
             defense = getattr(tgt_def, "defense", 0)
-            defense *= body_type_tgt_bonus
+            #defense *= body_type_tgt_bonus
 
             damage = max(
                 1,
@@ -1937,7 +1917,7 @@ class RuntimeCombat:
 
         if inst.battle_team == "enemy":
 
-            self.run_enemy_turn()
+            o.waiting_enemy_turn_start = True
 
         else:
 
@@ -2080,8 +2060,8 @@ class RuntimeCombat:
                 return "async"
 
             self.apply_damage(
-                attacker,
-                target,
+                user_pack,
+                target_pack,
                 result
             )
 
@@ -2118,6 +2098,22 @@ class RuntimeCombat:
 
             if actor_def_target.hp <= 0:
                 actor_def_target.hp = effect_data.power
+
+    def update_enemy_turn_start(self, dt):
+
+        o = self.owner
+
+        if not getattr(o, "waiting_enemy_turn_start", False):
+            return
+
+        self.turn_camera_lock -= dt
+
+        if self.turn_camera_lock > 0:
+            return
+
+        o.waiting_enemy_turn_start = False
+
+        self.run_enemy_turn()
 
     def run_enemy_turn(self):
 
@@ -3251,8 +3247,8 @@ class RuntimeCombat:
         print("result", result)
 
         self.apply_damage(
-            attacker,
-            target,
+            attacker_pack,
+            target_pack,
             result
         )
 
@@ -3494,6 +3490,8 @@ class RuntimeCombat:
 
                 self.counter_attack_used = True
 
+                self.attack_result_type = "counter_attack"
+
                 atk_pack = self.last_attack_attacker
                 tgt_pack = self.last_attack_target
 
@@ -3618,20 +3616,66 @@ class RuntimeCombat:
             print("charge_running update_combat_actor_attack")
             return
         
+        if self.attack_result_type == "counter_attack":
+
+                self.spawn_combat_popup(
+                            o.battle_selected_unit,
+                            "COUNTER ATTACK!",
+                            color=(1,0.2,0.2,1),
+                            lifetime=0.5,
+                            offset_y = 10,
+                            offset_x = -10
+                        )
+                self.attack_result_type = ""
+                
+        elif self.attack_result_type == "normal":
+
+                self.spawn_combat_popup(
+                                o.battle_selected_unit,
+                                "HIT! " + str(self.actual_damage),
+                                color=(1,0.2,0.2,1),
+                                lifetime=0.5,
+                                offset_y = 10,
+                                offset_x = -10,
+                            )
+                
+        elif self.attack_result_type == "critical":
+
+                self.spawn_combat_popup(
+                                o.battle_selected_unit,
+                                "CRITICAL! " + str(self.actual_damage),
+                                color=(1,0.2,0.2,1),
+                                lifetime=0.5,
+                                offset_y = 10,
+                                offset_x = -10,
+                                scale=2.5
+                            )
+
+                
+        elif self.attack_result_type == "miss":
+                
+                self.spawn_combat_popup(
+                    o.battle_selected_unit,
+                    "MISS",
+                    lifetime=0.5,
+                    color=(0.8,0.8,0.8,1),
+                    offset_x = -10
+                )
+        
         # terminó
         if inst.animator.finished:
 
             self.performing_attack = False
 
             if self.attack_result_type == "miss":
+                
                 idle_anim = (
                         "sitdown_dere"
                         if self.attack_anim_side == "dere"
                         else "sitdown_izq"
                     )
                 
-            else:
-
+            else:     
                 # volver a idle
                 idle_anim = (
                     "idle_dere"
@@ -3648,6 +3692,8 @@ class RuntimeCombat:
 
         if not self.combat_animation_finished():
             return
+        
+        o = self.owner
 
         # =====================================
         # COUNTER ATTACK
@@ -3758,6 +3804,92 @@ class RuntimeCombat:
                     return True
 
         return False
+    
+
+    def spawn_combat_popup(
+        self,
+        pack,
+        text,
+        color=(1,1,1,1),
+        lifetime=1.5,
+        rise_speed=40,
+        offset_y=0,
+        scale=2,
+        offset_x=0
+    ):
+
+        popup = {
+            "pack": pack,
+            "text": text,
+            "color": color,
+            "time": lifetime,
+            "max_time": lifetime,
+            "rise_speed": rise_speed,
+            "offset_y": offset_y,
+            "offset_x": offset_x,
+            "scale": scale
+
+        }
+
+        self.combat_text_popups.append(popup)
+
+    def update_combat_popups(self, dt):
+
+        alive = []
+
+        for p in self.combat_text_popups:
+
+            p["time"] -= dt
+
+            if p["time"] <= 0:
+                continue
+
+            p["offset_y"] -= p["rise_speed"] * dt
+
+            alive.append(p)
+
+        self.combat_text_popups = alive
+
+    def draw_combat_popups(self):
+
+        o = self.owner
+
+        for p in self.combat_text_popups:
+
+            pack = p["pack"]
+
+            inst = pack["inst"]
+
+            scale = p["scale"]
+
+            wx = pack["gx"] + inst.offx
+            wy = inst.ground_z + 2.0
+            wz = pack["gy"] + inst.offy
+
+            screen = o.viewport.world_to_screen(wx, wy, wz)
+
+            if not screen:
+                continue
+
+            sx, sy = screen
+
+            alpha = p["time"] / p["max_time"]
+
+            color = (
+                p["color"][0],
+                p["color"][1],
+                p["color"][2],
+                alpha
+            )
+
+            o.viewport.draw_ui_text(
+                p["text"],
+                sx + p["offset_x"],
+                sy + p["offset_y"],
+                color=color,
+                centered=True,
+                scale=scale
+            )
 
     def update_combat_actor_move(self, dt):
 
