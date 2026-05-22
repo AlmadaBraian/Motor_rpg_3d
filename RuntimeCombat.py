@@ -1,8 +1,10 @@
 import math
 from collections import deque
 
+from ActorInstance import ActorInstance
 import IA
 import Skills
+from SpriteManager import Animator
 from config import GRID_H, GRID_W
 import random
 
@@ -46,6 +48,8 @@ class RuntimeCombat:
         self.current_attack_is_counter = False
         self.actual_damage = 0
         self.combat_text_popups = []
+        self.attack_popup_spawned = False
+        self.battle_pause_timer = 0.0
 
     # =========================================================
     # START COMBAT
@@ -89,9 +93,17 @@ class RuntimeCombat:
         # PARTY
         # =====================================
 
+        o.battle_state = "deploy_party"
+
+        o.battle_deploy_party = []
+        o.battle_deploy_index = 0
+        o.battle_deploy_tiles = []
+        self.create_battle_party_units()
+        self.build_deploy_tiles()
+
         for row in o.runtime_world.grid:
             for t in row:
-                for pack in getattr(t, "actors", []):
+                for pack in t.actors:
 
                     inst = pack["inst"]
 
@@ -102,15 +114,6 @@ class RuntimeCombat:
 
                     team = getattr(actor_def, "team", "npc")
 
-                    # MAIN ACTOR SIEMPRE PLAYER
-                    if pack == o.runtime_world.main_actor:
-                        team = "player"
-
-                    elif team == "main":
-                        team = "player"
-
-                    elif team == "party":
-                        team = "player"
 
                     if team not in ["player", "ally", "enemy"]:
                         continue
@@ -129,9 +132,14 @@ class RuntimeCombat:
                         pack["gy"]
                     )
 
-        # =====================================
-        # BUILD TURN ORDER
-        # =====================================
+        first = o.battle_deploy_tiles[0]
+
+        o.battle_cursor_x = first[0]
+        o.battle_cursor_y = first[1]
+
+    def build_battle_turn_order(self):
+
+        o = self.owner
 
         for pack in o.battle_units:
 
@@ -151,7 +159,9 @@ class RuntimeCombat:
 
             roll = random.randint(1, 20)
 
-            inst.battle_initiative = base_init + roll + speed
+            inst.battle_initiative = (
+                base_init + roll + speed
+            )
 
             print(
                 inst.actor_name,
@@ -171,23 +181,161 @@ class RuntimeCombat:
             reverse=True
         )
 
-
         o.update_battle_unit_facings()
-
-        # =====================================
-        # START TURN
-        # =====================================
 
         o.battle_turn_index = 0
 
-        self.begin_battle_turn()
+    def create_battle_party_units(self):
 
-        print("TACTICAL COMBAT START")
+        o = self.owner
+
+        o.battle_deploy_party = []
+
+        for actor_name in o.party:
+
+            inst = ActorInstance(actor_name)
+
+            actor_def = o.actors.get(actor_name)
+
+            if actor_name == o.runtime_world.main_actor["inst"].actor_name:
+
+                pack = o.runtime_world.main_actor
+                pack["inst"].battle_team = "player"
+
+                o.battle_deploy_party.append(pack)
+                continue
+
+            # animator
+            if getattr(actor_def, "sprite_sheets", []):
+
+                sprname = actor_def.sprite_sheets[0]
+
+                if sprname in o.sprites:
+
+                    sprite_asset = o.sprites[sprname]
+
+                    inst.animator = Animator(
+                        o.clone_clips(
+                            sprite_asset.base_clips
+                        )
+                    )
+
+                    if sprite_asset.base_clips:
+
+                        default_idle = "idle_dere"
+
+                        if default_idle in inst.animator.clips:
+                            inst.animator.play(default_idle)
+
+                        else:
+                            first = sprite_asset.base_clips[0].name
+                            inst.animator.play(first)
+
+            inst.battle_team = "player"
+
+            pack = {
+                "inst": inst,
+                "gx": 0,
+                "gy": 0
+            }
+
+            o.battle_deploy_party.append(pack)
+
+
+    def place_next_party_member(self):
+
+        o = self.owner
+
+        idx = o.battle_deploy_index
+
+        if idx >= len(o.battle_deploy_party):
+            return
+
+        pack = o.battle_deploy_party[idx]
+
+        for tx, ty in o.battle_deploy_tiles:
+
+            blocked = False
+
+            for p in o.battle_units:
+
+                if (
+                    p["gx"] == o.battle_cursor_x
+                    and
+                    p["gy"] == o.battle_cursor_y
+                ):
+                    return
+
+            pack["gx"] = o.battle_cursor_x
+            pack["gy"] = o.battle_cursor_y
+
+            o.battle_units.append(pack)
+            tile = o.runtime_world.grid[
+                pack["gy"]
+            ][
+                pack["gx"]
+            ]
+
+            if pack not in tile.actors:
+                tile.actors.append(pack)
+
+            o.battle_deploy_index += 1
+
+            if not blocked:
+                o.battle_cursor_x = tx
+                o.battle_cursor_y = ty
+                break
+
+        if o.battle_deploy_index >= len(o.battle_deploy_party):
+
+            o.battle_deploy_tiles = []
+
+            o.battle_state = "idle"
+
+            # build turn order acá
+            self.build_battle_turn_order()
+
+            self.begin_battle_turn()
+
+            print("TACTICAL COMBAT START")
         
 
     # =========================================================
     # PATHFINDING
     # =========================================================
+
+    def build_deploy_tiles(self):
+
+        o = self.owner
+
+        o.battle_deploy_tiles = []
+
+        main = o.runtime_world.main_actor
+
+        self.battle_camera_mode = 0
+
+        mx = main["gx"]
+        my = main["gy"]
+
+        for yy in range(my - 1, my + 2):
+
+            for xx in range(mx - 2, mx + 3):
+
+                if xx < 0 or yy < 0:
+                    continue
+
+                if yy >= len(o.runtime_world.grid):
+                    continue
+
+                if xx >= len(o.runtime_world.grid[0]):
+                    continue
+
+                tile = o.runtime_world.grid[yy][xx]
+
+                if tile.is_block:
+                    continue
+
+                o.battle_deploy_tiles.append((xx, yy))
 
     def build_combat_path(self, sx, sy, tx, ty):
 
@@ -878,6 +1026,8 @@ class RuntimeCombat:
 
         if event.keysym == "space":
 
+            o.battle_input_cooldown = 0.25
+
             if o.max_actions <= 0:
                     o.battle_selected_unit = None
 
@@ -891,8 +1041,21 @@ class RuntimeCombat:
             # =====================================
             # SELECT UNIT
             # =====================================
+            if o.battle_state == "deploy_party":
 
-            if o.battle_selected_unit is None:
+                pos = (
+                    o.battle_cursor_x,
+                    o.battle_cursor_y
+                )
+
+                if pos not in o.battle_deploy_tiles:
+                    return
+
+                self.place_next_party_member()
+
+                return
+
+            elif o.battle_selected_unit is None:
 
                 print(
                     "CURSOR:",
@@ -1061,6 +1224,7 @@ class RuntimeCombat:
 
         user = user_pack["inst"]
         target = None
+        self.attack_popup_spawned = False
 
         # =====================================
         # TARGET UNIT
@@ -1830,6 +1994,7 @@ class RuntimeCombat:
 
         o.max_actions = 2
         o.current_action_type = "attack"
+        self.counter_attack= False
 
         if not o.battle_units:
             return
@@ -1840,8 +2005,6 @@ class RuntimeCombat:
         o.battle_input_cooldown = 0.25
 
         o.selected_combat_action = None
-
-        self.counter_attack = False
 
         # =========================================
         # wrap turn index
@@ -2837,8 +3000,12 @@ class RuntimeCombat:
             if inst.rot_r:
                 o.runtime_cam_orbit += rot_speed
 
-        if inst.rot_l or inst.rot_r:
-            o.update_battle_unit_facings()
+        if o.battle_current_unit:
+
+            inst = o.battle_current_unit["inst"]
+
+            if inst.rot_l or inst.rot_r:
+                o.update_battle_unit_facings()
 
         # =========================================
         # FOLLOW
@@ -3204,6 +3371,7 @@ class RuntimeCombat:
         if not is_counter:
             self.pending_counter_attack = None
             self.counter_attack_used = False
+            self.counter_attack = False
 
         if not attacker_pack or not target_pack:
             return False
@@ -3487,10 +3655,10 @@ class RuntimeCombat:
                 and
                 not self.counter_attack_used
             ):
+                
 
                 self.counter_attack_used = True
-
-                self.attack_result_type = "counter_attack"
+                self.counter_attack = True
 
                 atk_pack = self.last_attack_attacker
                 tgt_pack = self.last_attack_target
@@ -3520,10 +3688,12 @@ class RuntimeCombat:
                 )
 
                 can_counter = False
+                self.counter_attack = False
 
                 # target mas rapido
                 if tgt_speed > atk_speed:
                     can_counter = True
+                    self.counter_attack= True
 
                 # empate de velocidad
                 elif tgt_speed == atk_speed:
@@ -3531,8 +3701,11 @@ class RuntimeCombat:
                     # desempate por iniciativa
                     if tgt_init > atk_init:
                         can_counter = True
+                        self.counter_attack= True
 
                 if can_counter:
+
+                    self.battle_pause_timer = 0.35
 
                     print(
                         tgt_pack["inst"].actor_name,
@@ -3544,9 +3717,21 @@ class RuntimeCombat:
                         atk_pack
                     )
 
+                    self.attack_popup_spawned = True
+
+                    self.spawn_combat_popup(
+                            o.battle_target_unit,
+                            tgt_pack["inst"].actor_name + " COUNTER ATTACK!",
+                            color=(1,0.2,0.2,1),
+                            lifetime=0.5,
+                            offset_y = 10
+                        )
+
             # =========================================
             # FINALIZAR O EJECUTAR COUNTER
             # =========================================
+            if self.battle_pause_timer > 0:
+                return
 
             self.try_finish_attack_sequence()
                 
@@ -3616,65 +3801,55 @@ class RuntimeCombat:
             print("charge_running update_combat_actor_attack")
             return
         
-        if self.attack_result_type == "counter_attack":
+        if not self.attack_popup_spawned:
 
-                self.spawn_combat_popup(
-                            o.battle_selected_unit,
-                            "COUNTER ATTACK!",
-                            color=(1,0.2,0.2,1),
-                            lifetime=0.5,
-                            offset_y = 10,
-                            offset_x = -10
-                        )
-                self.attack_result_type = ""
+            self.attack_popup_spawned = True
+    
                 
-        elif self.attack_result_type == "normal":
+            if self.attack_result_type == "normal":
 
-                self.spawn_combat_popup(
-                                o.battle_selected_unit,
-                                "HIT! " + str(self.actual_damage),
-                                color=(1,0.2,0.2,1),
-                                lifetime=0.5,
-                                offset_y = 10,
-                                offset_x = -10,
-                            )
-                
-        elif self.attack_result_type == "critical":
+                    self.spawn_combat_popup(
+                                    o.battle_target_unit,
+                                    "HIT! " + str(self.actual_damage),
+                                    color=(1,0.2,0.2,1),
+                                    lifetime=0.5,
+                                    offset_y = 10
+                                )
+                    
+            elif self.attack_result_type == "critical":
 
-                self.spawn_combat_popup(
-                                o.battle_selected_unit,
-                                "CRITICAL! " + str(self.actual_damage),
-                                color=(1,0.2,0.2,1),
-                                lifetime=0.5,
-                                offset_y = 10,
-                                offset_x = -10,
-                                scale=2.5
-                            )
+                    self.spawn_combat_popup(
+                                    o.battle_target_unit,
+                                    "CRITICAL! " + str(self.actual_damage),
+                                    color=(1,0.2,0.2,1),
+                                    lifetime=0.5,
+                                    offset_y = 10,
+                                    scale=2.5
+                                )
 
-                
-        elif self.attack_result_type == "miss":
-                
-                self.spawn_combat_popup(
-                    o.battle_selected_unit,
-                    "MISS",
-                    lifetime=0.5,
-                    color=(0.8,0.8,0.8,1),
-                    offset_x = -10
-                )
-        
+                    
+            elif self.attack_result_type == "miss":
+                    
+                    self.spawn_combat_popup(
+                        o.battle_target_unit,
+                        "MISS",
+                        lifetime=0.5,
+                        color=(0.8,0.8,0.8,1)
+                    )
+            
         # terminó
         if inst.animator.finished:
 
             self.performing_attack = False
 
             if self.attack_result_type == "miss":
-                
+                    
                 idle_anim = (
                         "sitdown_dere"
                         if self.attack_anim_side == "dere"
                         else "sitdown_izq"
                     )
-                
+                    
             else:     
                 # volver a idle
                 idle_anim = (
@@ -3862,9 +4037,14 @@ class RuntimeCombat:
 
             scale = p["scale"]
 
-            wx = pack["gx"] + inst.offx
+            # =========================
+            # CENTRO REAL DEL ACTOR
+            # =========================
+
+            wx = pack["gx"] + 0.5 + inst.offx
+            wz = pack["gy"] + 0.5 + inst.offy
+
             wy = inst.ground_z + 2.0
-            wz = pack["gy"] + inst.offy
 
             screen = o.viewport.world_to_screen(wx, wy, wz)
 
@@ -3890,6 +4070,22 @@ class RuntimeCombat:
                 centered=True,
                 scale=scale
             )
+
+    def update_battle_animations(self, dt):
+
+        o = self.owner
+
+        if not o.battle_mode:
+            return
+
+        for pack in o.battle_units:
+
+            inst = pack["inst"]
+
+            if not inst.animator:
+                continue
+
+            inst.animator.update(dt)
 
     def update_combat_actor_move(self, dt):
 

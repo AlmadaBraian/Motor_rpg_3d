@@ -463,11 +463,17 @@ class GLViewport(OpenGLFrame):
 
             # SOLO runtime viewport
             if self is self.toolkit_ref.viewport:
+                if self.toolkit_ref.runtime_combat.battle_pause_timer > 0:
+
+                    self.toolkit_ref.runtime_combat.battle_pause_timer -= dt
+
+                    return
 
                 self.toolkit_ref.runtime_combat.update_combat_actor_move(dt)
                 self.toolkit_ref.runtime_combat.update_combat_actor_attack(dt)
                 self.toolkit_ref.runtime_combat.update_combat_actor_damage(dt)
                 self.toolkit_ref.runtime_combat.update_battle_camera(dt)
+                self.toolkit_ref.runtime_combat.update_battle_animations(dt)
                 Skills.update_charge_attack(self.toolkit_ref.runtime_combat, dt)
                 IA.update_enemy_ai(self.toolkit_ref.runtime_combat, dt)
                 self.toolkit_ref.runtime_combat.update_combat_popups(dt)
@@ -545,6 +551,8 @@ class GLViewport(OpenGLFrame):
 
                 self.draw_combat_path(self.toolkit_ref)
 
+                self.draw_battle_deploy_tiles(self.toolkit_ref)
+
                 self.draw_battle_move_tiles(self.toolkit_ref)
 
                 self.draw_battle_target_tiles(self.toolkit_ref)
@@ -560,6 +568,38 @@ class GLViewport(OpenGLFrame):
 
             self.showUI()
         glFlush()
+
+    def draw_battle_deploy_tiles(self, tool):
+
+        glDisable(GL_TEXTURE_2D)
+
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        glDepthMask(GL_FALSE)
+
+        glColor4f(0.2, 0.8, 1, 0.35)
+
+        for x,y in tool.battle_deploy_tiles:
+
+            t = tool.grid[y][x]
+
+            h = tool.runtime_combat.combat_tile_height(x, y) + 0.05
+
+            self.draw_quad(
+                (x,h,y),
+                (x+1,h,y),
+                (x+1,h,y+1),
+                (x,h,y+1)
+            )
+
+        glDepthMask(GL_TRUE)
+
+        glDisable(GL_BLEND)
+
+        glEnable(GL_TEXTURE_2D)
+
+        glColor4f(1,1,1,1)
 
     def draw_combat_path(self, tool):
 
@@ -2407,18 +2447,28 @@ class GLViewport(OpenGLFrame):
         glEnable(GL_TEXTURE_2D)
 
     def render_actors(self, tool):
+
         grid = tool.get_active_grid()
+
         cam = self.get_camera_world_pos()
 
+        # =========================================
+        # ACTORES DEL MAPA
+        # =========================================
+
         for y in range(GRID_H):
+
             for x in range(GRID_W):
+
                 t = grid[y][x]
 
                 if not hasattr(t, "actors"):
                     continue
 
                 for pack in t.actors:
+
                     inst = pack["inst"]
+
                     if inst.actor_name not in tool.actors:
                         continue
 
@@ -2432,13 +2482,64 @@ class GLViewport(OpenGLFrame):
                     if sprname not in tool.sprites:
                         continue
 
-                    sprite = tool.sprites[actor_def.sprite_sheets[0]]
+                    sprite = tool.sprites[sprname]
 
                     wx = x + inst.offx + 0.5
                     wy = t.floor_height + inst.offz
                     wz = y + inst.offy + 0.5
 
-                    self.draw_actor_instance(sprite, inst, wx, wy, wz, cam)
+                    self.draw_actor_instance(
+                        sprite,
+                        inst,
+                        wx,
+                        wy,
+                        wz,
+                        cam
+                    )
+
+        # =========================================
+        # BATTLE UNITS
+        # =========================================
+
+        if tool.battle_mode:
+
+            for pack in tool.battle_units:
+
+                inst = pack["inst"]
+
+                if inst.actor_name not in tool.actors:
+                    continue
+
+                actor_def = tool.actors[inst.actor_name]
+
+                if not actor_def.sprite_sheets:
+                    continue
+
+                sprname = actor_def.sprite_sheets[0]
+
+                if sprname not in tool.sprites:
+                    continue
+
+                sprite = tool.sprites[sprname]
+
+                gx = pack["gx"]
+                gy = pack["gy"]
+
+                tile = tool.runtime_world.grid[gy][gx]
+
+                wx = gx + inst.offx + 0.5
+                wy = tile.floor_height + inst.offz
+                wz = gy + inst.offy + 0.5
+
+                self.draw_actor_instance(
+                    sprite,
+                    inst,
+                    wx,
+                    wy,
+                    wz,
+                    cam
+                )
+
 
     def render_alpha_pass(self, tool):
         cam = self.get_camera_world_pos()

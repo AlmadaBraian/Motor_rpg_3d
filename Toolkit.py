@@ -171,6 +171,12 @@ class Toolkit:
 
         self.battle_units = []
 
+        self.battle_deploy_tiles = []
+        self.battle_deploy_index = 0
+        self.battle_deploy_party = []
+        self.battle_deploy_finished = False
+        self.party = ["A","b","c"]
+
         self.battle_selected_unit = None
         self.battle_attacker_unit = None
         self.battle_target_unit = None
@@ -879,8 +885,14 @@ class Toolkit:
 
         cam_yaw = cam.yaw
 
+        # =====================================
+        # ACTORES DEL MAPA
+        # =====================================
+
         for row in self.runtime_world.grid:
+
             for t in row:
+
                 for pack in getattr(t, "actors", []):
 
                     inst = pack["inst"]
@@ -889,6 +901,21 @@ class Toolkit:
                         continue
 
                     self.update_actor_idle_view_by_camera(inst)
+
+        # =====================================
+        # BATTLE UNITS
+        # =====================================
+
+        if self.battle_mode:
+
+            for pack in self.battle_units:
+
+                inst = pack["inst"]
+
+                if not inst.animator:
+                    continue
+
+                self.update_actor_idle_view_by_camera(inst)
 
 
     def update_runtime_actor(self, dt):
@@ -1181,8 +1208,12 @@ class Toolkit:
         inst.visual_facing = map_vis.get(suffix, "espalda")
 
         if inst.animator:
+
             if chosen in inst.animator.clips:
-                inst.animator.play(chosen)
+
+                if inst.animator.current != chosen:
+                    inst.animator.play(chosen)
+
                 return
 
             # =====================================

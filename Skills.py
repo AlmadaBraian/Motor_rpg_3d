@@ -344,7 +344,15 @@ def update_charge_attack(self, dt):
     # =====================================
 
     if phase == "push":
-        print("if phase == push")
+
+        user = self.charge_attack_user["inst"]
+        target = self.charge_attack_target["inst"]
+
+        if user.animator:
+            user.animator.update(dt)
+
+        if target.animator:
+            target.animator.update(dt)
 
         update_charge_push(self, dt)
 
@@ -357,8 +365,14 @@ def update_charge_attack(self, dt):
         user_pack = self.charge_attack_user
         target_pack = self.charge_attack_target
 
-        user = user_pack["inst"]
-        target = target_pack["inst"]
+        user = self.charge_attack_user["inst"]
+        target = self.charge_attack_target["inst"]
+
+        if user.animator:
+            user.animator.update(dt)
+
+        if target.animator:
+            target.animator.update(dt)
 
         user_done = True
         target_done = True
@@ -436,6 +450,14 @@ def apply_charge_attack_damage(self):
         "CHARGE DAMAGE",
         result["damage"]
     )
+
+    self.spawn_combat_popup(
+            o.battle_target_unit,
+            "HIT! " + str(result["damage"]),
+            color=(1,0.2,0.2,1),
+            lifetime=0.5,
+            offset_y = 10
+        )
 
     if actor_def_target.hp <= 0:
 

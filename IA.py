@@ -235,6 +235,10 @@ def update_enemy_ai(self, dt):
         if self.runtime_attack_camera:
             return
 
+        # NUEVO
+        if self.counter_attack:
+            return
+
         o.enemy_ai_state = "end_turn"
 
         return
@@ -245,11 +249,14 @@ def update_enemy_ai(self, dt):
 
     if state == "end_turn":
 
-        # esperar animaciones
         if self.performing_attack:
             return
 
         if self.runtime_attack_camera:
+            return
+
+        # NUEVO
+        if self.counter_attack:
             return
 
         print("AI TURN END")
@@ -257,11 +264,9 @@ def update_enemy_ai(self, dt):
         o.enemy_ai_state = None
 
         o.viewport.after(
-            700,
+            900,
             lambda: self.end_battle_turn()
-            )
-
-        #self.end_battle_turn()
+        )
 
 def enemy_find_attack_target(self):
 
