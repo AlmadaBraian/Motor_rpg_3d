@@ -1,3 +1,6 @@
+from config import NORMAL_ATTACK_SCRIPT
+
+
 def find_closest_enemy(self, user_pack):
 
     o = self.owner
@@ -108,6 +111,17 @@ def update_enemy_ai(self, dt):
 
     o = self.owner
 
+    current = o.battle_current_unit
+
+    if not current:
+        return
+
+    inst = current["inst"]
+
+    if inst.battle_team != "enemy":
+        o.enemy_ai_state = None
+        return
+
     state = getattr(
         o,
         "enemy_ai_state",
@@ -171,6 +185,8 @@ def update_enemy_ai(self, dt):
 
         o.enemy_ai_state = "select_attack"
 
+        o.battle_move_tiles = []
+
         return
 
     # =====================================
@@ -184,6 +200,8 @@ def update_enemy_ai(self, dt):
         if not target:
 
             print("NO TARGET IN RANGE")
+            self.pending_turn_end = True
+            self.turn_end_timer = 0.9
 
             o.enemy_ai_state = "end_turn"
             return
@@ -199,6 +217,7 @@ def update_enemy_ai(self, dt):
         )
 
         o.enemy_ai_state = "confirm_attack"
+        o.battle_move_tiles = []
 
         return
 
@@ -218,10 +237,11 @@ def update_enemy_ai(self, dt):
 
         o.current_action_type = "attack"
 
-        self.execute_combat_action(
-            o.battle_attacker_unit,
-            target
-        )
+        self.start_runtime_skill(
+                NORMAL_ATTACK_SCRIPT,
+                o.battle_attacker_unit,
+                target
+            )
 
         o.enemy_ai_state = "wait_attack_finish"
 
@@ -229,19 +249,22 @@ def update_enemy_ai(self, dt):
     
     if state == "wait_attack_finish":
 
-        if self.performing_attack:
+        # skill todavía ejecutándose
+        if self.active_runtime_skill:
             return
 
+        # cámara todavía activa
         if self.runtime_attack_camera:
             return
 
-        # NUEVO
-        if self.counter_attack:
+        # animaciones todavía activas
+        if self.performing_attack:
             return
+        
+        self.pending_turn_end = True
+        self.turn_end_timer = 0.9
 
         o.enemy_ai_state = "end_turn"
-
-        return
 
     # =====================================
     # END TURN
@@ -254,19 +277,22 @@ def update_enemy_ai(self, dt):
 
         if self.runtime_attack_camera:
             return
+        
+        if self.pending_turn_end:
 
-        # NUEVO
-        if self.counter_attack:
-            return
+            self.turn_end_timer -= dt
 
-        print("AI TURN END")
+            if self.turn_end_timer <= 0:
 
-        o.enemy_ai_state = None
+                self.pending_turn_end = False
 
-        o.viewport.after(
-            900,
-            lambda: self.end_battle_turn()
-        )
+                print("AI TURN END")
+
+                o.enemy_ai_state = None
+
+                self.end_battle_turn()
+
+        
 
 def enemy_find_attack_target(self):
 

@@ -3744,7 +3744,7 @@ class Toolkit:
             item.price = ad.get("price", 0)
             item.consumable = ad.get("consumable", True)
             item.range = ad.get("range", 0)
-            item.script = ad.get("script", "")
+            item.script = ad.get("script", [])
 
             self.items[name] = item
             #self.asset_listbox.insert(tk.END, name)
@@ -3767,7 +3767,7 @@ class Toolkit:
             skill.animation_sprite = ad.get("animation_sprite", "")
             skill.animation_clip = ad.get("animation_clip", "")
             skill.status_effect = ad.get("status_effect", "")
-            skill.script = ad.get("script", "")
+            skill.script = ad.get("script", [])
 
             self.skills[name] = skill
 
@@ -3902,7 +3902,7 @@ class Toolkit:
                     "trigger": "step",
                     "scene": "",
                     "dialog": "",
-                    "script": "",
+                    "script": [],
                     "teleport": None,
                     "combat": False,
                     "once": False,

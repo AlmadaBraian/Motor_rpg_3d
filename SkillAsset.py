@@ -16,9 +16,10 @@ class SkillAsset:
 
         self.status_effect = ""
 
-        self.script = ""
+        self.script = []
 
         self.animation_sprite = ""
+        self.animation_effect = ""
         self.animation_clip = ""
 
         self.target_shape = "diamond"

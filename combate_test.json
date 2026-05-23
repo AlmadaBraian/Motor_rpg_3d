@@ -42496,7 +42496,64 @@
             "animation_sprite": "base sheet 9 frames v2 73x65.png",
             "animation_clip": "run_perfil_dere",
             "status_effect": "",
-            "script": "charge_attack\n\n"
+            "script": [
+
+                    {
+                        "action": "attack_camera"
+                    },
+
+                    {
+                        "action": "move_to_target"
+                    },
+
+                    {
+                        "action": "play_animation",
+                        "target": "user",
+                        "clip": "attack_dereX2"
+                    },
+
+                    {
+                        "action": "wait_animation",
+                        "target": "user"
+                    },
+
+                    {
+                        "action": "play_animation",
+                        "target": "target",
+                        "clip": "hit_fall_face_up_izq"
+                    },
+                    {
+                        "action": "play_idle_animation"
+                    },
+
+                    {
+                        "action": "damage"
+                    },
+
+                    {
+                        "action": "push_target",
+                        "distance": 1
+                    },
+
+                    {
+                        "action":"wait_runtime_flag",
+                        "flag":"push_finished"
+                    },
+
+                    {
+                        "action": "wait_animation",
+                        "target": "target"
+                    },
+
+                    {
+                        "action": "wait",
+                        "time": 300
+                    },
+
+                    {
+                        "action": "end_skill"
+                    }
+                ]
         },
         "Pedorron": {
             "name": "Pedorron",
@@ -42524,7 +42581,10 @@
             "animation_sprite": "",
             "animation_clip": "",
             "status_effect": "",
-            "script": "mantle_skill\n\n\n"
+            "script": [{
+                    "action": "call_func",
+                    "func": "execute_mantle_skill"
+                }]
         }
     },
     "items": {
