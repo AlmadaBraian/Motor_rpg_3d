@@ -14,7 +14,7 @@ from EventManager import (
 )
 
 from RuntimeWorld import RuntimeWorld
-import Skills
+
 from SpriteManager import Animator
 from config import GRID_H, GRID_W
 

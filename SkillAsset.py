@@ -20,6 +20,7 @@ class SkillAsset:
 
         self.animation_sprite = ""
         self.animation_effect = ""
-        self.animation_clip = ""
+        self.animation_clip_dere = ""
+        self.animation_clip_izq = ""
 
         self.target_shape = "diamond"

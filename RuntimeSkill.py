@@ -225,12 +225,14 @@ def run_skill_command(
 
     if action == "play_animation":
 
+        side = combat.attack_anim_side
+
+        runtime_skill.data["attack_side"] = side
+
         target_name = cmd.get(
             "target",
             "user"
         )
-
-        clip = cmd.get("clip", "")
 
         inst = None
 
@@ -239,6 +241,40 @@ def run_skill_command(
 
         elif target_name == "target":
             inst = target
+
+        # =====================================
+        # CLIP SEGUN LADO
+        # =====================================
+
+        clip = ""
+
+        action_data = runtime_skill.action_data
+
+        if action_data:
+
+            if side == "dere":
+
+                clip = getattr(
+                    action_data,
+                    "animation_clip_dere",
+                    ""
+                )
+
+            else:
+
+                clip = getattr(
+                    action_data,
+                    "animation_clip_izq",
+                    ""
+                )
+
+        # fallback opcional
+        if not clip:
+            clip = cmd.get("clip", "")
+
+        # =====================================
+        # PLAY
+        # =====================================
 
         if inst and inst.animator:
 
@@ -904,6 +940,8 @@ def end_runtime_skill(runtime_skill):
     o.battle_target_tiles = []
 
     o.selected_combat_action = None
+
+    runtime_skill.user_pack["inst"].charge_running = False
 
     action_data = runtime_skill.action_data
 

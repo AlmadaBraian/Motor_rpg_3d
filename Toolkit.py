@@ -3530,7 +3530,8 @@ class Toolkit:
                 "target_shape": skill.target_shape,
                 "power": skill.power,
                 "animation_sprite": skill.animation_sprite,
-                "animation_clip": skill.animation_clip,
+                "animation_clip_dere": skill.animation_clip_dere,
+                "animation_clip_izq": skill.animation_clip_izq,
                 "status_effect": skill.status_effect,
                 "script": skill.script
 
@@ -3765,7 +3766,8 @@ class Toolkit:
             skill.target_shape = ad.get("target_shape", "diamond")
             skill.power = ad.get("power", 10)
             skill.animation_sprite = ad.get("animation_sprite", "")
-            skill.animation_clip = ad.get("animation_clip", "")
+            skill.animation_clip_dere = ad.get("animation_clip_dere", "")
+            skill.animation_clip_izq = ad.get("animation_clip_izq", "")
             skill.status_effect = ad.get("status_effect", "")
             skill.script = ad.get("script", [])
 

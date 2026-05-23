@@ -37,7 +37,6 @@ class Animator:
             self.current = name
             self.frame = 0
             self.timer = 0
-        print("ANIM PLAY:", name)
 
     def update(self, dt):
 

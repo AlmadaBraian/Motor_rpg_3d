@@ -12,7 +12,7 @@ import HUDManager
 import IA
 from RuntimeCombat import RuntimeCombat
 from RuntimeSkill import update_knockback
-import Skills
+
 from SpriteInstance import SpriteInstance
 from TextureManager import TextureManager
 from AnimatedTexture import AnimatedTexture
@@ -474,7 +474,7 @@ class GLViewport(OpenGLFrame):
                 #self.toolkit_ref.runtime_combat.update_combat_actor_attack(dt)
                 self.toolkit_ref.runtime_combat.update_battle_camera(dt)
                 self.toolkit_ref.runtime_combat.update_battle_animations(dt)
-                Skills.update_charge_attack(self.toolkit_ref.runtime_combat, dt)
+                #Skills.update_charge_attack(self.toolkit_ref.runtime_combat, dt)
                 if self.toolkit_ref.runtime_combat.active_runtime_skill:
                     self.toolkit_ref.runtime_combat.active_runtime_skill.update(dt)
                     for pack in self.toolkit_ref.battle_units:

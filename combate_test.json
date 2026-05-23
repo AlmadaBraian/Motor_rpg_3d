@@ -42494,7 +42494,8 @@
             "target_shape": "cross",
             "power": 6,
             "animation_sprite": "base sheet 9 frames v2 73x65.png",
-            "animation_clip": "run_perfil_dere",
+            "animation_clip_dere": "attack_dereX2",
+            "animation_clip_izq": "attack_izqX2",
             "status_effect": "",
             "script": [
 
@@ -42508,8 +42509,7 @@
 
                     {
                         "action": "play_animation",
-                        "target": "user",
-                        "clip": "attack_dereX2"
+                        "target": "user"
                     },
 
                     {
@@ -42518,10 +42518,9 @@
                     },
 
                     {
-                        "action": "play_animation",
-                        "target": "target",
-                        "clip": "hit_fall_face_up_izq"
+                        "action": "play_hit_animation"
                     },
+                    
                     {
                         "action": "play_idle_animation"
                     },
@@ -42565,7 +42564,8 @@
             "target_shape": "diamond",
             "power": 5,
             "animation_sprite": "base sheet 9 frames v2 73x65.png",
-            "animation_clip": "fall",
+            "animation_clip_dere": "fall",
+            "animation_clip_izq": "fall",
             "status_effect": "Nauseas",
             "script": "\n\n\n"
         },
@@ -42579,7 +42579,8 @@
             "target_shape": "diamond",
             "power": 0,
             "animation_sprite": "",
-            "animation_clip": "",
+            "animation_clip_dere": "",
+            "animation_clip_izq": "",
             "status_effect": "",
             "script": [{
                     "action": "call_func",

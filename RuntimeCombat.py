@@ -4165,18 +4165,6 @@ class RuntimeCombat:
         if not o.combat_move_queue:
 
             # =====================================
-            # CHARGE SKILL
-            # =====================================
-
-            runtime_skill = self.active_runtime_skill
-
-            if runtime_skill:
-
-                runtime_skill.flags[
-                    "move_finished"
-                ] = True
-
-            # =====================================
             # MANTLE ARRIVAL
             # =====================================
 
@@ -4231,6 +4219,26 @@ class RuntimeCombat:
                 o.battle_cursor_y = o.battle_current_unit["gy"]
 
                 self.mantle_skill_user = None
+
+                return
+            
+            # =====================================
+            # CHARGE SKILL
+            # =====================================
+
+            runtime_skill = self.active_runtime_skill
+
+            # =====================================
+            # MOVEMENT FROM RUNTIME SKILL
+            # =====================================
+
+            if runtime_skill:
+
+                o.combat_actor_moving = False
+
+                runtime_skill.flags["move_finished"] = True
+
+                print("RUNTIME SKILL MOVE FINISHED")
 
                 return
 
