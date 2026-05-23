@@ -1846,7 +1846,7 @@ class RuntimeCombat:
 
                 result="hit"
             else:
-                result:"miss"
+                result="miss"
 
         # =========================================
         # DAMAGE
