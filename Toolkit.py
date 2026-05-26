@@ -107,6 +107,14 @@ class Toolkit:
         self.runtime_combat = RuntimeCombat(self)
         self.runtime = RuntimeSystem(self)
 
+        # =====================================
+        # DRAG PAINT
+        # =====================================
+
+        self.drag_painting = False
+        self.drag_start = None
+        self.drag_end = None
+
         # ================================
         # WORLD EVENT ENGINE
         # ================================
@@ -386,7 +394,9 @@ class Toolkit:
 
         self.grid_canvas=tk.Canvas(center,width=GRID_W*CELL_PIXELS,height=GRID_H*CELL_PIXELS,bg='#202020')
         self.grid_canvas.pack()
-        self.grid_canvas.bind('<Button-1>',self.paint_2d)
+        self.grid_canvas.bind("<ButtonPress-1>", self.start_grid_drag)
+        self.grid_canvas.bind("<B1-Motion>", self.update_grid_drag)
+        self.grid_canvas.bind("<ButtonRelease-1>", self.end_grid_drag)
 
         self.viewport=GLViewport(self.root,width=900,height=700)
         self.viewport.pack(side='left',fill='both',expand=True)
@@ -429,6 +439,80 @@ class Toolkit:
     def open_item_editor (self):
         
         open_item_editor(self)
+
+    def mouse_to_grid(self, event):
+
+        gx = event.x // CELL_PIXELS
+        gy = event.y // CELL_PIXELS
+
+        if gx < 0 or gy < 0:
+            return None, None
+
+        if gx >= GRID_W or gy >= GRID_H:
+            return None, None
+
+        return gx, gy
+    
+    def start_grid_drag(self, event):
+
+        gx, gy = self.mouse_to_grid(event)
+
+        if gx is None:
+            return
+
+        self.drag_painting = True
+        self.drag_start = (gx, gy)
+        self.drag_end = (gx, gy)
+
+        self.draw_grid()
+
+    def update_grid_drag(self, event):
+
+        if not self.drag_painting:
+            return
+
+        gx, gy = self.mouse_to_grid(event)
+
+        if gx is None:
+            return
+
+        self.drag_end = (gx, gy)
+
+        self.draw_grid()
+
+    def end_grid_drag(self, event):
+
+        if not self.drag_painting:
+            return
+
+        self.drag_painting = False
+
+        gx, gy = self.mouse_to_grid(event)
+
+        if gx is None:
+            return
+
+        self.drag_end = (gx, gy)
+
+        x1 = min(self.drag_start[0], self.drag_end[0])
+        y1 = min(self.drag_start[1], self.drag_end[1])
+
+        x2 = max(self.drag_start[0], self.drag_end[0])
+        y2 = max(self.drag_start[1], self.drag_end[1])
+
+        # =====================================
+        # PINTAR REGION
+        # =====================================
+
+        for yy in range(y1, y2 + 1):
+            for xx in range(x1, x2 + 1):
+
+                self.apply_tool(xx, yy)
+
+        self.drag_start = None
+        self.drag_end = None
+
+        self.draw_grid()
 
     def listaHerramientas(self, place):
         tool_defs = [
@@ -5454,5 +5538,33 @@ class Toolkit:
                         text='B' + str(round(t.block_top - t.block_bottom,1)),
                         fill='#00ffff',
                         font=('Arial',8,'bold')
+                    )
+
+                # =====================================
+                # DRAG SELECTION PREVIEW
+                # =====================================
+
+                if self.drag_painting and self.drag_start and self.drag_end:
+
+                    x1 = min(self.drag_start[0], self.drag_end[0])
+                    y1 = min(self.drag_start[1], self.drag_end[1])
+
+                    x2 = max(self.drag_start[0], self.drag_end[0])
+                    y2 = max(self.drag_start[1], self.drag_end[1])
+
+                    px1 = x1 * CELL_PIXELS
+                    py1 = y1 * CELL_PIXELS
+
+                    px2 = (x2 + 1) * CELL_PIXELS
+                    py2 = (y2 + 1) * CELL_PIXELS
+
+                    self.grid_canvas.create_rectangle(
+                        px1,
+                        py1,
+                        px2,
+                        py2,
+                        outline="yellow",
+                        width=3,
+                        dash=(4, 2)
                     )
                     
