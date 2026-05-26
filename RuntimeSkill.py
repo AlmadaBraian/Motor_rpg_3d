@@ -128,12 +128,6 @@ def update_skill_script(runtime_skill, dt):
             runtime_skill.waiting_animation = False
             runtime_skill.index += 1
             return
-        
-        print(
-        "WAIT ANIM:",
-        animator.current,
-        animator.finished
-        )
 
         #animator.update(dt)
 
@@ -655,15 +649,12 @@ def run_skill_command(
         # =====================================
         # POPUP
         # =====================================
-
-        combat.spawn_combat_popup(
-            tgt_pack,
-            tgt_pack["inst"].actor_name
-            + " COUNTER!",
-            color=(1,0.2,0.2,1),
-            lifetime=0.5,
-            offset_y=10
+        combat.show_popup(
+        tgt_pack,
+        result, counter=True
         )
+
+        
 
         # =====================================
         # START COUNTER SKILL

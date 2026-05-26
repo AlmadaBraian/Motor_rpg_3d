@@ -1894,34 +1894,6 @@
                         "rot": 0
                     },
                     {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": false,
-                        "rot": 0
-                    },
-                    {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": false,
-                        "rot": 0
-                    },
-                    {
                         "frame": 5,
                         "crop_x": 0,
                         "crop_y": 0,
@@ -1966,34 +1938,6 @@
             {
                 "name": "hit_dere",
                 "frames": [
-                    {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": true,
-                        "rot": 0
-                    },
-                    {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": true,
-                        "rot": 0
-                    },
                     {
                         "frame": 15,
                         "crop_x": 0,
@@ -2057,34 +2001,6 @@
             {
                 "name": "hit_fall_sitdown_izq",
                 "frames": [
-                    {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": false,
-                        "rot": 0
-                    },
-                    {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": false,
-                        "rot": 0
-                    },
                     {
                         "frame": 15,
                         "crop_x": 0,
@@ -2206,34 +2122,6 @@
                         "rot": 0
                     },
                     {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": false,
-                        "rot": 0
-                    },
-                    {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": false,
-                        "rot": 0
-                    },
-                    {
                         "frame": 5,
                         "crop_x": 0,
                         "crop_y": 0,
@@ -2334,34 +2222,6 @@
             {
                 "name": "hit_fall_face_up_dere",
                 "frames": [
-                    {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": true,
-                        "rot": 0
-                    },
-                    {
-                        "frame": 15,
-                        "crop_x": 0,
-                        "crop_y": 0,
-                        "crop_w": 73,
-                        "crop_h": 65,
-                        "w": 73,
-                        "h": 65,
-                        "ox": 0,
-                        "oy": 0,
-                        "dur": 1,
-                        "flip_x": true,
-                        "rot": 0
-                    },
                     {
                         "frame": 15,
                         "crop_x": 0,

@@ -291,19 +291,21 @@ class RuntimeSystem:
 
         k = event.keysym.lower()
 
-        if k == "w":
-            p.move_b = True
-        if k == "s":
-            p.move_f = True
-        if k == "a":
-            p.move_l = True
-        if k == "d":
-            p.move_r = True
+        if not tkref.world_event_running:
 
-        if k == "q":
-            p.rot_l = True
-        if k == "e":
-            p.rot_r = True
+            if k == "w":
+                p.move_b = True
+            if k == "s":
+                p.move_f = True
+            if k == "a":
+                p.move_l = True
+            if k == "d":
+                p.move_r = True
+
+            if k == "q":
+                p.rot_l = True
+            if k == "e":
+                p.rot_r = True
 
         if event.keysym == "space":
 

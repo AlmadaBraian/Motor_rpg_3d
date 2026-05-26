@@ -195,29 +195,9 @@ def update_enemy_ai(self, dt):
 
     if state == "select_attack":
 
-        target = enemy_find_attack_target(self)
+        self.build_battle_target_tiles(current)
 
-        if not target:
-
-            print("NO TARGET IN RANGE")
-            self.pending_turn_end = True
-            self.turn_end_timer = 0.9
-
-            o.enemy_ai_state = "end_turn"
-            return
-
-        o.enemy_ai_attack_target = target
-
-        o.battle_cursor_x = target["gx"]
-        o.battle_cursor_y = target["gy"]
-
-        print(
-            "TARGET FOUND:",
-            target["inst"].actor_name
-        )
-
-        o.enemy_ai_state = "confirm_attack"
-        o.battle_move_tiles = []
+        #target = find_attack_target(self, current)
 
         return
 
@@ -294,26 +274,29 @@ def update_enemy_ai(self, dt):
 
         
 
-def enemy_find_attack_target(self):
+def find_attack_target(
+    self,
+    attacker_pack
+):
 
     o = self.owner
 
-    attacker = o.battle_current_unit
-
-    if not attacker:
+    if not attacker_pack:
         return None
 
-    team = attacker["inst"].battle_team
+    valid_tiles = set(o.battle_target_tiles)
 
-    ax = attacker["gx"]
-    ay = attacker["gy"]
+    team = attacker_pack["inst"].battle_team
 
     best = None
     best_dist = 999
 
+    ax = attacker_pack["gx"]
+    ay = attacker_pack["gy"]
+
     for pack in o.battle_units:
 
-        if pack == attacker:
+        if pack == attacker_pack:
             continue
 
         inst = pack["inst"]
@@ -324,14 +307,20 @@ def enemy_find_attack_target(self):
         if inst.battle_team == team:
             continue
 
-        dx = abs(pack["gx"] - ax)
-        dy = abs(pack["gy"] - ay)
+        px = pack["gx"]
+        py = pack["gy"]
+
+        # =====================================
+        # TILE NO VALIDA PARA EL SHAPE
+        # =====================================
+
+        if (px, py) not in valid_tiles:
+            continue
+
+        dx = abs(px - ax)
+        dy = abs(py - ay)
 
         dist = dx + dy
-
-        # melee range
-        if dist > 1:
-            continue
 
         if dist < best_dist:
 

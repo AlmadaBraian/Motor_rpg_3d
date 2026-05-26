@@ -23,6 +23,10 @@ NORMAL_ATTACK_SCRIPT = [
     {
         "action": "attack_camera"
     },
+    {
+        "action": "wait",
+        "time": 600
+    },
 
     {
         "action": "play_attack_animation"
@@ -55,7 +59,7 @@ NORMAL_ATTACK_SCRIPT = [
 
     {
         "action": "wait",
-        "time": 600
+        "time": 300
     },
 
     {

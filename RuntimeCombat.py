@@ -978,8 +978,6 @@ class RuntimeCombat:
 
         else:
 
-            target = None
-
             for pack in o.battle_units:
 
                 if (
@@ -1764,6 +1762,8 @@ class RuntimeCombat:
             target.hp = 0
             target.battle_dead = True
             target.pending_remove = True
+
+            self.remove_battle_unit(target)
 
             print(target.actor_name, "DEAD")
 
@@ -3044,6 +3044,34 @@ class RuntimeCombat:
                 )
             )
 
+        target = IA.find_attack_target(self, o.battle_selected_unit)
+
+        if not target:
+
+            print("NO TARGET IN RANGE")
+            if(inst.battle_team == "enemy"):
+                self.pending_turn_end = True
+                self.turn_end_timer = 0.9
+
+                o.enemy_ai_state = "end_turn"
+            return
+        
+        if(inst.battle_team == "enemy"):
+    
+            o.enemy_ai_attack_target = target
+            o.enemy_ai_state = "confirm_attack"
+            o.battle_move_tiles = []
+
+        o.battle_target_unit = target
+
+        o.battle_cursor_x = target["gx"]
+        o.battle_cursor_y = target["gy"]
+
+        print(
+                "TARGET FOUND:",
+                target["inst"].actor_name
+        )
+
     def get_skill_value(self,skill, key, default=None):
 
         if isinstance(skill, dict):
@@ -3905,10 +3933,15 @@ class RuntimeCombat:
     def show_popup(
     self,
     target_pack,
-    result
+    result, counter = False
     ):
 
         damage = result["damage"]
+
+        offset_x = 100
+
+        #side = self.attack_anim_side
+
 
         if result["critical_hit"]:
 
@@ -3918,7 +3951,8 @@ class RuntimeCombat:
                 color=(1,0.2,0.2,1),
                 lifetime=0.5,
                 offset_y=10,
-                scale=2.5
+                scale=2.5,
+                offset_x=offset_x
             )
 
         elif not result["hit"]:
@@ -3927,7 +3961,8 @@ class RuntimeCombat:
                 target_pack,
                 "MISS",
                 lifetime=0.5,
-                color=(0.8,0.8,0.8,1)
+                color=(0.8,0.8,0.8,1),
+                offset_x=offset_x + 30
             )
 
         else:
@@ -3937,8 +3972,20 @@ class RuntimeCombat:
                 "HIT! " + str(damage),
                 color=(1,0.2,0.2,1),
                 lifetime=0.5,
-                offset_y=10
+                offset_y=10,
+                offset_x=offset_x
             )
+
+        if counter:
+            self.spawn_combat_popup(
+            target_pack,
+            target_pack["inst"].actor_name
+            + " COUNTER!",
+            color=(1,0.2,0.2,1),
+            lifetime=0.5,
+            offset_y=10,
+            offset_x=offset_x
+        )
 
                             
 

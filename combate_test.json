@@ -8765,7 +8765,7 @@
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
                         "frame": 0,
-                        "timer": 0.1295217545827292,
+                        "timer": 0.049631883621216344,
                         "is_npc": false,
                         "npc_name": "E",
                         "interact_radius": 1.2,
@@ -10487,7 +10487,7 @@
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
                         "frame": 3,
-                        "timer": 0.1295217545827292,
+                        "timer": 0.049631883621216344,
                         "is_npc": false,
                         "npc_name": "Demonio",
                         "interact_radius": 1.2,
@@ -12267,7 +12267,7 @@
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
                         "frame": 0,
-                        "timer": 0.1295217545827292,
+                        "timer": 0.049631883621216344,
                         "is_npc": false,
                         "npc_name": "Frenazi",
                         "interact_radius": 1.2,
@@ -17475,7 +17475,7 @@
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
                         "frame": 1,
-                        "timer": 0.1295217545827292,
+                        "timer": 0.049631883621216344,
                         "is_npc": false,
                         "npc_name": "A",
                         "interact_radius": 1.2,
@@ -40488,34 +40488,6 @@
                             "rot": 0
                         },
                         {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": false,
-                            "rot": 0
-                        },
-                        {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": false,
-                            "rot": 0
-                        },
-                        {
                             "frame": 5,
                             "crop_x": 0,
                             "crop_y": 0,
@@ -40560,34 +40532,6 @@
                 {
                     "name": "hit_dere",
                     "frames": [
-                        {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": true,
-                            "rot": 0
-                        },
-                        {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": true,
-                            "rot": 0
-                        },
                         {
                             "frame": 15,
                             "crop_x": 0,
@@ -40651,34 +40595,6 @@
                 {
                     "name": "hit_fall_sitdown_izq",
                     "frames": [
-                        {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": false,
-                            "rot": 0
-                        },
-                        {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": false,
-                            "rot": 0
-                        },
                         {
                             "frame": 15,
                             "crop_x": 0,
@@ -40800,34 +40716,6 @@
                             "rot": 0
                         },
                         {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": false,
-                            "rot": 0
-                        },
-                        {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": false,
-                            "rot": 0
-                        },
-                        {
                             "frame": 5,
                             "crop_x": 0,
                             "crop_y": 0,
@@ -40928,34 +40816,6 @@
                 {
                     "name": "hit_fall_face_up_dere",
                     "frames": [
-                        {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": true,
-                            "rot": 0
-                        },
-                        {
-                            "frame": 15,
-                            "crop_x": 0,
-                            "crop_y": 0,
-                            "crop_w": 73,
-                            "crop_h": 65,
-                            "w": 73,
-                            "h": 65,
-                            "ox": 0,
-                            "oy": 0,
-                            "dur": 1,
-                            "flip_x": true,
-                            "rot": 0
-                        },
                         {
                             "frame": 15,
                             "crop_x": 0,
@@ -42498,61 +42358,45 @@
             "animation_clip_izq": "attack_izqX2",
             "status_effect": "",
             "script": [
-
-                    {
-                        "action": "attack_camera"
-                    },
-
-                    {
-                        "action": "move_to_target"
-                    },
-
-                    {
-                        "action": "play_animation",
-                        "target": "user"
-                    },
-
-                    {
-                        "action": "wait_animation",
-                        "target": "user"
-                    },
-
-                    {
-                        "action": "play_hit_animation"
-                    },
-                    
-                    {
-                        "action": "play_idle_animation"
-                    },
-
-                    {
-                        "action": "damage"
-                    },
-
-                    {
-                        "action": "push_target",
-                        "distance": 1
-                    },
-
-                    {
-                        "action":"wait_runtime_flag",
-                        "flag":"push_finished"
-                    },
-
-                    {
-                        "action": "wait_animation",
-                        "target": "target"
-                    },
-
-                    {
-                        "action": "wait",
-                        "time": 300
-                    },
-
-                    {
-                        "action": "end_skill"
-                    }
-                ]
+                {
+                    "action": "attack_camera"
+                },
+                {
+                    "action": "wait",
+                    "time": 600
+                },
+                {
+                    "action": "move_to_target"
+                },
+                {
+                    "action": "play_animation",
+                    "target": "user"
+                },
+                {
+                    "action": "wait_animation",
+                    "target": "user"
+                },
+                {
+                    "action": "play_hit_animation"
+                },
+                {
+                    "action": "play_idle_animation"
+                },
+                {
+                    "action": "damage"
+                },
+                {
+                    "action": "wait_animation",
+                    "target": "target"
+                },
+                {
+                    "action": "wait",
+                    "time": 300
+                },
+                {
+                    "action": "end_skill"
+                }
+            ]
         },
         "Pedorron": {
             "name": "Pedorron",
@@ -42567,7 +42411,43 @@
             "animation_clip_dere": "fall",
             "animation_clip_izq": "fall",
             "status_effect": "Nauseas",
-            "script": "\n\n\n"
+            "script": [
+                {
+                    "action": "attack_camera"
+                },
+                {
+                    "action": "wait",
+                    "time": 600
+                },
+                {
+                    "action": "play_animation",
+                    "target": "user"
+                },
+                {
+                    "action": "wait_animation",
+                    "target": "user"
+                },
+                {
+                    "action": "play_hit_animation"
+                },
+                {
+                    "action": "play_idle_animation"
+                },
+                {
+                    "action": "damage"
+                },
+                {
+                    "action": "wait_animation",
+                    "target": "target"
+                },
+                {
+                    "action": "wait",
+                    "time": 300
+                },
+                {
+                    "action": "end_skill"
+                }
+            ]
         },
         "Trepar": {
             "name": "Trepar",
@@ -42582,10 +42462,12 @@
             "animation_clip_dere": "",
             "animation_clip_izq": "",
             "status_effect": "",
-            "script": [{
+            "script": [
+                {
                     "action": "call_func",
                     "func": "execute_mantle_skill"
-                }]
+                }
+            ]
         }
     },
     "items": {

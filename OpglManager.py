@@ -535,45 +535,6 @@ class GLViewport(OpenGLFrame):
             self.begin_ui()
             self.end_ui()
         #self.debug_draw_autotile_sheet("esquinasAgua_Auto.png")
-
-            # =========================================
-            # overlays combate
-            # =========================================
-            if self.toolkit_ref.battle_mode:
-
-                glEnable(GL_BLEND)
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
-                glEnable(GL_DEPTH_TEST)
-
-                # testear profundidad
-                # pero NO escribir
-                glDepthMask(GL_FALSE)
-
-                # importante
-                glDisable(GL_ALPHA_TEST)
-
-                glColor4f(1,1,1,0.5)
-
-                self.draw_runtime_actor_tile_highlight(self.toolkit_ref)
-
-                self.draw_combat_path(self.toolkit_ref)
-
-                self.draw_battle_deploy_tiles(self.toolkit_ref)
-
-                self.draw_battle_move_tiles(self.toolkit_ref)
-
-                self.draw_battle_target_tiles(self.toolkit_ref)
-
-                self.draw_battle_cursor(self.toolkit_ref)
-
-                # restaurar estado
-                glDepthMask(GL_TRUE)
-
-                glDisable(GL_BLEND)
-
-                glColor4f(1,1,1,1)
-
             self.showUI()
         glFlush()
 
@@ -2568,6 +2529,13 @@ class GLViewport(OpenGLFrame):
 
             alpha_queue.append(("wall", dist, side, x, y, h0, h1, texid, rv))
 
+        # =========================================
+        # overlays combate
+        # =========================================
+        if self.toolkit_ref.battle_mode:
+
+            self.draw_overlays_combat()
+
         # ============================
         # SPRITES + ACTORS
         # ============================
@@ -2648,6 +2616,15 @@ class GLViewport(OpenGLFrame):
                 self.draw_sprite_instance(sprite, inst, wx, wy, wz, cam)
 
             elif kind == "actor":
+                glEnable(GL_BLEND)
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+                glEnable(GL_ALPHA_TEST)
+                glAlphaFunc(GL_GREATER, 0.05)
+
+                glDepthMask(GL_FALSE)
+
+                glColor4f(1,1,1,1)
                 _, dist, sprite, inst, wx, wy, wz = item
 
                 if inst.animator:
@@ -2659,9 +2636,52 @@ class GLViewport(OpenGLFrame):
 
                 ground_y = grid[pack["gy"]][pack["gx"]].floor_height
                 self.draw_blob_shadow(wx, ground_y, wz, 0.28)
-                    
 
                 self.draw_actor_instance(sprite, inst, wx, wy, wz, cam)
+
+    def draw_overlays_combat(self):
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        glEnable(GL_DEPTH_TEST)
+
+        # testear profundidad
+        # pero NO escribir
+        glDepthMask(GL_FALSE)
+
+        # importante
+        glDisable(GL_ALPHA_TEST)
+
+        glColor4f(1,1,1,0.5)
+
+        self.draw_runtime_actor_tile_highlight(self.toolkit_ref)
+
+        self.draw_combat_path(self.toolkit_ref)
+
+        self.draw_battle_deploy_tiles(self.toolkit_ref)
+
+        self.draw_battle_move_tiles(self.toolkit_ref)
+
+        self.draw_battle_target_tiles(self.toolkit_ref)
+
+        self.draw_battle_cursor(self.toolkit_ref)
+
+        # restaurar estado
+        glDepthMask(GL_TRUE)
+
+        glDisable(GL_BLEND)
+
+        glColor4f(1,1,1,1)
+
+        # restaurar estados importantes
+        glDisable(GL_BLEND)
+
+        glEnable(GL_ALPHA_TEST)
+        glAlphaFunc(GL_GREATER, 0.05)
+
+        glDepthMask(GL_FALSE)
+
+        glColor4f(1,1,1,1)
 
 
     def draw_ui_text(
