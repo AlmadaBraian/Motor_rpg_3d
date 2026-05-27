@@ -2,6 +2,16 @@
   "scene": "test",
   "script": [
     {
+    "action": "deploy_party"
+    },
+    {
+      "action": "wait",
+      "time": 500
+    },
+    {
+      "action": "all_play_idle"
+    },
+    {
       "action": "show_dialog",
       "speaker": "Batman",
       "text": [
@@ -9,16 +19,63 @@
         "Vo, no pode estar acá."
       ]
     },
+     {
+      "action": "play_animation",
+      "actor_name": "A",
+      "animation_clip": "hit_fall_face_up"
+      },
     {
       "action": "wait",
       "time": 500
     },
+    {
+    "action": "move_actor",
+    "actor": "A",
+    "direction": "down",
+    "tiles": 1
+  },
+  {
+      "action": "wait",
+      "time": 500
+    },
+  {
+    "action": "move_actor",
+    "actor": "A",
+    "direction": "left",
+    "tiles": 3
+  },
+  {
+      "action": "wait",
+      "time": 500
+    },
+  {
+    "action": "move_actor",
+    "actor": "A",
+    "direction": "down",
+    "tiles": 3
+  },
+  {
+      "action": "wait",
+      "time": 500
+    },
+    {
+      "action": "play_animation",
+      "actor_name": "A",
+      "animation_clip": "idle"
+      },
     {
       "action": "show_dialog",
       "speaker": "Marisa",
       "text": [
         "¡No me digas lo que puedo y no puedo hacer!"
       ]
+    },
+    {
+  "action": "withdraw_party"
+    },
+    {
+      "action": "wait",
+      "time": 1500
     },
     {
       "action": "start_combat"

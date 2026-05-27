@@ -445,6 +445,31 @@ class GLViewport(OpenGLFrame):
         # =====================================================
         if hasattr(self, "toolkit_ref"):
             if hasattr(self.toolkit_ref, "update_runtime_actor"):
+                if self.toolkit_ref.runtime_world:
+                    # =====================================
+                    # MAIN ACTOR
+                    # =====================================
+
+                    main_pack = self.toolkit_ref.runtime_world.main_actor
+
+                    if main_pack:
+                        update_world_actor_move(
+                            self.toolkit_ref,
+                            main_pack,
+                            dt
+                        )
+
+                    # =====================================
+                    # PARTY ACTORS
+                    # =====================================
+
+                    for pack in self.toolkit_ref.runtime_world.runtime_party_actors:
+
+                        update_world_actor_move(
+                            self.toolkit_ref,
+                            pack,
+                            dt
+                        )
                 self.toolkit_ref.update_runtime_actor(dt)
                 HUDManager.update_runtime_hud(self)
 

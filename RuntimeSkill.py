@@ -683,6 +683,108 @@ def run_skill_command(
 
         return
     
+    if action == "move_actor":
+
+        combat = runtime_skill.combat
+        o = combat.owner
+
+        actor_id = cmd.get(
+            "actor",
+            "user"
+        )
+
+        direction = cmd.get(
+            "direction",
+            "left"
+        )
+
+        tiles = cmd.get(
+            "tiles",
+            1
+        )
+
+        # =====================================
+        # SELECT PACK
+        # =====================================
+
+        if actor_id == "user":
+            pack = runtime_skill.user_pack
+        else:
+            pack = runtime_skill.target_pack
+
+        inst = pack["inst"]
+
+        start_x = pack["gx"]
+        start_y = pack["gy"]
+
+        # =====================================
+        # DIRECTION
+        # =====================================
+
+        dx = 0
+        dy = 0
+
+        if direction == "left":
+            dx = -1
+
+        elif direction == "right":
+            dx = 1
+
+        elif direction == "up":
+            dy = -1
+
+        elif direction == "down":
+            dy = 1
+
+        # =====================================
+        # BUILD PATH
+        # =====================================
+
+        queue = []
+
+        for i in range(tiles):
+
+            gx = start_x + dx * (i + 1)
+            gy = start_y + dy * (i + 1)
+
+            queue.append((gx, gy))
+
+        # =====================================
+        # START MOVEMENT
+        # =====================================
+
+        inst.charge_running = True
+
+        runtime_skill.flags[
+            "move_finished"
+        ] = False
+
+        o.combat_move_queue = queue
+
+        o.combat_actor_moving = True
+
+        o.combat_moving_unit = pack
+
+        inst.is_battle_moving = True
+
+        inst.battle_move_timer = 0.0
+
+        inst.battle_moved = True
+
+        # =====================================
+        # WAIT
+        # =====================================
+
+        runtime_skill.waiting = True
+
+        runtime_skill.wait_flag = (
+            "move_finished"
+        )
+
+        runtime_skill.index += 1
+
+        return
+    
     if action == "move_to_target":
 
         combat = runtime_skill.combat

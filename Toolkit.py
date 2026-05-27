@@ -13,6 +13,7 @@ import shutil
 import glob
 from ActorAsset import ActorAsset
 from ActorCreatorWindows import open_actor_creator_window
+from EventTileEditor import EventTileEditor
 from ItemAsset import ItemAsset
 from ItemCreatorWindows import open_item_editor
 from SkillAsset import SkillAsset
@@ -81,6 +82,7 @@ class Toolkit:
         self.obj_rot_y = tk.IntVar(value=0)
         self.obj_rot_z = tk.IntVar(value=0)
         self.texture_manager=TextureManager()
+        self.event_tile_editor=EventTileEditor(toolkit=self)
         self.selected_texture=None
         self.texture_assign_mode=tk.StringVar(value='floor')
         self.texture_thumb_refs=[]
@@ -140,6 +142,12 @@ class Toolkit:
 
         self.space_icon_blink = 0.0
 
+        self.world_move_queue = []
+        self.world_actor_moving = False
+        self.world_moving_unit = None
+        self.event_wait_move = False
+
+
         self.button_A_command = "Interactuar"
         self.text_A_button_color = (1, 0.2, 0.2, 1)
         self.button_Y_command = "Items"
@@ -169,7 +177,7 @@ class Toolkit:
         # TACTICAL RPG
         # =========================================
         self.battle_mode = False
-        self.pending_combat_enemy = None
+        self.pending_combat_enemy = False
         self.combat_actor_moving = False
         self.battle_input_cooldown = 0
         self.waiting_enemy_turn_start = False
@@ -827,138 +835,7 @@ class Toolkit:
 
         print("SELECTED ACTOR:", inst.actor_name)
 
-    def open_event_tile_creator(self, gx, gy, t):
-        win = tk.Toplevel()
-        win.title("Create Event Tile")
-        win.geometry("430x420")
-
-        tk.Label(win, text=f"Tile [{gx},{gy}]", font=("Arial",12,"bold")).pack(pady=6)
-
-        # ==========================================
-        # TRIGGER TYPE
-        # ==========================================
-        tk.Label(win, text="Trigger Type").pack()
-        mode_combo = ttk.Combobox(win, state="readonly")
-        mode_combo["values"] = ["step", "action", "autorun", "proximity"]
-        mode_combo.set(t.event_data.get("trigger","step"))
-        mode_combo.pack(fill="x", padx=10)
-
-        # ==========================================
-        # SCENE JSON
-        # ==========================================
-        tk.Label(win, text="Scene JSON").pack(pady=(10,0))
-
-        scene_files = []
-        if os.path.exists("scenes"):
-            scene_files = [f for f in os.listdir("scenes") if f.endswith(".json")]
-
-        event_combo = ttk.Combobox(win, state="readonly")
-        event_combo["values"] = scene_files
-
-        current_scene = os.path.basename(t.event_data.get("scene",""))
-
-        if current_scene:
-            event_combo.set(current_scene)
-        elif scene_files:
-            event_combo.set(scene_files[0])
-
-        event_combo.pack(fill="x", padx=10)
-
-        # ==========================================
-        # FLAGS
-        # ==========================================
-        once_var = tk.BooleanVar(value=t.event_data.get("once", False))
-        combat_var = tk.BooleanVar(value=t.event_data.get("combat", False))
-
-        tk.Checkbutton(win, text="Run Once", variable=once_var).pack(anchor="w", padx=20, pady=4)
-        tk.Checkbutton(win, text="Start Combat", variable=combat_var).pack(anchor="w", padx=20, pady=4)
-
-        tk.Label(win, text="Enemy Actor").pack(pady=(10,0))
-
-        enemy_combo = ttk.Combobox(win, state="readonly")
-
-        enemy_names = []
-
-        for aname, a in self.actors.items():
-            if a.kind == "enemy":
-                enemy_names.append(aname)
-
-        enemy_combo["values"] = enemy_names
-
-        saved_enemy = t.event_data.get("enemy_id", "")
-
-        if saved_enemy:
-            enemy_combo.set(saved_enemy)
-        elif enemy_names:
-            enemy_combo.set(enemy_names[0])
-
-        enemy_combo.pack(fill="x", padx=10)
-
-        # ==========================================
-        # QUICK DIALOG OPTIONAL
-        # ==========================================
-        tk.Label(win, text="Quick Dialog (optional)").pack(pady=(10,0))
-        dialog_entry = tk.Entry(win)
-        dialog_entry.insert(0, t.event_data.get("dialog",""))
-        dialog_entry.pack(fill="x", padx=10)
-
-        # ==========================================
-        # DELETE EVENT BUTTON
-        # ==========================================
-        def delete_evt():
-            t.event_data = {
-                "enabled": False,
-                "trigger": "step",
-                "scene": "",
-                "dialog": "",
-                "script": "",
-                "teleport": None,
-                "combat": False,
-                "once": False,
-                "done": False,
-                "switch_required": "",
-                "switch_set": "",
-                "enemy_id": "",
-                "item_required": "",
-                "facing_lock": False,
-                "enemy_id": ""
-            }
-
-            self.draw_grid()
-
-            if hasattr(self, "viewport"):
-                self.viewport.redraw()
-
-            win.destroy()
-
-        # ==========================================
-        # SAVE EVENT
-        # ==========================================
-        def save_evt():
-            evt = event_combo.get()
-
-            fullpath = os.path.join("scenes", evt) if evt else ""
-
-            t.event_data["enabled"] = True
-            t.event_data["trigger"] = mode_combo.get()
-            t.event_data["scene"] = fullpath
-            t.event_data["dialog"] = dialog_entry.get()
-            t.event_data["once"] = once_var.get()
-            t.event_data["combat"] = combat_var.get()
-            t.event_data["enemy_id"] = enemy_combo.get()
-
-            print("EVENT TILE SET:", gx, gy, t.event_data)
-
-            self.draw_grid()
-
-            if hasattr(self, "viewport"):
-                self.viewport.redraw()
-
-            self.auto_return_to_select()
-            win.destroy()
-
-        tk.Button(win, text="SAVE EVENT TILE", command=save_evt).pack(pady=12)
-        tk.Button(win, text="DELETE EVENT", command=delete_evt).pack()
+    
 
     def update_battle_unit_facings(self):
 
@@ -1000,6 +877,35 @@ class Toolkit:
                     continue
 
                 self.update_actor_idle_view_by_camera(inst)
+
+    def find_actor_pack_by_name(self, actor_name):
+
+        for row in self.runtime_world.grid:
+
+            for t in row:
+
+                for pack in getattr(t, "actors", []):
+
+                    inst = pack["inst"]
+
+                    if inst.actor_name == actor_name:
+
+                        return pack
+
+        return None
+
+    def find_actor_by_name(self, actor_name):
+
+        for row in self.runtime_world.grid:
+            for t in row:
+                for pack in getattr(t, "actors", []):
+
+                    actor = pack["inst"]
+
+                    if actor.actor_name == actor_name:
+                        return actor
+
+        return None
 
 
     def update_runtime_actor(self, dt):
@@ -1124,9 +1030,6 @@ class Toolkit:
         # =========================================
         moved = self.try_move_runtime_actor(pack, dx, dy)
 
-        if moved:
-            check_runtime_step_events(self)
-
         # =========================================
         # FOLLOW CAMERA DESPUES DE MOVER
         # =========================================
@@ -1226,6 +1129,8 @@ class Toolkit:
         
 
     def update_actor_idle_view_by_camera(self, inst, moving=False):
+        if inst.scripted_animation:
+            return
         if self.play_mode and hasattr(self, "game_view"):
             cam = self.game_view.camera
         else:
@@ -1408,6 +1313,8 @@ class Toolkit:
                 
 
     def update_actor_idle_hybrid(self, inst, dt):
+        if inst.scripted_animation:
+            return
         cam = self.game_view.camera if self.play_mode and hasattr(self, "game_view") else self.viewport.camera
 
         current_yaw = cam.yaw % 360
@@ -1620,6 +1527,9 @@ class Toolkit:
         # ---------------------------------------------
         pack["gx"] = gx
         pack["gy"] = gy
+
+        #print(pack["gx"], pack["gy"])
+        check_runtime_step_events(self)
 
         inst.offx = nx
         inst.offy = ny
@@ -3236,7 +3146,7 @@ class Toolkit:
             self.paste_prefab_region(gx, gy)
 
         elif self.selected_tool == "place_event_tile":
-            self.open_event_tile_creator(gx, gy, t)
+            self.event_tile_editor.open(gx, gy, t)
             self.auto_return_to_select()
 
         self.draw_grid()

@@ -62,6 +62,8 @@ class RuntimeCombat:
         if o.battle_mode:
             return
         
+        print("START COMBAT!!!")
+        
         if o.runtime_cam_orbit is None:
             o.runtime_cam_orbit = 0
         
@@ -1211,6 +1213,8 @@ class RuntimeCombat:
 
         if event.keysym == "x":
 
+            print("APRETE X")
+
             self.execute_x_command()
             o.battle_input_cooldown = 0.12
             return
@@ -1220,7 +1224,7 @@ class RuntimeCombat:
             # =====================================
             # ENTER ITEM MODE
             # =====================================
-
+            print("APRETE Z")
             if o.battle_state in [
                 "select_move",
                 "select_target"
@@ -1234,6 +1238,7 @@ class RuntimeCombat:
 
         if event.keysym == "c":
             o.battle_input_cooldown = 0.25
+            print("APRETE C")
 
             if o.battle_state in [
                 "select_move",

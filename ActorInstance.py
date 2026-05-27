@@ -85,4 +85,10 @@ class ActorInstance:
         self.combat_using_mantle = False
         self.combat_mantle_target = None
 
+        self.scripted_animation = False
+
+        self.world_move_queue=[]
+        self.is_world_moving=False
+        self.withdraw_after_move=False
+
    
