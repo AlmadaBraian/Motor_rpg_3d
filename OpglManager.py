@@ -91,8 +91,6 @@ class GLViewport(OpenGLFrame):
         self.camera = self.editor_camera
         self.active_camera_mode = "editor"
 
-        self.game_cam_anim = CameraAnimator(self.game_camera)
-
         # setup inicial game camera
         self.game_camera.x = 5
         self.game_camera.y = 1
@@ -437,8 +435,23 @@ class GLViewport(OpenGLFrame):
         # =====================================================
         # 1. animaciones de cámara cinematicas
         # =====================================================
-        if hasattr(self, "game_cam_anim") and self.game_cam_anim:
-            self.game_cam_anim.update(dt)
+        if hasattr(self, "game_cam_anim") and self.toolkit_ref.game_view.game_cam_anim:
+            self.toolkit_ref.game_view.game_cam_anim.update(dt)
+            anim = self.toolkit_ref.game_view.game_cam_anim
+
+            if not anim.playing:
+
+                self.toolkit_ref.event_wait_camera = False
+            if hasattr(self, "toolkit_ref"):
+
+                tk = self.toolkit_ref
+
+                if hasattr(self, "game_cam_anim"):
+
+                    if tk.event_wait_camera:
+
+                        if not self.toolkit_ref.game_view.game_cam_anim.playing:
+                            tk.event_wait_camera = False
 
         # =====================================================
         # 2. update runtime actor / movimiento / cambio de clips
@@ -523,17 +536,49 @@ class GLViewport(OpenGLFrame):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
-        radx = math.radians(self.camera.pitch)
-        rady = math.radians(self.camera.yaw)
+        if self.toolkit_ref.play_mode:
 
-        camx = self.camera.x + math.sin(rady) * math.cos(radx) * self.camera.distance
-        camy = self.camera.y + math.sin(radx) * self.camera.distance
-        camz = self.camera.z + math.cos(rady) * math.cos(radx) * self.camera.distance
+            camref = self.game_camera
+
+        else:
+
+            camref = self.camera
+
+        radx = math.radians(camref.pitch)
+        rady = math.radians(camref.yaw)
+
+        camx = (
+            camref.x
+            + math.sin(rady)
+            * math.cos(radx)
+            * camref.distance
+        )
+
+        camy = (
+            camref.y
+            + math.sin(radx)
+            * camref.distance
+        )
+
+        camz = (
+            camref.z
+            + math.cos(rady)
+            * math.cos(radx)
+            * camref.distance
+        )
 
         gluLookAt(
-            camx, camy, camz,
-            self.camera.x, self.camera.y, self.camera.z,
-            0, 1, 0
+            camx,
+            camy,
+            camz,
+
+            camref.x,
+            camref.y,
+            camref.z,
+
+            0,
+            1,
+            0
         )
 
         # =====================================================

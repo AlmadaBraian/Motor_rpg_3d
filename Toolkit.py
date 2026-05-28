@@ -147,6 +147,8 @@ class Toolkit:
         self.world_moving_unit = None
         self.event_wait_move = False
 
+        self.event_wait_camera = False
+
 
         self.button_A_command = "Interactuar"
         self.text_A_button_color = (1, 0.2, 0.2, 1)

@@ -434,10 +434,16 @@ def run_skill_command(
     
     if action == "attack_camera":
 
-        print("ATTACK CAMERA")
-
         combat.attack_anim_inst = user
         combat.damage_anim_inst = target
+
+        if not target:
+            end_runtime_skill(
+            runtime_skill
+            )
+            return
+
+        print("ATTACK CAMERA")
 
         combat.runtime_skill_attack_camera(
             runtime_skill

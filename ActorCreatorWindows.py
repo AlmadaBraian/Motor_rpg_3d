@@ -83,6 +83,16 @@ def open_actor_creator_window(self, actor_name=None):
         #spd_entry.insert(0,"5")
         spd_entry.grid(row=3,column=1)
 
+        tk.Label(combat_frame, text="EVASION").grid(row=3,column=4)
+        evasion_entry = tk.Entry(combat_frame,width=6)
+        #spd_entry.insert(0,"5")
+        evasion_entry.grid(row=3,column=5)
+
+        tk.Label(combat_frame, text="ACCURACY").grid(row=4,column=4)
+        accuracy_entry = tk.Entry(combat_frame,width=6)
+        #spd_entry.insert(0,"5")
+        accuracy_entry.grid(row=4,column=5)
+
         tk.Label(combat_frame, text="Atk bonus").grid(row=0,column=4)
         atk_bonus_entry = tk.Entry(combat_frame,width=6)
         #atk_bonus_entry.insert(0,"2")
@@ -98,11 +108,11 @@ def open_actor_creator_window(self, actor_name=None):
         #damage_max_entry.insert(0,"6")
         damage_max_entry.grid(row=2,column=5)
 
-        tk.Label(combat_frame, text="Body Type").grid(row=3,column=4)
+        tk.Label(combat_frame, text="Body Type").grid(row=2,column=6)
         body_type_combo = ttk.Combobox(combat_frame, state="readonly")
         body_type_combo["values"] = ["delgado","normal","robusto"]
         body_type_combo.set("normal")
-        body_type_combo.grid(row=3,column=5,columnspan=2,sticky="ew")
+        body_type_combo.grid(row=2,column=7,columnspan=2,sticky="ew")
 
         tk.Label(combat_frame, text="Battle Team").grid(row=0,column=6)
 
@@ -305,6 +315,8 @@ def open_actor_creator_window(self, actor_name=None):
             def_entry.insert(0, editing_actor.defense)
             res_entry.insert(0, editing_actor.resistance)
             spd_entry.insert(0, editing_actor.speed)
+            evasion_entry.insert(0, editing_actor.evasion)
+            accuracy_entry.insert(0, editing_actor.accuracy)
             atk_bonus_entry.insert(0, editing_actor.attack_bonus)
             CA_entry.insert(0, editing_actor.armor_class)
             damage_max_entry.insert(0, editing_actor.damage_max)
@@ -335,6 +347,8 @@ def open_actor_creator_window(self, actor_name=None):
             def_entry.insert(0, 5)
             res_entry.insert(0, 5)
             spd_entry.insert(0, 5)
+            evasion_entry.insert(0, 5)
+            accuracy_entry.insert(0, 5)
             atk_bonus_entry.insert(0, 2)
             CA_entry.insert(0, 10)
             damage_max_entry.insert(0, 6)
@@ -410,6 +424,8 @@ def open_actor_creator_window(self, actor_name=None):
             actor.magic = int(mag_entry.get())
             actor.resistance = int(res_entry.get())
             actor.speed = int(spd_entry.get())
+            actor.evasion = int(evasion_entry.get())
+            actor.accuracy = int(accuracy_entry.get())
             actor.initiative = int(iniciativa.get())
 
             actor.attack_bonus = int(atk_bonus_entry.get())

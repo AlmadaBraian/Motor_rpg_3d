@@ -1830,7 +1830,7 @@ class RuntimeCombat:
 
         roll = random.randint(1, 20)
 
-        total_attack = roll + attack_bonus
+        total_attack = roll
 
         critical_hit = False
         critical_miss = False
@@ -1846,7 +1846,9 @@ class RuntimeCombat:
             result="critical_miss"
 
         else:
-            hit = total_attack >= armor_class
+            accuracy = getattr(atk_def, "accuracy", 0)
+            evasion = getattr(atk_def, "evasion", 0)
+            hit = roll + accuracy >= evasion
             if hit:
 
                 result="hit"
@@ -1861,32 +1863,30 @@ class RuntimeCombat:
 
         if hit:
 
-            dmg_min = getattr(atk_def, "damage_min", 1)
-            dmg_max = getattr(atk_def, "damage_max", 6)
-
-            if critical_hit:
-                dmg_max *= 2
-                #dmg_max -= 2
+            dmg_min = getattr(atk_def, "damage_min", 4)
+            dmg_max = getattr(atk_def, "damage_max", 10)
 
             print("dmg_max", dmg_max)
 
             base_damage = random.randint(dmg_min, dmg_max)
-            base_damage *= body_type_atk_bonus
 
             print("base_damage", base_damage)
 
             defense = getattr(tgt_def, "defense", 0)
             #defense *= body_type_tgt_bonus
 
-            damage = max(
-                1,
-                round(base_damage + attack_bonus - defense)
-            )
+            mitigation = 100 / (100 + defense * 10)
+            damage = round(base_damage * mitigation)
+
+            if critical_hit:
+                damage *= 2
+                #dmg_max -= 2
 
             if getattr(target, "guard_mode", False):
 
-                damage *= 0.5
-                damage = max(1, round(damage))
+                damage = round(damage * 0.6)
+
+            damage = max(1, damage)
 
         return {
             "hit": hit,
@@ -3049,7 +3049,17 @@ class RuntimeCombat:
                 )
             )
 
-        target = IA.find_attack_target(self, o.battle_selected_unit)
+        # =====================================
+        # AUTO CURSOR POSITION
+        # =====================================
+
+        ux = pack["gx"]
+        uy = pack["gy"]
+
+        target = IA.find_attack_target(
+            self,
+            pack
+        )
 
         if not target:
 
@@ -3059,7 +3069,30 @@ class RuntimeCombat:
                 self.turn_end_timer = 0.9
 
                 o.enemy_ai_state = "end_turn"
+
+            else:
+
+                for tx, ty in o.battle_target_tiles:
+
+                    # evitar self tile
+                    if tx == ux and ty == uy:
+                        continue
+
+                    o.battle_cursor_x = tx
+                    o.battle_cursor_y = ty
+
+                    break
             return
+
+        # =====================================
+        # FOUND TARGET
+        # =====================================
+
+        else:
+
+            o.battle_cursor_x = target["gx"]
+            o.battle_cursor_y = target["gy"]
+
         
         if(inst.battle_team == "enemy"):
     

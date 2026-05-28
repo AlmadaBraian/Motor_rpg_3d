@@ -28,6 +28,8 @@ class ActorAsset:
         self.magic = 5
         self.resistance = 5
         self.speed = 5
+        self.evasion = 0
+        self.accuracy = 0
 
         self.move_range = 4
         self.attack_range = 1
@@ -36,8 +38,8 @@ class ActorAsset:
         #Agregar al creador de actores
         self.attack_bonus = 2
         self.armor_class = 10
-        self.damage_min = 1
-        self.damage_max = 6
+        self.damage_min = 4
+        self.damage_max = 10
         self.body_type = "normal"
         #body_type
         # Delgado: 8 

@@ -2,6 +2,8 @@ import json
 import math
 import os
 from ActorInstance import ActorInstance
+from CameraAnimator import CameraAnimator
+from CameraKeyframe import CameraKeyframe
 from RuntimeCombat import RuntimeCombat
 from SpriteManager import Animator
 from config import *
@@ -54,6 +56,9 @@ def update_world_event(self, dt):
 
         if self.current_event_index >= len(self.current_event_script):
             end_world_event(self)
+            return
+        
+        if self.event_wait_camera:
             return
 
         cmd = self.current_event_script[self.current_event_index]
@@ -118,6 +123,124 @@ def run_world_event_command(self, cmd):
             inst.animator.play(clip)
 
             print("PLAYING:", clip)
+
+            return
+        if action == "camera_follow_player":
+
+            self.runtime_camera_locked = False
+
+            return
+        
+        if action == "camera_look_actor":
+
+
+            actor_name = cmd.get("actor", "")
+
+            pack = self.find_actor_pack_by_name(actor_name)
+
+            if not pack:
+                return
+
+            camx = pack["gx"]
+            camz = pack["gy"]
+
+            if not hasattr(self.game_view, "game_cam_anim"):
+
+                self.game_view.game_cam_anim = CameraAnimator(
+                    self.game_view.game_camera
+                )
+
+            anim = self.game_view.game_cam_anim
+
+            cam = self.game_view.game_camera
+
+            anim = self.game_view.game_cam_anim
+
+            anim.clear()
+
+            cam = self.game_view.game_camera
+
+            anim.add_key(
+                CameraKeyframe(
+                    cam.x,
+                    cam.y,
+                    cam.z,
+                    cam.yaw,
+                    cam.pitch,
+                    cam.distance,
+                    0
+                )
+            )
+
+            anim.add_key(
+                CameraKeyframe(
+                    camx,
+                    cmd.get("height", 1.0),
+                    camz,
+                    cmd.get("yaw", 180),
+                    cmd.get("pitch", 25),
+                    cmd.get("distance", 5),
+                    cmd.get("duration", 2.0)
+                )
+            )
+
+            self.runtime_camera_locked = True
+
+            anim.play()
+
+            self.event_wait_camera = True
+
+            return
+        
+        if action == "camera_move":
+            
+
+            if not hasattr(self.game_view, "game_cam_anim"):
+
+                self.game_view.game_cam_anim = CameraAnimator(
+                    self.game_view.game_camera
+                )
+
+            anim = self.game_view.game_cam_anim
+
+            cam = self.game_view.game_camera
+
+            anim = self.game_view.game_cam_anim
+
+            anim.clear()
+
+            # key actual
+            cam = self.game_view.game_camera
+
+            anim.add_key(
+                CameraKeyframe(
+                    cam.x,
+                    cam.y,
+                    cam.z,
+                    cam.yaw,
+                    cam.pitch,
+                    cam.distance,
+                    0
+                )
+            )
+
+            # key destino
+            anim.add_key(
+                CameraKeyframe(
+                    cmd.get("x", cam.x),
+                    cmd.get("y", cam.y),
+                    cmd.get("z", cam.z),
+                    cmd.get("yaw", cam.yaw),
+                    cmd.get("pitch", cam.pitch),
+                    cmd.get("distance", cam.distance),
+                    cmd.get("duration", 2.0)
+                )
+            )
+            self.runtime_camera_locked = True
+
+            anim.play()
+
+            self.event_wait_camera = True
 
             return
         

@@ -19,6 +19,16 @@
         "Vo, no pode estar acá."
       ]
     },
+    {
+      "action": "camera_move",
+      "x": 10,
+      "y": 2,
+      "z": 8,
+      "yaw": 180,
+      "pitch": 25,
+      "distance": 6,
+      "duration": 2.5
+    },
      {
       "action": "play_animation",
       "actor_name": "A",
@@ -27,6 +37,14 @@
     {
       "action": "wait",
       "time": 500
+    },
+    {
+      "action": "camera_look_actor",
+      "actor": "A",
+      "yaw": 90,
+      "pitch": 30,
+      "distance": 5,
+      "duration": 1.5
     },
     {
     "action": "move_actor",
@@ -70,6 +88,9 @@
         "¡No me digas lo que puedo y no puedo hacer!"
       ]
     },
+    {
+    "action": "camera_follow_player"
+  },
     {
   "action": "withdraw_party"
     },

@@ -56,3 +56,10 @@ class CameraAnimator:
         if t >= 1.0:
             self.current_index += 1
             self.timer = 0
+        if self.current_index >= len(self.keys)-1:
+
+            self.playing = False
+
+            toolkit = getattr(self.camera, "toolkit_ref", None)
+
+            return
