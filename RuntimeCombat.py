@@ -3981,6 +3981,8 @@ class RuntimeCombat:
                     inst.move_r = False
                     inst.rot_l = False
                     inst.rot_r = False
+                    inst.world_move_queue = []
+                    inst.is_world_moving = False
 
                     inst.is_battle_moving = False
                     inst.battle_dead = False
@@ -3993,34 +3995,8 @@ class RuntimeCombat:
 
     def play_runtime_idle(self, inst):
 
-        if not inst.animator:
-            return
-
-        face = getattr(inst, "visual_facing", "espalda")
-
-        idle_map = {
-            "espalda": "idle",
-            "frente": "idle_frente",
-            "izq": "idle_izq",
-            "dere": "idle_dere",
-            "perfil_izq": "rot_perfil_izq",
-            "perfil_dere": "rot_perfil_dere",
-            "frente_izq": "rot_frente_izq",
-            "frente_dere": "rot_frente_dere",
-            "espalda_izq": "rot_espalda_izq",
-            "espalda_dere": "rot_espalda_dere"
-        }
-
-        candidates = [
-            idle_map.get(face, "idle"),
-            "idle",
-            "idle_espalda"
-        ]
-
-        for idle_anim in candidates:
-            if idle_anim in inst.animator.clips:
-                inst.animator.play(idle_anim)
-                return
+        if hasattr(self.owner, "play_runtime_actor_idle"):
+            self.owner.play_runtime_actor_idle(inst)
 
 
     # =========================================================
