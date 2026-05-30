@@ -52,7 +52,8 @@ class RuntimeSystem:
         tkref.dialog_index = 0
         tkref.show_ui = True
 
-        tkref.runtime_world = self.build_runtime_world_copy()
+        tkref.current_runtime_map_id = getattr(tkref, "current_map_id", "Map001")
+        tkref.runtime_world = self.build_runtime_world_copy(tkref.current_runtime_map_id)
 
         # ==========================================
         # WINDOW
@@ -161,11 +162,18 @@ class RuntimeSystem:
     # BUILD RUNTIME COPY
     # =====================================================
 
-    def build_runtime_world_copy(self):
+    def build_runtime_world_copy(self, map_id=None):
 
         tkref = self.toolkit
 
         rw = RuntimeWorld()
+        source_grid = tkref.grid
+
+        if map_id and hasattr(tkref, "maps") and map_id in tkref.maps:
+            source_grid = tkref.maps[map_id]
+            rw.map_id = map_id
+        else:
+            rw.map_id = getattr(tkref, "current_map_id", "Map001")
 
         rw.assets = tkref.assets
         rw.sprites = tkref.sprites
@@ -181,7 +189,7 @@ class RuntimeSystem:
             row = []
 
             for x in range(GRID_W):
-                src = tkref.grid[y][x]
+                src = source_grid[y][x]
                 t = copy.deepcopy(src)
 
                 # ----------------------------

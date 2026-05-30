@@ -8,4 +8,5 @@ class RuntimeWorld:
         self.sprites = {}
         self.main_actor = None
         self.runtime_party_actors = []
+        self.map_id = "Map001"
         

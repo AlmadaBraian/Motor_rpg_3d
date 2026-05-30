@@ -63,6 +63,9 @@ class Toolkit:
         self.root=root
         self.root.title('Dreamcast Toolkit V8.1')
         self.grid=[[Tile() for _ in range(GRID_W)] for _ in range(GRID_H)]
+        self.maps = {"Map001": self.grid}
+        self.current_map_id = "Map001"
+        self.current_map_var = tk.StringVar(value=self.current_map_id)
         self.play_mode = False
         self.assets={}
         self.sprites = {}
@@ -252,7 +255,26 @@ class Toolkit:
         prop_frame_3 = tk.Frame(top_map_panel)
         prop_frame_3.pack(side='left', padx=60, anchor='n')
 
-        
+        map_frame = tk.LabelFrame(top_map_panel, text="Mapas del Proyecto")
+        map_frame.pack(side='left', padx=20, anchor='n')
+
+        tk.Label(map_frame, text="Mapa activo").pack(anchor='w')
+        self.map_combo = ttk.Combobox(map_frame, textvariable=self.current_map_var, state='readonly', width=18)
+        self.map_combo.pack(fill='x')
+        self.map_combo.bind("<<ComboboxSelected>>", self.on_map_combo_selected)
+
+        nav_frame = tk.Frame(map_frame)
+        nav_frame.pack(fill='x', pady=(4, 0))
+        tk.Button(nav_frame, text="◀", width=3, command=self.previous_map).pack(side='left')
+        tk.Button(nav_frame, text="Nuevo", command=self.create_map).pack(side='left', fill='x', expand=True)
+        tk.Button(nav_frame, text="▶", width=3, command=self.next_map).pack(side='left')
+
+        tk.Button(map_frame, text="Renombrar mapa", command=self.rename_current_map).pack(fill='x', pady=(4, 0))
+        tk.Button(map_frame, text="Duplicar mapa", command=self.duplicate_current_map).pack(fill='x')
+        tk.Button(map_frame, text="Eliminar mapa", command=self.delete_current_map).pack(fill='x')
+        self.map_status_label = tk.Label(map_frame, text="", anchor='w')
+        self.map_status_label.pack(fill='x', pady=(4, 0))
+        self.refresh_map_selector()
 
         tk.Label(left,text='modo mapeo').pack(pady=4)
         self.uv_mode_combo = ttk.Combobox(left, values=["tile","stretch"], state="readonly")
@@ -3328,6 +3350,442 @@ class Toolkit:
             "frame": spr.animator.frame if spr.animator else 0
         }
     
+    def ensure_project_maps(self):
+        if not hasattr(self, "maps") or not self.maps:
+            self.maps = {"Map001": self.grid}
+            self.current_map_id = "Map001"
+
+        if not hasattr(self, "current_map_id") or self.current_map_id not in self.maps:
+            self.current_map_id = next(iter(self.maps))
+
+        self.grid = self.maps[self.current_map_id]
+
+    def sync_current_map(self):
+        self.ensure_project_maps()
+        self.maps[self.current_map_id] = self.grid
+
+    def get_map_names(self):
+        self.ensure_project_maps()
+        return list(self.maps.keys())
+
+    def refresh_map_selector(self):
+        if not hasattr(self, "map_combo"):
+            return
+
+        self.ensure_project_maps()
+        names = self.get_map_names()
+        self.map_combo["values"] = names
+        self.current_map_var.set(self.current_map_id)
+
+        if hasattr(self, "map_status_label"):
+            index = names.index(self.current_map_id) + 1
+            self.map_status_label.configure(text=f"{index}/{len(names)} mapas")
+
+    def reset_map_edit_selection(self):
+        self.selected_instance = None
+        self.selected_sprite = None
+        self.selected_sprite_gx = None
+        self.selected_sprite_gy = None
+        self.selected_actor = None
+        self.prefab_start = None
+        self.prefab_end = None
+        self.drag_start = None
+        self.drag_end = None
+
+    def switch_map(self, map_name):
+        self.ensure_project_maps()
+
+        if map_name not in self.maps or map_name == self.current_map_id:
+            return
+
+        if self.play_mode:
+            messagebox.showwarning("Mapas", "No se puede cambiar de mapa mientras el runtime está activo.")
+            self.current_map_var.set(self.current_map_id)
+            return
+
+        self.sync_current_map()
+        self.current_map_id = map_name
+        self.grid = self.maps[map_name]
+        self.reset_map_edit_selection()
+        self.refresh_map_selector()
+        self.draw_grid()
+
+    def on_map_combo_selected(self, event=None):
+        self.switch_map(self.current_map_var.get())
+
+    def make_unique_map_name(self, base="Map"):
+        self.ensure_project_maps()
+        existing = set(self.maps.keys())
+        i = 1
+
+        while True:
+            name = f"{base}{i:03d}"
+            if name not in existing:
+                return name
+            i += 1
+
+    def ask_map_name(self, title, prompt, initialvalue=""):
+        name = simpledialog.askstring(title, prompt, initialvalue=initialvalue, parent=self.root)
+
+        if name is None:
+            return None
+
+        name = name.strip()
+        if not name:
+            messagebox.showwarning("Mapas", "El nombre del mapa no puede estar vacío.")
+            return None
+
+        return name
+
+    def create_map(self):
+        self.sync_current_map()
+        default_name = self.make_unique_map_name()
+        name = self.ask_map_name("Nuevo mapa", "Nombre del nuevo mapa:", default_name)
+
+        if not name:
+            return
+
+        if name in self.maps:
+            messagebox.showerror("Mapas", f"Ya existe un mapa llamado '{name}'.")
+            return
+
+        self.maps[name] = [[Tile() for _ in range(GRID_W)] for _ in range(GRID_H)]
+        self.switch_map(name)
+
+    def duplicate_current_map(self):
+        self.sync_current_map()
+        default_name = self.make_unique_map_name(f"{self.current_map_id}_copy")
+        name = self.ask_map_name("Duplicar mapa", "Nombre de la copia:", default_name)
+
+        if not name:
+            return
+
+        if name in self.maps:
+            messagebox.showerror("Mapas", f"Ya existe un mapa llamado '{name}'.")
+            return
+
+        self.maps[name] = copy.deepcopy(self.grid)
+        self.switch_map(name)
+
+    def rename_current_map(self):
+        self.sync_current_map()
+        old_name = self.current_map_id
+        new_name = self.ask_map_name("Renombrar mapa", "Nuevo nombre del mapa:", old_name)
+
+        if not new_name or new_name == old_name:
+            return
+
+        if new_name in self.maps:
+            messagebox.showerror("Mapas", f"Ya existe un mapa llamado '{new_name}'.")
+            return
+
+        self.maps[new_name] = self.maps.pop(old_name)
+        self.current_map_id = new_name
+        self.grid = self.maps[new_name]
+        self.refresh_map_selector()
+        self.draw_grid()
+
+    def delete_current_map(self):
+        self.ensure_project_maps()
+
+        if len(self.maps) <= 1:
+            messagebox.showwarning("Mapas", "El proyecto debe conservar al menos un mapa.")
+            return
+
+        if not messagebox.askyesno("Eliminar mapa", f"¿Eliminar el mapa '{self.current_map_id}'?"):
+            return
+
+        names = self.get_map_names()
+        current_index = names.index(self.current_map_id)
+        del self.maps[self.current_map_id]
+        next_names = self.get_map_names()
+        self.current_map_id = next_names[min(current_index, len(next_names) - 1)]
+        self.grid = self.maps[self.current_map_id]
+        self.reset_map_edit_selection()
+        self.refresh_map_selector()
+        self.draw_grid()
+
+    def previous_map(self):
+        names = self.get_map_names()
+        if not names:
+            return
+
+        index = names.index(self.current_map_id)
+        self.switch_map(names[(index - 1) % len(names)])
+
+    def next_map(self):
+        names = self.get_map_names()
+        if not names:
+            return
+
+        index = names.index(self.current_map_id)
+        self.switch_map(names[(index + 1) % len(names)])
+
+    def serialize_tile(self, t):
+        td = {
+            "floor_tex": t.floor_tex,
+            "wall_tex": t.wall_tex,
+            "floor_height": getattr(t,"floor_height",0),
+            "floor_uv_mode": getattr(t,"floor_uv_mode","tile"),
+            "wall_uv_mode": getattr(t,"wall_uv_mode","tile"),
+            "wall_n": getattr(t,"wall_n",False),
+            "wall_s": getattr(t,"wall_s",False),
+            "wall_e": getattr(t,"wall_e",False),
+            "wall_w": getattr(t,"wall_w",False),
+            "wall_ne": getattr(t,"wall_ne",False),
+            "wall_nw": getattr(t,"wall_nw",False),
+            "wall_se": getattr(t,"wall_se",False),
+            "wall_sw": getattr(t,"wall_sw",False),
+            "wall_n_height": getattr(t,"wall_n_height",1),
+            "wall_s_height": getattr(t,"wall_s_height",1),
+            "wall_e_height": getattr(t,"wall_e_height",1),
+            "wall_w_height": getattr(t,"wall_w_height",1),
+            "wall_ne_height": getattr(t,"wall_ne_height",1),
+            "wall_se_height": getattr(t,"wall_se_height",1),
+            "wall_nw_height": getattr(t,"wall_nw_height",1),
+            "wall_sw_height": getattr(t,"wall_sw_height",1),
+            "wall_segments": getattr(t,"wall_segments",{"n":[],"s":[],"e":[],"w":[],"ne":[],"nw":[],"se":[],"sw":[]}),
+            "is_block" : getattr(t,"is_block",False),
+            "block_bottom" : getattr(t,"block_bottom", 0.0),
+            "block_top" : getattr(t,"block_top", 1.0),
+            "block_side_tex" : getattr(t,"block_side_tex", None),
+            "block_top_tex" : getattr(t,"block_top_tex", None),
+            "block_uv_mode" : getattr(t,"block_uv_mode", "tile"),
+            "objects": [],
+            "sprites": [],
+            "actors": [],
+            "event_data": copy.deepcopy(getattr(t, "event_data", {}))
+        }
+
+        for inst in getattr(t, "objects", []):
+            td["objects"].append(self.serialize_object_instance(inst))
+
+        for spr in getattr(t, "sprites", []):
+            td["sprites"].append(self.serialize_sprite_instance(spr))
+
+        for pack in getattr(t, "actors", []):
+            inst = pack["inst"]
+            td["actors"].append({
+                "actor_name": inst.actor_name,
+                "offx": inst.offx,
+                "offy": inst.offy,
+                "offz": inst.offz,
+                "rot": inst.rot,
+                "state": inst.state,
+                "facing": getattr(inst, "facing", "espalda"),
+                "visual_facing": getattr(inst, "visual_facing", "espalda"),
+                "current_anim": inst.animator.current if inst.animator else "",
+                "frame": inst.animator.frame if inst.animator else 0,
+                "timer": inst.animator.timer if inst.animator else 0,
+                "is_npc" : getattr(inst, "is_npc", False),
+                "npc_name" : getattr(inst, "npc_name", inst.actor_name),
+                "interact_radius" : getattr(inst, "interact_radius", 1.2),
+                "interact_text" : getattr(inst, "interact_text", "..."),
+                "interact_once" : getattr(inst, "interact_once", False),
+                "interacted" : getattr(inst, "interacted", False),
+                "trigger_combat" : getattr(inst, "trigger_combat", False),
+                "trigger_event" : getattr(inst, "trigger_event", ""),
+                "vspeed" : getattr(inst, "vspeed", 0),
+                "ground_z" : getattr(inst, "ground_z", 0),
+                "on_ground" : getattr(inst, "on_ground", True),
+                "is_jumping" : getattr(inst, "is_jumping", False),
+                "jump_vspeed" : getattr(inst, "jump_vspeed", 0),
+                "jump_gravity" : getattr(inst, "jump_gravity", 0),
+                "jump_target_z" : getattr(inst, "jump_target_z", 0),
+                "jump_land_done" : getattr(inst, "jump_land_done", False),
+                "mantle_dest_gx" : getattr(inst, "mantle_dest_gx", 0),
+                "mantle_dest_gy" : getattr(inst, "mantle_dest_gy", 0),
+                "battle_team" : getattr(inst, "battle_team", "player"),
+                "battle_moved" : getattr(inst, "battle_moved", False),
+                "battle_acted" : getattr(inst, "battle_acted", False),
+                "battle_dead" : getattr(inst, "battle_dead", False),
+                "is_battle_moving" : getattr(inst, "is_battle_moving", False),
+                "battle_move_timer" : getattr(inst, "battle_move_timer", 0)
+            })
+
+        return td
+
+    def serialize_grid(self, grid):
+        return [[self.serialize_tile(t) for t in row] for row in grid]
+
+    def deserialize_tile(self, td, x, y):
+        t = Tile()
+        t.floor_tex = td.get("floor_tex")
+        t.wall_tex = td.get("wall_tex")
+        t.floor_height = td.get("floor_height", 0)
+        t.floor_uv_mode = td.get("floor_uv_mode", "tile")
+        t.wall_uv_mode = td.get("wall_uv_mode", "tile")
+        t.wall_n = td.get("wall_n", False)
+        t.wall_s = td.get("wall_s", False)
+        t.wall_e = td.get("wall_e", False)
+        t.wall_w = td.get("wall_w", False)
+        t.wall_ne = td.get("wall_ne", False)
+        t.wall_nw = td.get("wall_nw", False)
+        t.wall_se = td.get("wall_se", False)
+        t.wall_sw = td.get("wall_sw", False)
+        t.wall_n_height = td.get("wall_n_height", 1)
+        t.wall_s_height = td.get("wall_s_height", 1)
+        t.wall_e_height = td.get("wall_e_height", 1)
+        t.wall_w_height = td.get("wall_w_height", 1)
+        t.wall_ne_height = td.get("wall_ne_height", 1)
+        t.wall_se_height = td.get("wall_se_height", 1)
+        t.wall_nw_height = td.get("wall_nw_height", 1)
+        t.wall_sw_height = td.get("wall_sw_height", 1)
+        t.wall_segments = td.get("wall_segments", {"n":[],"s":[],"e":[],"w":[],"ne":[],"nw":[],"se":[],"sw":[]})
+        t.is_block = td.get("is_block", False)
+        t.block_bottom = td.get("block_bottom", 0.0)
+        t.block_top = td.get("block_top", 1.0)
+        t.block_side_tex = td.get("block_side_tex", None)
+        t.block_top_tex = td.get("block_top_tex", None)
+        t.block_uv_mode = td.get("block_uv_mode", "tile")
+
+        default_event = {
+            "enabled": False,
+            "trigger": "step",
+            "scene": "",
+            "dialog": "",
+            "script": [],
+            "teleport": None,
+            "combat": False,
+            "once": False,
+            "done": False,
+            "switch_required": "",
+            "switch_set": "",
+            "enemy_id": "",
+            "item_required": "",
+            "facing_lock": False
+        }
+        t.event_data = td.get("event_data", default_event.copy())
+        t.events = td.get("events", [])
+
+        if "event_data" not in td:
+            if td.get("step_event", ""):
+                t.event_data["enabled"] = True
+                t.event_data["trigger"] = "step"
+                t.event_data["scene"] = td.get("step_event", "")
+
+            if td.get("action_event", ""):
+                t.event_data["enabled"] = True
+                t.event_data["trigger"] = "action"
+                t.event_data["scene"] = td.get("action_event", "")
+
+        t.objects = []
+        for od in td.get("objects", []):
+            t.objects.append({
+                "asset": od.get("asset"),
+                "offx": od.get("offx",0),
+                "offy": od.get("offy",0),
+                "offz": od.get("offz",0),
+                "rot_x": od.get("rot_x",0),
+                "rot_y": od.get("rot_y",0),
+                "rot_z": od.get("rot_z",0)
+            })
+
+        t.sprites = []
+        for sd in td.get("sprites", []):
+            sprinst = SpriteInstance(sd.get("asset"))
+            sprinst.offx = sd.get("offx",0)
+            sprinst.offy = sd.get("offy",0)
+            sprinst.offz = sd.get("offz",0)
+            sprinst.state = sd.get("state","idle")
+
+            if sprinst.asset in self.sprites:
+                asset = self.sprites[sprinst.asset]
+                sprinst.animator = Animator(self.clone_clips(asset.base_clips))
+                current_anim = sd.get("current_anim")
+                saved_frame = sd.get("frame",0)
+                saved_timer = sd.get("timer",0)
+
+                if current_anim:
+                    sprinst.animator.play(current_anim)
+
+                    if current_anim in sprinst.animator.clips:
+                        maxf = len(sprinst.animator.clips[current_anim].frames)-1
+                        sprinst.animator.frame = min(saved_frame, maxf)
+                        sprinst.animator.timer = saved_timer
+                elif asset.base_clips:
+                    sprinst.animator.play(asset.base_clips[0].name)
+
+            t.sprites.append(sprinst)
+
+        t.actors = []
+        for ad in td.get("actors", []):
+            actor_name = ad.get("actor_name")
+
+            if actor_name not in self.actors:
+                continue
+
+            inst = ActorInstance(actor_name)
+            inst.offx = ad.get("offx", 0)
+            inst.offy = ad.get("offy", 0)
+            inst.offz = ad.get("offz", 0)
+            inst.rot = ad.get("rot", 180)
+            inst.state = ad.get("state", "idle")
+            inst.facing = ad.get("facing", "espalda")
+            inst.visual_facing = ad.get("visual_facing", "espalda")
+            inst.battle_team = ad.get("battle_team", "player")
+            inst.battle_moved = ad.get("battle_moved", False)
+            inst.battle_acted = ad.get("battle_acted", False)
+            inst.battle_dead = ad.get("battle_dead", False)
+            inst.trigger_combat = ad.get("trigger_combat", False)
+            inst.trigger_event = ad.get("trigger_event", "")
+            inst.interact_radius = ad.get("interact_radius", 1.2)
+            inst.interact_text = ad.get("interact_text", "...")
+            inst.interact_once = ad.get("interact_once", False)
+            inst.is_npc = ad.get("is_npc", False)
+            inst.npc_name = ad.get("npc_name", actor_name)
+            inst.interacted = ad.get("interacted", getattr(inst, "interacted", False))
+
+            actor_def = self.actors[actor_name]
+
+            if actor_def.sprite_sheets:
+                sprname = actor_def.sprite_sheets[0]
+
+                if sprname in self.sprites:
+                    sprite_asset = self.sprites[sprname]
+                    inst.animator = Animator(self.clone_clips(sprite_asset.base_clips))
+
+                    if sprite_asset.base_clips:
+                        current_anim = ad.get("current_anim", sprite_asset.base_clips[0].name)
+                        inst.animator.play(current_anim)
+
+                        if current_anim in inst.animator.clips:
+                            maxf = len(inst.animator.clips[current_anim].frames)-1
+                            inst.animator.frame = min(ad.get("frame",0), maxf)
+                            inst.animator.timer = ad.get("timer",0)
+
+            t.actors.append({"inst": inst, "gx": x, "gy": y})
+
+        return t
+
+    def deserialize_grid(self, grid_data):
+        grid = [[Tile() for _ in range(GRID_W)] for _ in range(GRID_H)]
+
+        for y, row in enumerate(grid_data[:GRID_H]):
+            for x, td in enumerate(row[:GRID_W]):
+                grid[y][x] = self.deserialize_tile(td, x, y)
+
+        return grid
+
+    def load_project_maps(self, data):
+        loaded_maps = {}
+        maps_data = data.get("maps", {})
+
+        if maps_data:
+            for map_name, map_data in maps_data.items():
+                grid_data = map_data.get("grid", map_data if isinstance(map_data, list) else [])
+                loaded_maps[map_name] = self.deserialize_grid(grid_data)
+        else:
+            loaded_maps["Map001"] = self.deserialize_grid(data.get("grid", []))
+
+        if not loaded_maps:
+            loaded_maps["Map001"] = [[Tile() for _ in range(GRID_W)] for _ in range(GRID_H)]
+
+        requested_map = data.get("current_map")
+        self.maps = loaded_maps
+        self.current_map_id = requested_map if requested_map in self.maps else next(iter(self.maps))
+        self.grid = self.maps[self.current_map_id]
+
     def save_project(self):
         path = filedialog.asksaveasfilename(
             defaultextension=".json",
@@ -3346,121 +3804,21 @@ class Toolkit:
         }
 
         # =========================================
-        # GRID SERIALIZATION
+        # GRID / MAP SERIALIZATION
         # =========================================
-        for row in self.grid:
-            grow = []
+        self.sync_current_map()
+        data["project_version"] = 2
+        data["current_map"] = self.current_map_id
+        data["maps"] = {}
 
-            for t in row:
-                td = {
-                    "floor_tex": t.floor_tex,
-                    "wall_tex": t.wall_tex,
-                    "floor_height": getattr(t,"floor_height",0),
+        for map_name, grid in self.maps.items():
+            data["maps"][map_name] = {
+                "name": map_name,
+                "grid": self.serialize_grid(grid)
+            }
 
-                    "floor_uv_mode": getattr(t,"floor_uv_mode","tile"),
-                    "wall_uv_mode": getattr(t,"wall_uv_mode","tile"),
-
-                    "wall_n": getattr(t,"wall_n",False),
-                    "wall_s": getattr(t,"wall_s",False),
-                    "wall_e": getattr(t,"wall_e",False),
-                    "wall_w": getattr(t,"wall_w",False),
-
-                    "wall_ne": getattr(t,"wall_ne",False),
-                    "wall_nw": getattr(t,"wall_nw",False),
-                    "wall_se": getattr(t,"wall_se",False),
-                    "wall_sw": getattr(t,"wall_sw",False),
-
-                    "wall_n_height": getattr(t,"wall_n_height",1),
-                    "wall_s_height": getattr(t,"wall_s_height",1),
-                    "wall_e_height": getattr(t,"wall_e_height",1),
-                    "wall_w_height": getattr(t,"wall_w_height",1),
-
-                    "wall_ne_height": getattr(t,"wall_ne_height",1),
-                    "wall_se_height": getattr(t,"wall_se_height",1),
-                    "wall_nw_height": getattr(t,"wall_nw_height",1),
-                    "wall_sw_height": getattr(t,"wall_sw_height",1),
-
-                    "wall_segments": getattr(t,"wall_segments",{"n":[],"s":[],"e":[],"w":[],"ne":[],"nw":[],"se":[],"sw":[]}),
-
-                    "is_block" : getattr(t,"is_block",False),
-
-                    "block_bottom" : getattr(t,"block_bottom", 0.0),
-                    "block_top" : getattr(t,"block_top", 1.0),
-
-                    "block_side_tex" : getattr(t,"block_side_tex", None),
-                    "block_top_tex" : getattr(t,"block_top_tex", None),
-
-                    "block_uv_mode" : getattr(t,"block_uv_mode", "tile"),
-
-
-                    "objects": [],
-                    "sprites": [],
-                    "actors": [],
-                    
-                    "event_data": copy.deepcopy(getattr(t, "event_data", {}))
-                }
-
-                # OBJECTS
-                for inst in t.objects:
-                    td["objects"].append(self.serialize_object_instance(inst))
-
-                # SPRITES
-                for spr in t.sprites:
-                    td["sprites"].append(self.serialize_sprite_instance(spr))
-
-                #actors
-                for pack in t.actors:
-                    inst = pack["inst"]
-
-                    td["actors"].append({
-                        "actor_name": inst.actor_name,
-                        "offx": inst.offx,
-                        "offy": inst.offy,
-                        "offz": inst.offz,
-                        "rot": inst.rot,
-                        "state": inst.state,
-                        "facing": getattr(inst, "facing", "espalda"),
-                        "visual_facing": getattr(inst, "visual_facing", "espalda"),
-                        "current_anim": inst.animator.current if inst.animator else "",
-                        "frame": inst.animator.frame if inst.animator else 0,
-                        "timer": inst.animator.timer if inst.animator else 0,
-                        "is_npc" : inst.is_npc,
-                        "npc_name" : inst.npc_name,
-
-                        "interact_radius" : inst.interact_radius,
-                        "interact_text" : inst.interact_text,
-                        "interact_once" : inst.interact_once,
-                        "interacted" : inst.interacted,
-
-                        "trigger_combat" : inst.trigger_combat,
-                        "trigger_event" : inst.trigger_event,
-
-                        "vspeed" : inst.vspeed,
-                        "ground_z" : inst.ground_z,
-                        "on_ground" : inst.on_ground,
-
-                        "is_jumping" : inst.is_jumping,
-
-                        "jump_vspeed" : inst.jump_vspeed,          # impulso inicial hacia arriba
-                        "jump_gravity" : inst.jump_gravity,         # gravedad
-                        "jump_target_z" : inst.jump_target_z,
-
-                        "jump_land_done" : inst.jump_land_done,
-
-                        "mantle_dest_gx" : inst.mantle_dest_gx,
-                        "mantle_dest_gy" : inst.mantle_dest_gy,
-
-                        "battle_team" : inst.battle_team,
-                        "battle_moved" : inst.battle_moved,
-                        "battle_acted" : inst.battle_acted,
-                        "battle_dead" : inst.battle_dead,
-                        "is_battle_moving" : inst.is_battle_moving,
-                        "battle_move_timer" : inst.battle_move_timer
-                    })
-
-                grow.append(td)
-
-            data["grid"].append(grow)
+        # Retrocompatibilidad: mantiene el mapa activo en la clave antigua.
+        data["grid"] = data["maps"][self.current_map_id]["grid"]
 
         # =========================================
         # SAVE ASSETS (VOXEL/MESH)
@@ -3846,197 +4204,14 @@ class Toolkit:
             self.actors[name] = actor
 
         # =========================================
-        # LOAD GRID
+        # LOAD MAPS / GRID
         # =========================================
-        for y, row in enumerate(data.get("grid", [])):
-            for x, td in enumerate(row):
-
-                t = Tile()
-
-                t.floor_tex = td.get("floor_tex")
-                t.wall_tex = td.get("wall_tex")
-                t.floor_height = td.get("floor_height", 0)
-
-                t.floor_uv_mode = td.get("floor_uv_mode", "tile")
-                t.wall_uv_mode = td.get("wall_uv_mode", "tile")
-
-                t.wall_n = td.get("wall_n", False)
-                t.wall_s = td.get("wall_s", False)
-                t.wall_e = td.get("wall_e", False)
-                t.wall_w = td.get("wall_w", False)
-
-                t.wall_ne = td.get("wall_ne", False)
-                t.wall_nw = td.get("wall_nw", False)
-                t.wall_se = td.get("wall_se", False)
-                t.wall_sw = td.get("wall_sw", False)
-
-                t.wall_n_height = td.get("wall_n_height", 1)
-                t.wall_s_height = td.get("wall_s_height", 1)
-                t.wall_e_height = td.get("wall_e_height", 1)
-                t.wall_w_height = td.get("wall_w_height", 1)
-
-                t.wall_ne_height = td.get("wall_ne_height", 1)
-                t.wall_se_height = td.get("wall_se_height", 1)
-                t.wall_nw_height = td.get("wall_nw_height", 1)
-                t.wall_sw_height = td.get("wall_sw_height", 1)
-
-                t.wall_segments = td.get("wall_segments", {"n":[],"s":[],"e":[],"w":[]})
-
-                t.is_block = td.get("is_block", False)
-
-                t.block_bottom = td.get("block_bottom", 0.0)
-                t.block_top = td.get("block_top", 1.0)
-
-                t.block_side_tex = td.get("block_side_tex", None)
-                t.block_top_tex = td.get("block_top_tex", None)
-
-                t.block_uv_mode = td.get("block_uv_mode", "tile")
-
-                # ==========================================
-                # EVENT LOAD NUEVO
-                # ==========================================
-                default_event = {
-                    "enabled": False,
-                    "trigger": "step",
-                    "scene": "",
-                    "dialog": "",
-                    "script": [],
-                    "teleport": None,
-                    "combat": False,
-                    "once": False,
-                    "done": False,
-                    "switch_required": "",
-                    "switch_set": "",
-                    "enemy_id": "",
-                    "item_required": "",
-                    "facing_lock": False
-                }
-
-                t.event_data = td.get("event_data", default_event.copy())
-
-                # retrocompatibilidad por si algún mapa guardó lista vieja
-                t.events = td.get("events", [])
-
-                if "event_data" not in td:
-                    if td.get("step_event", ""):
-                        t.event_data["enabled"] = True
-                        t.event_data["trigger"] = "step"
-                        t.event_data["scene"] = td.get("step_event", "")
-
-                    if td.get("action_event", ""):
-                        t.event_data["enabled"] = True
-                        t.event_data["trigger"] = "action"
-                        t.event_data["scene"] = td.get("action_event", "")
-
-                # OBJECTS
-                t.objects = []
-                for od in td.get("objects", []):
-                    inst = {
-                        "asset": od.get("asset"),
-                        "offx": od.get("offx",0),
-                        "offy": od.get("offy",0),
-                        "offz": od.get("offz",0),
-                        "rot_x": od.get("rot_x",0),
-                        "rot_y": od.get("rot_y",0),
-                        "rot_z": od.get("rot_z",0)
-                    }
-                    t.objects.append(inst)
-
-                # SPRITES
-                t.sprites = []
-                for sd in td.get("sprites", []):
-                    sprinst = SpriteInstance(sd.get("asset"))
-
-                    sprinst.offx = sd.get("offx",0)
-                    sprinst.offy = sd.get("offy",0)
-                    sprinst.offz = sd.get("offz",0)
-                    sprinst.state = sd.get("state","idle")
-
-                    if sprinst.asset in self.sprites:
-                        asset = self.sprites[sprinst.asset]
-
-                        sprinst.animator = Animator(self.clone_clips(asset.base_clips))
-
-                        current_anim = sd.get("current_anim")
-                        saved_frame = sd.get("frame",0)
-                        saved_timer = sd.get("timer",0)
-
-                        if current_anim:
-                            sprinst.animator.play(current_anim)
-
-                            if current_anim in sprinst.animator.clips:
-                                maxf = len(sprinst.animator.clips[current_anim].frames)-1
-                                sprinst.animator.frame = min(saved_frame, maxf)
-                                sprinst.animator.timer = saved_timer
-                        elif asset.base_clips:
-                            sprinst.animator.play(asset.base_clips[0].name)
-
-                    t.sprites.append(sprinst)
-
-                # --------------------------
-                # ACTOR INSTANCES
-                # --------------------------
-                t.actors = []
-
-                for ad in td.get("actors", []):
-                    actor_name = ad.get("actor_name")
-
-                    if actor_name not in self.actors:
-                        continue
-
-                    inst = ActorInstance(actor_name)
-
-                    inst.offx = ad.get("offx", 0)
-                    inst.offy = ad.get("offy", 0)
-                    inst.offz = ad.get("offz", 0)
-                    inst.rot = ad.get("rot", 180)
-                    inst.state = ad.get("state", "idle")
-                    inst.facing = ad.get("facing", "espalda")
-                    inst.visual_facing = ad.get("visual_facing", "espalda")
-                    inst.battle_team = ad.get("battle_team", "player")
-                    inst.battle_moved = ad.get("battle_moved", False)
-                    inst.battle_acted = ad.get("battle_acted", False)
-                    inst.battle_dead = ad.get("battle_dead", False)
-                    inst.trigger_combat = ad.get("trigger_combat", False)
-                    inst.trigger_event = ad.get("trigger_event", "")
-                    inst.interact_radius = ad.get("interact_radius", 1.2)
-                    inst.interact_text = ad.get("interact_text", "...")
-                    inst.interact_once = ad.get("interact_once", False)
-                    inst.is_npc = ad.get("is_npc", False)
-                    inst.npc_name = ad.get("npc_name", actor_name)
-
-                    actor_def = self.actors[actor_name]
-
-                    if actor_def.sprite_sheets:
-                        sprname = actor_def.sprite_sheets[0]
-
-                        if sprname in self.sprites:
-                            sprite_asset = self.sprites[sprname]
-
-                            inst.animator = Animator(self.clone_clips(sprite_asset.base_clips))
-
-                            if sprite_asset.base_clips:
-                                current_anim = ad.get("current_anim", sprite_asset.base_clips[0].name)
-                                inst.animator.play(current_anim)
-
-                                if current_anim in inst.animator.clips:
-                                    maxf = len(inst.animator.clips[current_anim].frames)-1
-                                    inst.animator.frame = min(ad.get("frame",0), maxf)
-                                    inst.animator.timer = ad.get("timer",0)
-
-                    pack = {
-                        "inst": inst,
-                        "gx": x,
-                        "gy": y
-                    }
-
-                    t.actors.append(pack)
-
-                self.grid[y][x] = t
+        self.load_project_maps(data)
 
         self.selected_instance = None
         self.selected_sprite = None
         self.refresh_actor_listbox()
+        self.refresh_map_selector()
         self.draw_grid()
 
         messagebox.showinfo("Load","Project loaded.")

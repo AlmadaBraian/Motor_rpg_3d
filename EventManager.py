@@ -971,6 +971,15 @@ def runtime_teleport_player(self, tp):
         if not self.runtime_world:
             return
 
+        target_map = tp.get("map") or tp.get("map_id") or tp.get("map_name")
+
+        if target_map and hasattr(self, "maps") and target_map in self.maps:
+            current_runtime_map = getattr(self.runtime_world, "map_id", getattr(self, "current_runtime_map_id", None))
+
+            if target_map != current_runtime_map:
+                self.current_runtime_map_id = target_map
+                self.runtime_world = self.runtime.build_runtime_world_copy(target_map)
+
         if not self.runtime_world.main_actor:
             return
 
@@ -983,7 +992,7 @@ def runtime_teleport_player(self, tp):
         self.runtime_world.main_actor["gx"] = nx
         self.runtime_world.main_actor["gy"] = ny
 
-        print("PLAYER TELEPORTED:", nx, ny)
+        print("PLAYER TELEPORTED:", getattr(self.runtime_world, "map_id", "Map001"), nx, ny)
 
 def execute_tile_event(self, t):
         t.event_done = True
