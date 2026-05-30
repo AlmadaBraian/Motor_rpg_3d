@@ -1073,9 +1073,14 @@ class Toolkit:
             if not inst.on_ground:
                 pass
             else:
-                if abs(dx) > 0.001 or abs(dy) > 0.001:
+                moving = abs(dx) > 0.001 or abs(dy) > 0.001
+
+                if moving:
                     self.update_actor_walk_by_input(inst, dx, dy)
                 else:
+                    # Al volver desde combate puede quedar un clip walk activo
+                    # aunque ya no exista input de movimiento. Forzamos idle
+                    # desde Toolkit, que es quien gobierna la exploracion.
                     self.update_actor_idle_hybrid(inst, dt)
 
         if self.runtime_message_timer > 0:
@@ -1336,6 +1341,39 @@ class Toolkit:
                 inst.animator.play("walk_espalda")
                 
 
+    def play_runtime_actor_idle(self, inst):
+
+        if not inst.animator:
+            return
+
+        vf = getattr(inst, "visual_facing", "espalda")
+
+        name_map = {
+            "espalda": "idle",
+            "frente": "idle_frente",
+            "izq": "idle_izq",
+            "dere": "idle_dere",
+            "espalda_izq": "rot_espalda_izq",
+            "perfil_izq": "rot_perfil_izq",
+            "frente_izq": "rot_frente_izq",
+            "frente_dere": "rot_frente_dere",
+            "perfil_dere": "rot_perfil_dere",
+            "espalda_dere": "rot_espalda_dere"
+        }
+
+        candidates = [
+            name_map.get(vf, "idle"),
+            "idle",
+            "idle_espalda",
+            "idle_frente"
+        ]
+
+        for chosen in candidates:
+            if chosen in inst.animator.clips:
+                if inst.animator.current != chosen:
+                    inst.animator.play(chosen)
+                return
+
     def update_actor_idle_hybrid(self, inst, dt):
         if inst.scripted_animation:
             return
@@ -1360,29 +1398,7 @@ class Toolkit:
         # ==========================================
         # QUIETO SIN GIRAR -> conservar ultima pose
         # ==========================================
-        vf = getattr(inst, "visual_facing", "espalda")
-
-        name_map = {
-            "espalda": "idle",
-            "frente": "idle_frente",
-            "izq": "idle_izq",
-            "dere": "idle_dere",
-            "espalda_izq": "rot_espalda_izq",
-            "perfil_izq": "rot_perfil_izq",
-            "frente_izq": "rot_frente_izq",
-            "frente_dere": "rot_frente_dere",
-            "perfil_dere": "rot_perfil_dere",
-            "espalda_dere": "rot_espalda_dere"
-        }
-
-        chosen = name_map.get(vf, "idle")
-
-        if chosen in inst.animator.clips:
-            inst.animator.play(chosen)
-            return
-
-        if "idle" in inst.animator.clips:
-            inst.animator.play("idle")
+        self.play_runtime_actor_idle(inst)
 
     def select_actor_asset_from_list(self, event=None):
         sel = self.actor_listbox.curselection()

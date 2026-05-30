@@ -395,14 +395,30 @@ class RuntimeSystem:
 
         k = event.keysym.lower()
 
+        movement_released = False
+
         if k == "w":
             p.move_b = False
+            movement_released = True
         if k == "s":
             p.move_f = False
+            movement_released = True
         if k == "a":
             p.move_l = False
+            movement_released = True
         if k == "d":
             p.move_r = False
+            movement_released = True
+
+        if (
+            movement_released
+            and not p.move_f
+            and not p.move_b
+            and not p.move_l
+            and not p.move_r
+            and hasattr(tkref, "play_runtime_actor_idle")
+        ):
+            tkref.play_runtime_actor_idle(p)
 
         if k == "q":
             p.rot_l = False

@@ -79,6 +79,8 @@ class RuntimeCombat:
         o.combat_actor_moving = False
         o.combat_move_queue = []
 
+        self.reset_runtime_actor_motion()
+
         o.battle_input_cooldown = 0
 
         o.battle_cam_target_x = 0
@@ -2091,6 +2093,21 @@ class RuntimeCombat:
             p.rot_l = False
         if k == "e":
             p.rot_r = False
+
+        # Si el jugador suelta WASD durante combate, el RuntimeSystem
+        # no recibe el KeyRelease de exploracion. Limpiamos siempre al
+        # actor principal para que no vuelva a explorar con una bandera
+        # de movimiento heredada.
+        main_inst = tkref.runtime_world.main_actor["inst"]
+
+        if k == "w":
+            main_inst.move_b = False
+        if k == "s":
+            main_inst.move_f = False
+        if k == "a":
+            main_inst.move_l = False
+        if k == "d":
+            main_inst.move_r = False
         
         if event.keysym == "space":
             tkref.space_pressed = False
@@ -3937,11 +3954,35 @@ class RuntimeCombat:
         # RESET FLAGS
         # =====================================
 
+        self.reset_runtime_actor_motion(force_idle=True)
+
+        print("COMBAT END")
+
+    def reset_runtime_actor_motion(self, force_idle=False):
+
+        o = self.owner
+
+        if not getattr(o, "runtime_world", None):
+            return
+
         for row in o.runtime_world.grid:
             for t in row:
                 for pack in getattr(t, "actors", []):
 
                     inst = pack["inst"]
+
+                    # Las teclas soltadas durante combate no pasan por el
+                    # runtime de exploracion. Si alguna bandera queda viva,
+                    # al volver al mundo se sigue eligiendo walk aunque el
+                    # actor ya este detenido.
+                    inst.move_f = False
+                    inst.move_b = False
+                    inst.move_l = False
+                    inst.move_r = False
+                    inst.rot_l = False
+                    inst.rot_r = False
+                    inst.world_move_queue = []
+                    inst.is_world_moving = False
 
                     inst.is_battle_moving = False
                     inst.battle_dead = False
@@ -3949,7 +3990,13 @@ class RuntimeCombat:
                     inst.battle_moved = False
                     inst.battle_acted = False
 
-        print("COMBAT END")
+                    if force_idle:
+                        self.play_runtime_idle(inst)
+
+    def play_runtime_idle(self, inst):
+
+        if hasattr(self.owner, "play_runtime_actor_idle"):
+            self.owner.play_runtime_actor_idle(inst)
 
 
     # =========================================================
