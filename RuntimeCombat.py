@@ -639,6 +639,9 @@ class RuntimeCombat:
 
         for pack in o.battle_units:
 
+            if getattr(pack["inst"], "battle_dead", False):
+                continue
+
             if (
                 pack["gx"] == o.battle_cursor_x
                 and
@@ -981,6 +984,9 @@ class RuntimeCombat:
         else:
 
             for pack in o.battle_units:
+
+                if getattr(pack["inst"], "battle_dead", False):
+                    continue
 
                 if (
                     pack["gx"] == o.battle_cursor_x
@@ -1471,6 +1477,9 @@ class RuntimeCombat:
 
                         for pack in o.battle_units:
 
+                            if getattr(pack["inst"], "battle_dead", False):
+                                continue
+
                             if pack["gx"] == tx and pack["gy"] == ty:
                                 target = pack
                                 break
@@ -1768,7 +1777,9 @@ class RuntimeCombat:
             target.battle_dead = True
             target.pending_remove = True
 
-            self.remove_battle_unit(target)
+            # remove_battle_unit trabaja con el pack completo.
+            # Pasar solo la instancia dejaba al muerto en las listas de turno.
+            self.remove_battle_unit(target_pack)
 
             print(target.actor_name, "DEAD")
 
@@ -2287,6 +2298,12 @@ class RuntimeCombat:
         if not o.battle_units:
             return
 
+        if not o.battle_turn_order:
+            return
+
+        if o.battle_turn_index >= len(o.battle_turn_order):
+            o.battle_turn_index = 0
+
         current = o.battle_turn_order[o.battle_turn_index]
 
         if current:
@@ -2348,6 +2365,33 @@ class RuntimeCombat:
             return
 
         if not o.play_mode:
+            return
+
+        if not o.battle_turn_order:
+            return
+
+        # Los muertos no deben tomar turno aunque sigan referenciados
+        # temporalmente por una animacion o una accion en curso.
+        skipped_dead = 0
+
+        while o.battle_turn_order:
+
+            if o.battle_turn_index >= len(o.battle_turn_order):
+                o.battle_turn_index = 0
+
+            current = o.battle_turn_order[o.battle_turn_index]
+            inst = current["inst"]
+
+            if not getattr(inst, "battle_dead", False):
+                break
+
+            o.battle_turn_order.pop(o.battle_turn_index)
+            skipped_dead += 1
+
+            if skipped_dead > len(o.battle_turn_order) + 1:
+                return
+
+        if not o.battle_turn_order:
             return
 
         o.battle_input_cooldown = 0.25
@@ -2491,9 +2535,21 @@ class RuntimeCombat:
 
         current = o.battle_current_unit
 
+        if (
+            not current
+            or
+            getattr(current["inst"], "battle_dead", False)
+        ):
+            self.end_battle_turn()
+            return
+
         self.build_battle_move_tiles(current)
 
         closest_pack = IA.find_closest_enemy(self, current)
+
+        if not closest_pack:
+            self.end_battle_turn()
+            return
 
         best_tile = IA.find_best_tile_towards_target(
             self,

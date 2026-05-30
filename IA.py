@@ -52,6 +52,9 @@ def find_best_tile_towards_target(
 
     o = self.owner
 
+    if not target_pack:
+        return None
+
     tx = target_pack["gx"]
     ty = target_pack["gy"]
 
@@ -117,6 +120,11 @@ def update_enemy_ai(self, dt):
         return
 
     inst = current["inst"]
+
+    if getattr(inst, "battle_dead", False):
+        o.enemy_ai_state = None
+        self.end_battle_turn()
+        return
 
     if inst.battle_team != "enemy":
         o.enemy_ai_state = None
@@ -208,6 +216,14 @@ def update_enemy_ai(self, dt):
     if state == "confirm_attack":
 
         target = o.enemy_ai_attack_target
+
+        if (
+            not target
+            or
+            getattr(target["inst"], "battle_dead", False)
+        ):
+            o.enemy_ai_state = "end_turn"
+            return
 
         o.battle_attacker_unit = (
             o.battle_current_unit
