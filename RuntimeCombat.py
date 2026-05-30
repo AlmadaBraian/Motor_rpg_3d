@@ -1777,9 +1777,9 @@ class RuntimeCombat:
             target.battle_dead = True
             target.pending_remove = True
 
-            # remove_battle_unit trabaja con el pack completo.
-            # Pasar solo la instancia dejaba al muerto en las listas de turno.
-            self.remove_battle_unit(target_pack)
+            # La unidad queda visible hasta terminar su animacion de muerte,
+            # pero sale del orden de turno para que no pueda actuar.
+            self.remove_dead_unit_from_turn_order(target_pack)
 
             print(target.actor_name, "DEAD")
 
@@ -3791,6 +3791,47 @@ class RuntimeCombat:
 
         return True
     
+    def remove_dead_unit_from_turn_order(self, pack):
+
+        o = self.owner
+
+        if not pack:
+            return
+
+        if pack not in o.battle_turn_order:
+            return
+
+        removed_index = o.battle_turn_order.index(pack)
+
+        o.battle_turn_order.remove(pack)
+
+        if removed_index < o.battle_turn_index:
+            o.battle_turn_index -= 1
+
+        if o.battle_turn_order:
+
+            if o.battle_turn_index >= len(o.battle_turn_order):
+                o.battle_turn_index = 0
+
+        else:
+
+            o.battle_turn_index = 0
+
+    def finalize_pending_dead_unit(self, pack):
+
+        if not pack:
+            return
+
+        inst = pack["inst"]
+
+        if not getattr(inst, "pending_remove", False):
+            return
+
+        if not getattr(inst, "battle_dead", False):
+            return
+
+        self.remove_battle_unit(pack)
+
     def remove_battle_unit(self, pack):
 
         o = self.owner
@@ -4000,6 +4041,20 @@ class RuntimeCombat:
             
         # terminó
         if inst.animator.finished:
+
+            target_inst = target_pack["inst"]
+            target_animator = getattr(target_inst, "animator", None)
+
+            if (
+                getattr(target_inst, "pending_remove", False)
+                and
+                target_animator
+                and
+                not target_animator.finished
+            ):
+                return
+
+            self.finalize_pending_dead_unit(target_pack)
 
             self.performing_attack = False
 
