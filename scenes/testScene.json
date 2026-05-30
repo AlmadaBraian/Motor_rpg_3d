@@ -96,7 +96,7 @@
     },
     {
       "action": "wait",
-      "time": 1500
+      "time": 2500
     },
     {
       "action": "start_combat"

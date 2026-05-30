@@ -1,4 +1,4 @@
-from config import NORMAL_ATTACK_SCRIPT
+from BasicScripts import NORMAL_ATTACK_SCRIPT
 
 
 def find_closest_enemy(self, user_pack):

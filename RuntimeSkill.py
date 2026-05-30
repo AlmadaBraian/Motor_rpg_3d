@@ -2,7 +2,8 @@
 # RUNTIME SKILL
 # =========================================================
 
-from config import GRID_H, GRID_W, NORMAL_ATTACK_SCRIPT
+from config import GRID_H, GRID_W
+from BasicScripts import NORMAL_ATTACK_SCRIPT
 
 
 class RuntimeSkill:
