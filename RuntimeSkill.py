@@ -125,6 +125,15 @@ def update_skill_script(runtime_skill, dt):
 
         if not animator:
 
+            if (
+                runtime_skill.target_pack
+                and
+                target == runtime_skill.target_pack["inst"]
+            ):
+                combat.finalize_pending_dead_unit(
+                    runtime_skill.target_pack
+                )
+
             runtime_skill.waiting_animation = False
             runtime_skill.index += 1
             return
@@ -132,6 +141,15 @@ def update_skill_script(runtime_skill, dt):
         #animator.update(dt)
 
         if animator.finished:
+
+            if (
+                runtime_skill.target_pack
+                and
+                target == runtime_skill.target_pack["inst"]
+            ):
+                combat.finalize_pending_dead_unit(
+                    runtime_skill.target_pack
+                )
 
             runtime_skill.waiting_animation = False
             runtime_skill.index += 1
@@ -289,6 +307,26 @@ def run_skill_command(
         result = runtime_skill.data.get(
             "combat_result"
         )
+
+        if result is None:
+
+            result = combat.calculate_combat_result(
+                user_pack,
+                target_pack,
+                runtime_skill.action_data
+            )
+
+            runtime_skill.data["combat_result"] = result
+
+            if result:
+
+                combat.apply_damage(
+                    user_pack,
+                    target_pack,
+                    result
+                )
+
+                runtime_skill.data["damage_applied"] = True
 
         result_type = "normal"
 
@@ -484,19 +522,29 @@ def run_skill_command(
 
     if action == "damage":
 
-        result = combat.calculate_combat_result(
-            user_pack,
-            target_pack,
-            runtime_skill.action_data
+        result = runtime_skill.data.get(
+            "combat_result"
         )
 
-        runtime_skill.data["combat_result"] = result
+        if result is None:
 
-        combat.apply_damage(
-            user_pack,
-            target_pack,
-            result
-        )
+            result = combat.calculate_combat_result(
+                user_pack,
+                target_pack,
+                runtime_skill.action_data
+            )
+
+            runtime_skill.data["combat_result"] = result
+
+        if not runtime_skill.data.get("damage_applied"):
+
+            combat.apply_damage(
+                user_pack,
+                target_pack,
+                result
+            )
+
+            runtime_skill.data["damage_applied"] = True
 
         combat.show_popup(
         target_pack,
@@ -1029,6 +1077,10 @@ def end_runtime_skill(runtime_skill):
 
     runtime_skill.running = False
     runtime_skill.finished = True
+
+    combat.finalize_pending_dead_unit(
+        runtime_skill.target_pack
+    )
 
     # =====================================
     # CONSUME ACTION
