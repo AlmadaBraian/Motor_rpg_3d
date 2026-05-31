@@ -3964,7 +3964,9 @@ class RuntimeCombat:
 
             print("GAME OVER")
 
-            self.combat_end_state = "fade_out"
+            o.start_fade_out(
+                self.finish_combat_fade
+            )
 
             return
         

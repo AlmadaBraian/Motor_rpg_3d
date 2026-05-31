@@ -121,6 +121,8 @@ class Toolkit:
 
         self.screen_fade_callback = None
 
+        self.event_wait_fade = False
+
         # =====================================
         # DRAG PAINT
         # =====================================
@@ -480,6 +482,12 @@ class Toolkit:
     def open_item_editor (self):
         
         open_item_editor(self)
+
+    def on_event_fade_finished(self):
+
+        print("EVENT FADE FINISHED")
+
+        self.event_wait_fade = False
 
     def start_fade_out(
         self,

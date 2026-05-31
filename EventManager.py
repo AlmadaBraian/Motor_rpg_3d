@@ -80,6 +80,9 @@ def update_world_event(self, dt):
         
         if self.event_wait_camera:
             return
+        
+        if self.event_wait_fade:
+            return
 
         cmd = self.current_event_script[self.current_event_index]
         self.current_event_index += 1
@@ -261,6 +264,44 @@ def run_world_event_command(self, cmd):
             anim.play()
 
             self.event_wait_camera = True
+
+            return
+        
+        # ==========================
+        # FADE OUT
+        # ==========================
+        if action == "fade_out":
+
+            duration = cmd.get(
+                "duration",
+                1.0
+            )
+
+            self.event_wait_fade = True
+
+            self.start_fade_out(
+                callback=self.on_event_fade_finished,
+                speed=1.0 / max(0.01, duration)
+            )
+
+            return
+        
+        # ==========================
+        # FADE IN
+        # ==========================
+        if action == "fade_in":
+
+            duration = cmd.get(
+                "duration",
+                1.0
+            )
+
+            self.event_wait_fade = True
+
+            self.start_fade_in(
+                callback=self.on_event_fade_finished,
+                speed=1.0 / max(0.01, duration)
+            )
 
             return
         

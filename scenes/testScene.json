@@ -20,20 +20,32 @@
       ]
     },
     {
-      "action": "camera_move",
-      "x": 10,
-      "y": 2,
-      "z": 8,
-      "yaw": 180,
-      "pitch": 25,
-      "distance": 6,
-      "duration": 2.5
+    "action": "fade_out",
+    "duration": 1.5
     },
+    {
+        "action": "camera_move",
+        "x": 10,
+        "z": 15,
+        "duration": 2.0
+    },
+    {
+        "action": "fade_in",
+        "duration": 1.5
+    },
+    
      {
       "action": "play_animation",
       "actor_name": "A",
       "animation_clip": "hit_fall_face_up"
       },
+
+      {
+        "action": "camera_move",
+        "x": 25,
+        "z": 15,
+        "duration": 2.0
+    },
     {
       "action": "wait",
       "time": 500
