@@ -6,7 +6,7 @@ import IA
 from RuntimeSkill import RuntimeSkill, update_knockback
 from SpriteManager import Animator
 from config import GRID_H, GRID_W
-from BasicScripts import NORMAL_ATTACK_SCRIPT
+from BasicScripts import END_COMBAT_SCRIPT, NORMAL_ATTACK_SCRIPT
 import random
 
 
@@ -51,6 +51,8 @@ class RuntimeCombat:
         self.current_attack_context = None
         self.turn_end_timer = 0
         self.pending_turn_end = False
+        self.combat_end_state = None
+        
 
     # =========================================================
     # START COMBAT
@@ -106,6 +108,17 @@ class RuntimeCombat:
         self.create_battle_party_units()
         self.build_deploy_tiles()
 
+        leader = o.runtime_world.main_actor
+
+        tile = o.runtime_world.grid[
+            leader["gy"]
+        ][
+            leader["gx"]
+        ]
+
+        if leader in tile.actors:
+            tile.actors.remove(leader)
+
         for row in o.runtime_world.grid:
             for t in row:
                 for pack in t.actors:
@@ -141,6 +154,17 @@ class RuntimeCombat:
 
         o.battle_cursor_x = first[0]
         o.battle_cursor_y = first[1]
+
+    def finish_combat_victory(self):
+
+        print("SCREEN ALPHA:",
+            self.owner.screen_fade_alpha)
+
+        self.remove_party_members()
+
+        self.end_runtime_combat()
+
+        self.owner.start_fade_in()
 
     def build_battle_turn_order(self):
 
@@ -258,6 +282,14 @@ class RuntimeCombat:
 
         pack = o.battle_deploy_party[idx]
 
+        # si es el líder existente del mundo
+        if pack == o.runtime_world.main_actor:
+
+            self.remove_actor_from_current_tile(pack)
+
+        pack["gx"] = o.battle_cursor_x
+        pack["gy"] = o.battle_cursor_y
+
         for tx, ty in o.battle_deploy_tiles:
 
             blocked = False
@@ -358,6 +390,19 @@ class RuntimeCombat:
                     continue
 
                 o.battle_deploy_tiles.append((xx, yy))
+
+    def remove_actor_from_current_tile(self, pack):
+
+        o = self.owner
+
+        old_tile = o.runtime_world.grid[
+            pack["gy"]
+        ][
+            pack["gx"]
+        ]
+
+        if pack in old_tile.actors:
+            old_tile.actors.remove(pack)
 
     def build_combat_path(self, sx, sy, tx, ty):
 
@@ -3907,9 +3952,11 @@ class RuntimeCombat:
 
         if not enemy_alive:
 
-            print("PLAYER WIN")
+            print("VICTORY DETECTED")
 
-            self.end_runtime_combat()
+            o.start_fade_out(
+                self.finish_combat_fade
+            )
 
             return
         
@@ -3917,11 +3964,104 @@ class RuntimeCombat:
 
             print("GAME OVER")
 
-            self.end_runtime_combat()
+            self.combat_end_state = "fade_out"
 
             return
         
+    def update_combat_end(self, dt):
+
+        if self.combat_end_state == "fade_out":
+
+            if self.owner.screen_fade_alpha >= 1.0:
+
+                self.remove_party_members()
+
+                self.end_runtime_combat()
+
+                self.owner.start_fade_in(1.0)
+
+                self.combat_end_state = "fade_in"
+
+        elif self.combat_end_state == "fade_in":
+
+            if self.owner.screen_fade_alpha <= 0:
+
+                self.combat_end_state = None
+
+    def remove_party_members(self):
+
+        o = self.owner
+
+        print("REMOVE PARTY FROM BATTLE UNITS")
+
+        leader = o.runtime_world.main_actor
+
+        remove_list = []
+
+        for pack in o.battle_units:
+
+            if pack == leader:
+                continue
+
+            if pack["inst"].battle_team == "enemy":
+                continue
+
+            remove_list.append(pack)
+
+        for pack in remove_list:
+
+            print(
+                "REMOVING",
+                pack["inst"].actor_name
+            )
+
+            tile = o.runtime_world.grid[
+                pack["gy"]
+            ][
+                pack["gx"]
+            ]
+
+            if pack in tile.actors:
+                tile.actors.remove(pack)
+
+    def finish_combat_fade(self):
+        print("FINISH COMBAT FADE")
+
+        o = self.owner
+
+        self.remove_party_members()
+
+        for y in range(GRID_H):
+            for x in range(GRID_W):
+
+                t = o.runtime_world.grid[y][x]
+
+                for pack in t.actors:
+
+                    print(
+                        "TILE ACTOR:",
+                        pack["inst"].actor_name,
+                        x,
+                        y
+                    )
+
+        print(
+            "BATTLE UNITS:",
+            len(self.owner.battle_units)
+        )
+
+        for p in self.owner.battle_units:
+            print(
+                p["inst"].actor_name
+            )
+
+        self.end_runtime_combat()
+
+        o.start_fade_in()
+        
     def end_runtime_combat(self):
+
+        print("END RUNTIME COMBAT")
 
         o = self.owner
 

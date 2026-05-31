@@ -111,6 +111,15 @@ class Toolkit:
         self.items = {}
         self.runtime_combat = RuntimeCombat(self)
         self.runtime = RuntimeSystem(self)
+        self.screen_fade_alpha = 0.0
+
+        self.screen_fade_active = False
+
+        self.screen_fade_speed = 1.5
+
+        self.screen_fade_direction = 0
+
+        self.screen_fade_callback = None
 
         # =====================================
         # DRAG PAINT
@@ -471,6 +480,90 @@ class Toolkit:
     def open_item_editor (self):
         
         open_item_editor(self)
+
+    def start_fade_out(
+        self,
+        callback=None,
+        speed=1.5
+    ):
+        
+        print("START FADE OUT")
+
+        self.screen_fade_alpha = 0.0
+
+        self.screen_fade_active = True
+
+        self.screen_fade_speed = speed
+
+        self.screen_fade_direction = 1
+
+        self.screen_fade_callback = callback
+
+    def start_fade_in(
+        self,
+        callback=None,
+        speed=1.5
+    ):
+        
+        print("START FADE IN")
+
+        self.screen_fade_alpha = 1.0
+
+        self.screen_fade_active = True
+
+        self.screen_fade_speed = speed
+
+        self.screen_fade_direction = -1
+
+        self.screen_fade_callback = callback
+
+    def update_screen_fade(self, dt):
+
+        if not self.screen_fade_active:
+            return
+
+        self.screen_fade_alpha += (
+            self.screen_fade_direction
+            * self.screen_fade_speed
+            * dt
+        )
+
+        self.screen_fade_alpha = max(
+            0.0,
+            min(
+                1.0,
+                self.screen_fade_alpha
+            )
+        )
+
+        finished = False
+
+        if (
+            self.screen_fade_direction > 0
+            and
+            self.screen_fade_alpha >= 1.0
+        ):
+            finished = True
+
+        if (
+            self.screen_fade_direction < 0
+            and
+            self.screen_fade_alpha <= 0.0
+        ):
+            finished = True
+
+        if finished:
+
+            self.screen_fade_active = False
+
+            callback = self.screen_fade_callback
+
+            self.screen_fade_callback = None
+
+            print("FADE COMPLETE")
+
+            if callback:
+                callback()
 
     def mouse_to_grid(self, event):
 

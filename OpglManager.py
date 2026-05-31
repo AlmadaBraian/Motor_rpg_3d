@@ -424,6 +424,61 @@ class GLViewport(OpenGLFrame):
         glEnable(GL_TEXTURE_2D)
         glColor3f(1,1,1)
 
+    def draw_screen_fade(self):
+
+        tool = self.toolkit_ref
+
+        #print("DRAW FADE", tool.screen_fade_alpha)
+
+        if tool.screen_fade_alpha <= 0:
+            return
+
+        glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
+        glLoadIdentity()
+        glOrtho(0, 1, 0, 1, -1, 1)
+
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glLoadIdentity()
+
+        glDisable(GL_DEPTH_TEST)
+        glDisable(GL_TEXTURE_2D)
+
+        glEnable(GL_BLEND)
+        glBlendFunc(
+            GL_SRC_ALPHA,
+            GL_ONE_MINUS_SRC_ALPHA
+        )
+
+        glColor4f(
+            0.0,
+            0.0,
+            0.0,
+            tool.screen_fade_alpha
+        )
+
+        glBegin(GL_QUADS)
+
+        glVertex2f(0, 0)
+        glVertex2f(1, 0)
+        glVertex2f(1, 1)
+        glVertex2f(0, 1)
+
+        glEnd()
+
+        glDisable(GL_BLEND)
+
+        glEnable(GL_TEXTURE_2D)
+        glEnable(GL_DEPTH_TEST)
+
+        glPopMatrix()
+
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+
+        glMatrixMode(GL_MODELVIEW)
+
     def redraw(self):
         glViewport(0, 0, self.width, self.height)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -492,6 +547,7 @@ class GLViewport(OpenGLFrame):
         if hasattr(self, "toolkit_ref"): 
             if hasattr(self.toolkit_ref, "play_mode"): 
                 if self.toolkit_ref.play_mode: 
+                    self.toolkit_ref.update_screen_fade(dt)
                     if not self.toolkit_ref.battle_mode: 
                         if hasattr(self.toolkit_ref, "runtime_world") and self.toolkit_ref.runtime_world: self.follow_runtime_camera()
 
@@ -513,8 +569,10 @@ class GLViewport(OpenGLFrame):
                 self.toolkit_ref.runtime_combat.update_battle_camera(dt)
                 self.toolkit_ref.runtime_combat.update_battle_animations(dt)
                 #Skills.update_charge_attack(self.toolkit_ref.runtime_combat, dt)
+                
                 if self.toolkit_ref.runtime_combat.active_runtime_skill:
                     self.toolkit_ref.runtime_combat.active_runtime_skill.update(dt)
+                    self.toolkit_ref.runtime_combat.update_combat_end(dt)
                     for pack in self.toolkit_ref.battle_units:
 
                         update_knockback(self.toolkit_ref.runtime_combat,
@@ -606,6 +664,9 @@ class GLViewport(OpenGLFrame):
             self.end_ui()
         #self.debug_draw_autotile_sheet("esquinasAgua_Auto.png")
             self.showUI()
+
+        self.draw_screen_fade()
+
         glFlush()
 
     def draw_battle_deploy_tiles(self, tool):

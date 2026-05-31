@@ -31,6 +31,26 @@ def start_world_event(self, jsonfile):
 
         print("WORLD EVENT START:", jsonfile)
 
+def start_world_script(
+    self,
+    script
+):
+
+    self.current_event_data = {}
+
+    self.current_event_script = script
+    self.current_event_index = 0
+
+    self.world_event_running = True
+    self.world_event_locked = True
+
+    self.event_wait_timer = 0
+    self.event_wait_input = False
+    self.event_wait_move = None
+    self.event_advance_block = False
+
+    print("WORLD SCRIPT START")
+
 def update_world_event(self, dt):
         if not self.world_event_running:
             return

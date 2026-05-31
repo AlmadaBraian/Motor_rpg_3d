@@ -738,6 +738,21 @@ def run_skill_command(
 
         return
     
+    if action == "withdraw_party":
+
+        combat.start_party_withdraw(
+            runtime_skill
+        )
+
+        runtime_skill.waiting = True
+        runtime_skill.wait_flag = (
+            "withdraw_finished"
+        )
+
+        runtime_skill.index += 1
+
+        return
+    
     if action == "move_actor":
 
         combat = runtime_skill.combat

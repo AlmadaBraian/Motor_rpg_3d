@@ -16,7 +16,7 @@ from EventManager import (
 from RuntimeWorld import RuntimeWorld
 
 from SpriteManager import Animator
-from config import GRID_H, GRID_W
+from config import GRID_H, GRID_W, SCREEN_H, SCREEN_W
 
 
 class RuntimeSystem:
@@ -96,8 +96,8 @@ class RuntimeSystem:
 
         tkref.game_view = GLViewport(
             tkref.game_win,
-            width=640,
-            height=480
+            width=SCREEN_W,
+            height=SCREEN_H
         )
 
         tkref.game_view.pack(fill='both', expand=True)

@@ -1,3 +1,11 @@
+END_COMBAT_SCRIPT = [
+    {"action":"withdraw_party"},
+
+    {"action": "wait",
+        "time": 2500
+    }
+]
+
 NORMAL_ATTACK_SCRIPT = [
 
     {
