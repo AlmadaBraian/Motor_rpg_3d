@@ -44,6 +44,8 @@ class RuntimeSystem:
         tkref.play_mode = True
         tkref.viewport.preview_paused = True
 
+        tkref.game_over = False
+
         tkref.runtime_event_cooldown = 0.0
         tkref.world_event_running = False
         tkref.dialog_visible = False
@@ -505,6 +507,8 @@ class RuntimeSystem:
         tkref.play_mode = False
         tkref.battle_mode = False
         tkref.show_ui = False
+
+        tkref.game_over = False
 
         tkref.runtime_world = None
 

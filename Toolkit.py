@@ -123,6 +123,8 @@ class Toolkit:
 
         self.event_wait_fade = False
 
+        self.game_over = False
+
         # =====================================
         # DRAG PAINT
         # =====================================

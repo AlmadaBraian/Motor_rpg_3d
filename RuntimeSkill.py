@@ -21,6 +21,8 @@ class RuntimeSkill:
         self.combat = combat
         self.owner = combat.owner
 
+        self.combat.battle_camera_mode = 1
+
         self.skill = action_data
 
         self.user_pack = user_pack
@@ -1179,6 +1181,8 @@ def end_runtime_skill(runtime_skill):
         ] = True
 
     combat.active_runtime_skill = None
+
+    combat.battle_camera_mode = 0
 
     print("RUNTIME SKILL END")
 

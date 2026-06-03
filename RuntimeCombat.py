@@ -2542,7 +2542,7 @@ class RuntimeCombat:
             print("PLAYER TURN")
 
             o.battle_state = "idle"
-            self.battle_camera_mode = 1
+            self.battle_camera_mode = 0
             o.show_ui = True
             o.button_A_command = "Seleccionar"
             o.button_X_command = "Guardia"
@@ -2592,7 +2592,7 @@ class RuntimeCombat:
 
         o = self.owner
 
-        self.battle_camera_mode = 1
+        self.battle_camera_mode = 0
 
         print("ENEMY TURN")
 
@@ -3936,12 +3936,23 @@ class RuntimeCombat:
 
         enemy_alive = False
         player_alive = False
+        main_dead = False
 
         for p in o.battle_units:
 
             inst = p["inst"]
 
+            is_main = getattr(
+                p,
+                "is_main",
+                False
+            )
+
+            print ("IS MAIN?", str(is_main))
+
             if getattr(inst, "battle_dead", False):
+                if is_main:
+                    main_dead = True
                 continue
 
             if inst.battle_team == "enemy":
@@ -3960,7 +3971,7 @@ class RuntimeCombat:
 
             return
         
-        if not player_alive:
+        if not player_alive or main_dead:
 
             print("GAME OVER")
 
