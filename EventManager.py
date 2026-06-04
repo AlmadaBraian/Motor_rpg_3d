@@ -148,6 +148,82 @@ def run_world_event_command(self, cmd):
             print("PLAYING:", clip)
 
             return
+        if action == "audio_play":
+            track_id = cmd.get("track", cmd.get("track_id", "sfx"))
+            path = cmd.get("sound", cmd.get("music", cmd.get("voice", "")))
+            category = cmd.get("category", "sfx")
+
+            if "music" in cmd:
+                category = "music"
+            elif "voice" in cmd:
+                category = "voice"
+
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.play(
+                    track_id=track_id,
+                    path=path,
+                    volume=cmd.get("volume", 1.0),
+                    loop=cmd.get("loop", category == "music"),
+                    category=category,
+                    replace=cmd.get("replace", True),
+                    fade_ms=cmd.get("fade_ms", 0)
+                )
+            return
+
+        if action == "audio_pause":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.pause(cmd.get("track", cmd.get("track_id")))
+            return
+
+        if action in ("audio_resume", "audio_unpause"):
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.resume(cmd.get("track", cmd.get("track_id")))
+            return
+
+        if action == "audio_stop":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.stop(
+                    cmd.get("track", cmd.get("track_id")),
+                    fade_ms=cmd.get("fade_ms", 0)
+                )
+            return
+
+        if action == "audio_set_volume":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.set_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("volume", 1.0)
+                )
+            return
+
+        if action == "audio_change_volume":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.change_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("delta", 0.0)
+                )
+            return
+
+        if action == "audio_fade_volume":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.fade_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("volume", cmd.get("target_volume", 0.0)),
+                    duration=cmd.get("duration", 1.0),
+                    stop_on_finish=cmd.get("stop", False)
+                )
+            return
+
+        if action == "set_floor_audio":
+            if hasattr(self, "set_floor_audio_link"):
+                self.set_floor_audio_link(
+                    cmd.get("texture", cmd.get("floor_tex", "")),
+                    cmd.get("sound", ""),
+                    volume=cmd.get("volume", 0.8),
+                    cooldown=cmd.get("cooldown", 0.25)
+                )
+            return
+
         if action == "camera_follow_player":
 
             self.runtime_camera_locked = False
@@ -786,6 +862,9 @@ def update_world_actor_move(self, pack, dt):
 
         if pack not in newtile.actors:
             newtile.actors.append(pack)
+
+        if hasattr(self, "play_runtime_floor_step"):
+            self.play_runtime_floor_step(newtile, pack)
 
         inst.world_move_queue.pop(0)
 

@@ -7,6 +7,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from PIL import Image, ImageTk
 import math
+import time
 import os
 import json
 import shutil
@@ -27,6 +28,7 @@ from RuntimeActor import RuntimeActor
 from RuntimeCombat import RuntimeCombat
 from RuntimeWorld import RuntimeWorld
 from RuntimeSystem import RuntimeSystem
+from AudioManager import AudioManager
 from Tile import Tile
 from SpriteAsset import SpriteAsset
 from SpriteManager import *
@@ -128,6 +130,10 @@ class Toolkit:
         self.items = {}
         self.runtime_combat = RuntimeCombat(self)
         self.runtime = RuntimeSystem(self)
+        self.audio_manager = AudioManager()
+        self.floor_audio_links = {}
+        self._last_step_audio_tile = None
+        self._last_step_audio_time = 0.0
         self.screen_fade_alpha = 0.0
 
         self.screen_fade_active = False
@@ -414,6 +420,7 @@ class Toolkit:
         #tk.Button(prop_frame,text='Select Sprite',command=lambda:self.set_tool('selectsprite')).pack(fill='x')
 
         tk.Button(left, text="Sprite Animator", command=self.open_sprite_animator).pack(fill='x')
+        tk.Button(left, text="Floor Audio Links", command=self.open_floor_audio_editor).pack(fill='x')
 
         #ttk.Button(left,text='Abrir Asset Builder',command=self.open_asset_builder).pack(fill='x')
         ttk.Button(left,text='Guardar Proyecto',command=self.save_project).pack(fill='x')
@@ -1222,6 +1229,9 @@ class Toolkit:
 
     def update_runtime_actor(self, dt):
 
+        if hasattr(self, "audio_manager"):
+            self.audio_manager.update(dt)
+
         if self.runtime_event_cooldown > 0:
             self.runtime_event_cooldown -= dt
 
@@ -1839,6 +1849,8 @@ class Toolkit:
         # ---------------------------------------------
         # si cambió de tile mover pack de celda runtime
         # ---------------------------------------------
+        stepped_tile = None
+
         if gx != old_gx or gy != old_gy:
 
             old_tile = self.runtime_world.grid[old_gy][old_gx]
@@ -1850,6 +1862,8 @@ class Toolkit:
             if pack not in new_tile.actors:
                 new_tile.actors.append(pack)
 
+            stepped_tile = new_tile
+
         # ---------------------------------------------
         # guardar nueva posicion
         # ---------------------------------------------
@@ -1857,6 +1871,9 @@ class Toolkit:
         pack["gy"] = gy
 
         #print(pack["gx"], pack["gy"])
+        if stepped_tile is not None:
+            self.play_runtime_floor_step(stepped_tile, pack)
+
         check_runtime_step_events(self)
 
         inst.offx = nx
@@ -3948,6 +3965,8 @@ class Toolkit:
 
     def deserialize_tile(self, td, x, y):
         t = Tile()
+        t.gx = x
+        t.gy = y
         t.floor_tex = td.get("floor_tex")
         t.wall_tex = td.get("wall_tex")
         t.floor_height = td.get("floor_height", 0)
@@ -4138,7 +4157,8 @@ class Toolkit:
             "sprites": {},
             "actors": {},
             "skills": {},
-            "items": {}
+            "items": {},
+            "audio": {}
         }
 
         # =========================================
@@ -4325,11 +4345,130 @@ class Toolkit:
             }
 
         data["camera_presets"] = self.camera_presets
+        data["audio"] = {
+            "floor_audio_links": copy.deepcopy(getattr(self, "floor_audio_links", {}))
+        }
 
         with open(path,"w") as f:
             json.dump(data,f,indent=4)
 
         messagebox.showinfo("Save","Project saved.")
+
+    def open_floor_audio_editor(self):
+        win = tk.Toplevel(self.root)
+        win.title("Floor Audio Links")
+        win.geometry("520x420")
+
+        selected_texture = tk.StringVar(value=self.selected_texture or "")
+        sound_path = tk.StringVar(value="")
+        volume_var = tk.DoubleVar(value=0.8)
+        cooldown_var = tk.DoubleVar(value=0.25)
+
+        textures = sorted(self.texture_manager.floor_textures)
+
+        def refresh_fields(*_):
+            tex = selected_texture.get()
+            link = self.floor_audio_links.get(tex, {})
+            sound_path.set(link.get("sound", ""))
+            volume_var.set(link.get("volume", 0.8))
+            cooldown_var.set(link.get("cooldown", 0.25))
+
+        def browse_sound():
+            path = filedialog.askopenfilename(
+                filetypes=[
+                    ("Audio", "*.wav *.ogg *.mp3"),
+                    ("All files", "*.*")
+                ]
+            )
+            if path:
+                sound_path.set(path)
+
+        def save_link():
+            tex = selected_texture.get()
+            if not tex:
+                messagebox.showwarning("Floor Audio", "Selecciona una textura de suelo.")
+                return
+
+            self.floor_audio_links[tex] = {
+                "sound": sound_path.get(),
+                "volume": float(volume_var.get()),
+                "cooldown": float(cooldown_var.get())
+            }
+            messagebox.showinfo("Floor Audio", "Vinculo guardado.")
+
+        def delete_link():
+            tex = selected_texture.get()
+            if tex in self.floor_audio_links:
+                del self.floor_audio_links[tex]
+            refresh_fields()
+
+        tk.Label(win, text="Textura de suelo").pack(anchor="w", padx=12, pady=(12, 2))
+        combo = ttk.Combobox(win, textvariable=selected_texture, values=textures, state="readonly")
+        combo.pack(fill="x", padx=12)
+        combo.bind("<<ComboboxSelected>>", refresh_fields)
+
+        tk.Label(win, text="Archivo de sonido").pack(anchor="w", padx=12, pady=(12, 2))
+        row = tk.Frame(win)
+        row.pack(fill="x", padx=12)
+        tk.Entry(row, textvariable=sound_path).pack(side="left", fill="x", expand=True)
+        tk.Button(row, text="Buscar", command=browse_sound).pack(side="left", padx=(4, 0))
+
+        tk.Label(win, text="Volumen").pack(anchor="w", padx=12, pady=(12, 2))
+        tk.Scale(win, from_=0.0, to=1.0, resolution=0.05, orient="horizontal", variable=volume_var).pack(fill="x", padx=12)
+
+        tk.Label(win, text="Cooldown entre pasos (segundos)").pack(anchor="w", padx=12, pady=(12, 2))
+        tk.Scale(win, from_=0.0, to=1.0, resolution=0.05, orient="horizontal", variable=cooldown_var).pack(fill="x", padx=12)
+
+        tk.Button(win, text="Guardar vinculo", command=save_link).pack(fill="x", padx=12, pady=(16, 4))
+        tk.Button(win, text="Eliminar vinculo", command=delete_link).pack(fill="x", padx=12)
+
+        refresh_fields()
+
+    def set_floor_audio_link(self, texture_name, sound_path, volume=0.8, cooldown=0.25):
+        if not texture_name:
+            return
+
+        self.floor_audio_links[texture_name] = {
+            "sound": sound_path,
+            "volume": float(volume),
+            "cooldown": float(cooldown)
+        }
+
+    def play_runtime_floor_step(self, tile, pack=None):
+        if not tile:
+            return
+
+        tex = getattr(tile, "floor_tex", None)
+        if not tex:
+            return
+
+        link = getattr(self, "floor_audio_links", {}).get(tex)
+        if not link:
+            return
+
+        now = time.time()
+        cooldown = float(link.get("cooldown", 0.25))
+        key = (getattr(tile, "gx", None), getattr(tile, "gy", None), tex)
+
+        if self._last_step_audio_tile == key and now - getattr(self, "_last_step_audio_time", 0.0) < cooldown:
+            return
+
+        self._last_step_audio_tile = key
+        self._last_step_audio_time = now
+
+        actor_name = "player"
+        if pack and "inst" in pack:
+            actor_name = getattr(pack["inst"], "actor_name", "player")
+
+        track_id = f"footstep:{actor_name}:{now}"
+        self.audio_manager.play(
+            track_id=track_id,
+            path=link.get("sound", ""),
+            volume=float(link.get("volume", 0.8)),
+            loop=False,
+            category="footstep",
+            replace=False
+        )
 
     def clone_clips(self, clips):
         out = []
@@ -4547,6 +4686,9 @@ class Toolkit:
             "camera_presets",
             self.camera_presets
         )
+
+        audio_data = data.get("audio", {})
+        self.floor_audio_links = audio_data.get("floor_audio_links", data.get("floor_audio_links", {}))
 
         self.camera_preset_combo["values"] = list(
             self.camera_presets.keys()

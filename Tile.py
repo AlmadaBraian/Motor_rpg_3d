@@ -1,5 +1,8 @@
 class Tile:
     def __init__(self):
+        self.gx = 0
+        self.gy = 0
+
         self.floor_tex = None
         self.wall_tex = None
 
