@@ -5,7 +5,7 @@ from ActorInstance import ActorInstance
 import IA
 from RuntimeSkill import RuntimeSkill, update_knockback
 from SpriteManager import Animator
-from config import GRID_H, GRID_W
+from config import CAMERA_PRESETS, GRID_H, GRID_W
 from BasicScripts import END_COMBAT_SCRIPT, NORMAL_ATTACK_SCRIPT
 import random
 
@@ -3516,18 +3516,24 @@ class RuntimeCombat:
         if self.battle_camera_mode == 0:
 
             # tactical
-            cam.y = 0
-            target_pitch = 55
-            target_dist = 18
+            preset = CAMERA_PRESETS["battle_tactical"]
+
+            cam.y = preset["y"]
+
+            target_pitch = preset["pitch"]
+            target_dist  = preset["distance"]
             cam.pitch += (target_pitch - cam.pitch) * dt * 6
             cam.distance += (target_dist - cam.distance) * dt * 6
 
         else:
 
             # close camera
-            cam.y = 1
-            target_pitch = 20
-            target_dist = 6
+            preset = CAMERA_PRESETS["battle_close"]
+
+            cam.y = preset["y"]
+
+            target_pitch = preset["pitch"]
+            target_dist  = preset["distance"]
             cam.pitch += (target_pitch - cam.pitch) * dt * 6
             cam.distance += (target_dist - cam.distance) * dt * 6
 

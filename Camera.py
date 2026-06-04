@@ -1,13 +1,24 @@
+from config import CAMERA_PRESETS
+from copy import deepcopy
+
+
 class Camera:
     def __init__(self):
         self.reset()
 
     def reset(self):
-        self.x = 12
-        self.y = 0
-        self.z = 12
+        apply_camera_preset(self, "editor")
 
-        self.yaw = 45
-        self.pitch = 55
+def apply_camera_preset(cam, preset_name):
+        p = CAMERA_PRESETS[preset_name]
 
-        self.distance = 35
+        for k, v in p.items():
+            setattr(cam, k, v)
+
+def build_world_camera_snapshot(tool):
+    return {
+        "yaw": tool.runtime_cam_orbit,
+        "pitch": tool.runtime_cam_target_pitch,
+        "distance": tool.runtime_cam_target_distance,
+        "height": tool.runtime_cam_target_height
+    }

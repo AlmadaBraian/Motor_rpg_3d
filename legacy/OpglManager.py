@@ -268,8 +268,6 @@ class GLViewport(OpenGLFrame):
         self.camera = self.editor_camera
         self.active_camera_mode = "editor"
 
-        self.game_cam_anim = CameraAnimator(self.game_camera)
-
         # setup inicial game camera
         self.game_camera.x = 5
         self.game_camera.y = 1
@@ -529,8 +527,11 @@ class GLViewport(OpenGLFrame):
         # =====================================================
         # 1. animaciones de cámara cinematicas
         # =====================================================
-        if hasattr(self, "game_cam_anim") and self.game_cam_anim:
-            self.game_cam_anim.update(dt)
+        if hasattr(self.toolkit_ref.game_view, "game_cam_anim"):
+
+            if self.toolkit_ref.game_view.game_cam_anim:
+
+                self.toolkit_ref.game_view.game_cam_anim.update(dt)
 
         # =====================================================
         # 2. update runtime actor / movimiento / cambio de clips
@@ -543,11 +544,17 @@ class GLViewport(OpenGLFrame):
         # =====================================================
         # 3. cámara sigue actor DESPUES del movimiento
         # =====================================================
-        if hasattr(self, "toolkit_ref"):
-            if hasattr(self.toolkit_ref, "play_mode"):
-                if self.toolkit_ref.play_mode:
-                    if hasattr(self.toolkit_ref, "runtime_world") and self.toolkit_ref.runtime_world:
-                        self.follow_runtime_camera()
+        if self.toolkit_ref.play_mode:
+
+            if not self.toolkit_ref.battle_mode:
+
+                if hasattr(self.toolkit_ref, "runtime_world"):
+
+                    if self.toolkit_ref.runtime_world:
+
+                        if not self.toolkit_ref.runtime_camera_locked:
+
+                            self.follow_runtime_camera()
 
         # =====================================================
         # 4. construir matrices con cámara ya actualizada

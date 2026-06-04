@@ -106,6 +106,23 @@ class Toolkit:
         self.runtime_climb_action = None
         self.runtime_camera_locked = False
         self.runtime_camera_catchup = False
+        self.camera_preview_dirty = False
+        self.camera_preview_presets = [
+            "editor",
+            "world",
+            "battle_tactical",
+            "battle_close"
+        ]
+
+        self.camera_presets = copy.deepcopy(CAMERA_PRESETS)
+        self.current_camera_preset = tk.StringVar(value="editor")
+
+        self.cam_preset_yaw = tk.DoubleVar()
+        self.cam_preset_pitch = tk.DoubleVar()
+        self.cam_preset_distance = tk.DoubleVar()
+        self.cam_preset_height = tk.DoubleVar()
+
+        self.camera_preview_index = 0
         self.current_wall_direction = ""
         self.skills = {}
         self.items = {}
@@ -252,7 +269,7 @@ class Toolkit:
         left=tk.Frame(self.root)
         left.pack(side='left',fill='y')
         center=tk.Frame(self.root)
-        center.pack(side='left')
+        center.pack(side='left', padx=1)
         top_map_panel = tk.Frame(center)
         top_map_panel.pack(fill='x', pady=4)
 
@@ -288,6 +305,81 @@ class Toolkit:
         self.map_status_label = tk.Label(map_frame, text="", anchor='w')
         self.map_status_label.pack(fill='x', pady=(4, 0))
         self.refresh_map_selector()
+
+        # =========================================
+        # CAMERA PRESETS CONTAINER
+        # =========================================
+
+        self.camera_preset_frame = tk.Frame(prop_frame_3)
+        self.camera_preset_frame.pack(fill="both", expand=True)
+
+        tk.Label(self.camera_preset_frame, text="Camera Preset").pack()
+
+        self.camera_preset_combo = ttk.Combobox(
+            self.camera_preset_frame,
+            textvariable=self.current_camera_preset,
+            state="readonly"
+        )
+
+        self.camera_preset_combo.pack(fill="x")
+
+        self.camera_preset_combo["values"] = list(
+            self.camera_presets.keys()
+        )
+
+        self.camera_preset_combo.bind(
+            "<<ComboboxSelected>>",
+            self.on_camera_preset_changed
+        )
+
+        tk.Label(self.camera_preset_frame, text="Yaw").pack()
+
+        tk.Scale(
+            self.camera_preset_frame,
+            from_=-180,
+            to=180,
+            resolution=1,
+            orient="horizontal",
+            variable=self.cam_preset_yaw,
+            command=lambda v: self.update_camera_preset_values()
+        ).pack(fill="x")
+
+        tk.Label(self.camera_preset_frame, text="Pitch").pack()
+
+        tk.Scale(
+            self.camera_preset_frame,
+            from_=-90,
+            to=90,
+            resolution=1,
+            orient="horizontal",
+            variable=self.cam_preset_pitch,
+            command=lambda v: self.update_camera_preset_values()
+        ).pack(fill="x")
+
+        tk.Label(self.camera_preset_frame, text="Distance").pack()
+
+        tk.Scale(
+            self.camera_preset_frame,
+            from_=-1,
+            to=100,
+            resolution=1,
+            orient="horizontal",
+            variable=self.cam_preset_distance,
+            command=lambda v: self.update_camera_preset_values()
+        ).pack(fill="x")
+
+        tk.Label(self.camera_preset_frame, text="Height").pack()
+
+        tk.Scale(
+            self.camera_preset_frame,
+            from_=-5,
+            to=10,
+            resolution=1,
+            orient="horizontal",
+            variable=self.cam_preset_height,
+            command=lambda v: self.update_camera_preset_values()
+        ).pack(fill="x")
+
 
         tk.Label(left,text='modo mapeo').pack(pady=4)
         self.uv_mode_combo = ttk.Combobox(left, values=["tile","stretch"], state="readonly")
@@ -371,6 +463,7 @@ class Toolkit:
             variable=self.cam_rot_speed
         ).pack(fill="x")
 
+       
         self.obj_title_label = tk.Frame(prop_frame_2)
 
         self.obj_config_frame_1 = tk.Frame(prop_frame_2) 
@@ -381,7 +474,7 @@ class Toolkit:
 
 
         tk.Button(
-            prop_frame_3,
+            map_frame,
             text="RUN GAME",
             command=self.runtime.open_game_runtime
         ).pack(fill='x')
@@ -484,6 +577,96 @@ class Toolkit:
     def open_item_editor (self):
         
         open_item_editor(self)
+
+    def on_camera_preset_changed(self, event=None):
+
+        name = self.current_camera_preset.get()
+
+        p = self.camera_presets[name]
+
+        self.cam_preset_yaw.set(p["yaw"])
+        self.cam_preset_pitch.set(p["pitch"])
+        self.cam_preset_distance.set(p["distance"])
+        self.cam_preset_height.set(p["y"])
+
+        self.preview_camera_preset()
+
+    def update_camera_preset_values(self):
+
+        name = self.current_camera_preset.get()
+
+        p = self.camera_presets[name]
+
+        p["yaw"] = self.cam_preset_yaw.get()
+        p["pitch"] = self.cam_preset_pitch.get()
+        p["distance"] = self.cam_preset_distance.get()
+        p["y"] = self.cam_preset_height.get()
+
+        self.camera_preview_dirty = True
+        self.preview_camera_preset()
+
+    def reset_camera(self):
+
+        name = self.current_camera_preset.get()
+
+        print("CAMARA REAL")
+        print(
+            self.viewport.camera.x,
+            self.viewport.camera.y,
+            self.viewport.camera.z,
+            self.viewport.camera.yaw,
+            self.viewport.camera.pitch,
+            self.viewport.camera.distance
+        )
+
+        print("PRESET")
+        print(self.camera_presets[name])
+
+        print("ANTES:", self.camera_presets[name])
+
+        self.camera_presets[name] = copy.deepcopy(
+            CAMERA_PRESETS[name]
+        )
+
+        print("DESPUES:", self.camera_presets[name])
+
+        self.on_camera_preset_changed()
+
+        self.preview_camera_preset()
+
+    def preview_camera_preset(self):
+
+        name = self.current_camera_preset.get()
+        p = self.camera_presets[name]
+
+        print("APLICANDO:", p)
+
+        cam = self.viewport.camera
+
+        if "x" in p:
+            cam.x = p["x"]
+
+        if "y" in p:
+            cam.y = p["y"]
+
+        if "z" in p:
+            cam.z = p["z"]
+
+        cam.yaw = p["yaw"]
+        cam.pitch = p["pitch"]
+        cam.distance = p["distance"]
+
+        print(
+            "CAM:",
+            cam.x,
+            cam.y,
+            cam.z,
+            cam.yaw,
+            cam.pitch,
+            cam.distance
+        )
+
+        #apply_camera_preset(cam, name)
 
     def on_event_fade_finished(self):
 
@@ -854,27 +1037,42 @@ class Toolkit:
     def mostrarConfigObj(self):
 
         if self.show_object_transform:
+
             self.obj_title_label.pack_forget()
             self.obj_config_frame_1.pack_forget()
             self.obj_config_frame_2.pack_forget()
+
+            # vuelve a mostrar presets de cámara
+            self.camera_preset_frame.pack(fill="both", expand=True)
+
             self.show_object_transform = False
 
         else:
+
             self.show_object_transform = True
-            # Limpiamos contenido interno de los frames
-            for f in [self.obj_config_frame_1, self.obj_config_frame_2, self.obj_title_label]:
+
+            # oculta presets de cámara
+            self.camera_preset_frame.pack_forget()
+
+            for f in [
+                self.obj_config_frame_1,
+                self.obj_config_frame_2,
+                self.obj_title_label
+            ]:
                 for w in f.winfo_children():
                     w.destroy()
 
-            titulo = tk.Label(self.obj_title_label, text='Object Transform', font=("Arial", 10, "bold"))
+            titulo = tk.Label(
+                self.obj_title_label,
+                text='Object Transform',
+                font=("Arial", 10, "bold")
+            )
             titulo.pack(fill='x', pady=(10,0))
 
             self.objConfig_Offsets(self.obj_config_frame_1)
             self.objConfig_Rotations(self.obj_config_frame_2)
 
-            #self.objConfig(self.obj_config_frame_1, self.obj_config_frame_2)
             self.obj_title_label.pack(fill='x')
-            
             self.obj_config_frame_1.pack(fill='x', pady=(20,0))
             self.obj_config_frame_2.pack(fill='x', pady=(30,0))
 
@@ -2073,10 +2271,6 @@ class Toolkit:
             inst.offz = inst.ground_z
             inst.vspeed = 0
             inst.on_ground = True
-    
-
-    def reset_camera(self):
-        self.viewport.camera.reset()
 
     def save_sprite_library(self):
         data = {}
@@ -2258,14 +2452,22 @@ class Toolkit:
         self.viewport.space_held = False
 
     def toggle_camera_view(self, event=None):
-        target = None
 
-        if self.play_mode and hasattr(self, "game_view"):
-            target = self.game_view
-        else:
-            target = self.viewport
+        self.camera_preview_index += 1
 
-        target.toggle_camera_mode()
+        if self.camera_preview_index >= len(self.camera_preview_presets):
+            self.camera_preview_index = 0
+
+        preset_name = self.camera_preview_presets[self.camera_preview_index]
+
+        apply_camera_preset(
+            self.viewport.camera,
+            preset_name
+        )
+
+        print("CAMERA:", preset_name)
+
+        #target.toggle_camera_mode()
 
     def import_sprite_sheet_window(self):
         path = filedialog.askopenfilename(filetypes=[("PNG Image","*.png")])
@@ -2908,6 +3110,7 @@ class Toolkit:
 
         self.viewport.last_x = e.x
         self.viewport.last_y = e.y
+        self.sync_camera_to_ui()
 
     def start_pan(self, e):
         if self.play_mode:
@@ -2979,12 +3182,41 @@ class Toolkit:
 
         self.viewport.last_x = e.x
         self.viewport.last_y = e.y
+        self.sync_camera_to_ui()
 
     def zoom_camera(self, e):
         if self.play_mode:
             return
         self.viewport.camera.distance -= (1 if e.delta > 0 else -1)
         self.viewport.camera.distance = max(5, min(100, self.viewport.camera.distance))
+        self.sync_camera_to_ui()
+
+    def sync_camera_to_ui(self):
+
+        name = self.current_camera_preset.get()
+
+        if name not in self.camera_presets:
+            return
+
+        cam = self.viewport.camera
+        p = self.camera_presets[name]
+
+        p["yaw"] = cam.yaw
+        p["pitch"] = cam.pitch
+        p["distance"] = cam.distance
+
+        if "x" in p:
+            p["x"] = cam.x
+
+        if "y" in p:
+            p["y"] = cam.y
+
+        if "z" in p:
+            p["z"] = cam.z
+
+        self.cam_preset_yaw.set(round(cam.yaw, 1))
+        self.cam_preset_pitch.set(round(cam.pitch, 1))
+        self.cam_preset_distance.set(round(cam.distance, 1))
 
     def set_tool(self, toolname):
         self.selected_tool = toolname
@@ -4105,6 +4337,8 @@ class Toolkit:
 
             }
 
+        data["camera_presets"] = self.camera_presets
+
         with open(path,"w") as f:
             json.dump(data,f,indent=4)
 
@@ -4322,6 +4556,15 @@ class Toolkit:
 
             self.actors[name] = actor
 
+        self.camera_presets = data.get(
+            "camera_presets",
+            self.camera_presets
+        )
+
+        self.camera_preset_combo["values"] = list(
+            self.camera_presets.keys()
+        )
+
         # =========================================
         # LOAD MAPS / GRID
         # =========================================
@@ -4331,6 +4574,7 @@ class Toolkit:
         self.selected_sprite = None
         self.refresh_actor_listbox()
         self.refresh_map_selector()
+        self.on_camera_preset_changed()
         self.draw_grid()
 
         messagebox.showinfo("Load","Project loaded.")

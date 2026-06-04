@@ -18,3 +18,34 @@ EXPORT_FOLDER = base_path + "/export_dc"
 media_folder = base_path + "/media"
 
 scene_folder = base_path + "/scenes"
+
+CAMERA_PRESETS = {
+    "editor": {
+        "x": 12,
+        "y": 0,
+        "z": 12,
+        "yaw": 45,
+        "pitch": 55,
+        "distance": 35
+    },
+
+    "world": {
+        "y": 0.8,
+        "yaw": 0,
+        "pitch": 35,
+        "distance": 7
+    },
+
+    "battle_tactical": {
+        "y": 0,
+        "yaw":0,
+        "pitch": 55,
+        "distance": 14
+    },
+
+    "battle_close": {
+        "y": 1,
+        "pitch": 20,
+        "distance": 6
+    }
+}

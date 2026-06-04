@@ -16,7 +16,7 @@ from EventManager import (
 from RuntimeWorld import RuntimeWorld
 
 from SpriteManager import Animator
-from config import GRID_H, GRID_W, SCREEN_H, SCREEN_W
+from config import CAMERA_PRESETS, GRID_H, GRID_W, SCREEN_H, SCREEN_W
 
 
 class RuntimeSystem:
@@ -36,7 +36,7 @@ class RuntimeSystem:
         if tkref.play_mode:
             return
 
-        tkref.runtime_cam_orbit = 45
+        tkref.runtime_cam_orbit = 0
 
         tkref.runtime_last_event_tile = None
         tkref.runtime_event_cooldown = 0
@@ -469,13 +469,16 @@ class RuntimeSystem:
             # =====================================
             if tkref.battle_mode == False:
 
-                cam.x = p.x
-                cam.y = 0.8
-                cam.z = p.z
+                preset = CAMERA_PRESETS["world"]
 
-                cam.yaw = 180
-                cam.pitch = -20
-                cam.distance = 6
+                cam.y = preset["y"]
+                cam.yaw = preset["yaw"]
+                cam.pitch = preset["pitch"]
+                cam.distance = preset["distance"]
+
+        if tkref.camera_preview_dirty:
+            tkref.preview_camera_preset()
+            tkref.camera_preview_dirty = False
 
         if tkref.dialog_visible:
 
@@ -580,7 +583,7 @@ class RuntimeSystem:
         # CAMARAS
         # =====================================
         tkref.runtime_camera_locked = False
-        tkref.runtime_cam_orbit = 45
+        tkref.runtime_cam_orbit = 0
 
         # =====================================
         # VIEWPORT EDITOR

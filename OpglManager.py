@@ -41,7 +41,7 @@ from PIL import Image, ImageTk
 import math
 import os
 from SpriteManager import *
-from Camera import Camera
+from Camera import Camera, apply_camera_preset
 
 
 def rotate_3d(x, y, z, rx, ry, rz):
@@ -92,12 +92,7 @@ class GLViewport(OpenGLFrame):
         self.active_camera_mode = "editor"
 
         # setup inicial game camera
-        self.game_camera.x = 5
-        self.game_camera.y = 1
-        self.game_camera.z = 5
-        self.game_camera.yaw = 180
-        self.game_camera.pitch = -10
-        self.game_camera.distance = 6
+        apply_camera_preset(self.game_camera, "world")
 
 
         self.preview_paused = False
@@ -171,15 +166,6 @@ class GLViewport(OpenGLFrame):
 
         return (cx, cy, cz)
     
-    def toggle_camera_mode(self):
-        if self.active_camera_mode == "editor":
-            self.active_camera_mode = "game"
-            self.camera = self.game_camera
-            print("VIEWPORT NOW USING GAME CAMERA")
-        else:
-            self.active_camera_mode = "editor"
-            self.camera = self.editor_camera
-            print("VIEWPORT NOW USING EDITOR CAMERA")
 
     def resolve_texture(self, tex):
         if tex is None:
