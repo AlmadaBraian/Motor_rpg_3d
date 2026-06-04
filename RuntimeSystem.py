@@ -6,6 +6,7 @@ from CameraAnimator import CameraAnimator
 from OpglManager import GLViewport
 
 from EventManager import (
+    check_runtime_autorun_events,
     execute_runtime_tile_event,
     get_near_event_cell,
     get_near_interactive_actor,
@@ -161,6 +162,8 @@ class RuntimeSystem:
             100,
             lambda: tkref.game_view.focus_set()
         )
+
+        check_runtime_autorun_events(tkref)
 
     # =====================================================
     # BUILD RUNTIME COPY

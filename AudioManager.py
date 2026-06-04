@@ -1,10 +1,14 @@
+import hashlib
 import importlib.util
 import os
+import shutil
+import subprocess
+import tempfile
 import time
 
 
 class AudioTrack:
-    def __init__(self, track_id, path, channel=None, sound=None, volume=1.0, loop=False, category="sfx"):
+    def __init__(self, track_id, path, channel=None, sound=None, volume=1.0, loop=False, category="sfx", playback_path=None):
         self.track_id = track_id
         self.path = path
         self.channel = channel
@@ -18,6 +22,7 @@ class AudioTrack:
         self.loop = loop
         self.category = category
         self.started_at = time.time()
+        self.playback_path = playback_path or path
 
 
 class AudioManager:
@@ -34,6 +39,11 @@ class AudioManager:
             "sfx": 1.0,
             "footstep": 1.0
         }
+        self.decode_cache = {}
+        self.decode_cache_dir = os.path.join(
+            tempfile.gettempdir(),
+            "motor_rpg_3d_audio"
+        )
         self._init_backend()
 
     def _init_backend(self):
@@ -59,10 +69,85 @@ class AudioManager:
         if not path:
             return ""
 
+        path = str(path).replace("\\", os.sep).replace("/", os.sep)
+
         if os.path.isabs(path):
-            return path
+            return os.path.normpath(path)
 
         return os.path.normpath(path)
+
+    def _decode_to_pcm_wav(self, path):
+        if path in self.decode_cache:
+            cached = self.decode_cache[path]
+
+            if os.path.exists(cached):
+                return cached
+
+        ffmpeg = shutil.which("ffmpeg")
+
+        if not ffmpeg:
+            print(
+                "AUDIO DECODE ERROR:",
+                path,
+                "requires PCM WAV/OGG/MP3 supported by SDL_mixer, or ffmpeg installed for conversion"
+            )
+            return None
+
+        os.makedirs(self.decode_cache_dir, exist_ok=True)
+
+        stat = os.stat(path)
+        key = f"{os.path.abspath(path)}:{stat.st_mtime_ns}:{stat.st_size}"
+        digest = hashlib.sha1(key.encode("utf-8")).hexdigest()
+        outpath = os.path.join(self.decode_cache_dir, f"{digest}.wav")
+
+        if not os.path.exists(outpath):
+            cmd = [
+                ffmpeg,
+                "-y",
+                "-v",
+                "error",
+                "-i",
+                path,
+                "-acodec",
+                "pcm_s16le",
+                "-ar",
+                "44100",
+                "-ac",
+                "2",
+                outpath
+            ]
+
+            result = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            if result.returncode != 0:
+                print(
+                    "AUDIO DECODE ERROR:",
+                    path,
+                    result.stderr.strip()
+                )
+                return None
+
+        self.decode_cache[path] = outpath
+        return outpath
+
+    def _load_sound(self, path):
+        try:
+            return self._pygame.mixer.Sound(path), path
+        except Exception as exc:
+            decoded = self._decode_to_pcm_wav(path)
+
+            if not decoded:
+                raise exc
+
+            try:
+                return self._pygame.mixer.Sound(decoded), decoded
+            except Exception:
+                raise exc
 
     def _get_category_volume(self, category):
         return self.category_volumes.get(category, 1.0)
@@ -88,7 +173,7 @@ class AudioManager:
             self.stop(track_id)
 
         try:
-            sound = self._pygame.mixer.Sound(path)
+            sound, playback_path = self._load_sound(path)
             loops = -1 if loop else 0
             channel = sound.play(loops=loops, fade_ms=int(fade_ms))
         except Exception as exc:
@@ -106,7 +191,8 @@ class AudioManager:
             sound=sound,
             volume=volume,
             loop=loop,
-            category=category
+            category=category,
+            playback_path=playback_path
         )
 
         self.tracks[track_id] = track

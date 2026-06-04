@@ -915,6 +915,37 @@ def update_world_actor_move(self, pack, dt):
         * dt
     )
 
+def check_runtime_autorun_events(self):
+    if not hasattr(self, "runtime_world"):
+        return False
+
+    if not self.runtime_world:
+        return False
+
+    if self.world_event_running:
+        return False
+
+    if self.runtime_event_cooldown > 0:
+        return False
+
+    for row in self.runtime_world.grid:
+        for t in row:
+            ed = getattr(t, "event_data", None)
+
+            if not ed:
+                continue
+
+            if not ed.get("enabled", False):
+                continue
+
+            if ed.get("trigger", "") != "autorun":
+                continue
+
+            execute_runtime_tile_event(self, t)
+            return True
+
+    return False
+
 def check_runtime_proximity_events(self):
 
     if self.world_event_running:
@@ -950,7 +981,7 @@ def check_runtime_proximity_events(self):
 
             trigger_dist = ed.get(
                 "distance",
-                2
+                ed.get("radius", 2)
             )
 
             if dist <= trigger_dist:

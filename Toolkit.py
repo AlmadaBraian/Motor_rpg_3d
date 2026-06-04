@@ -1257,6 +1257,9 @@ class Toolkit:
         if self.world_event_running:
             update_world_event(self,dt)
             #print(self.sprites.keys())
+        else:
+            check_runtime_autorun_events(self)
+            check_runtime_proximity_events(self)
             
         if self.battle_input_cooldown > 0:
             self.battle_input_cooldown -= dt
