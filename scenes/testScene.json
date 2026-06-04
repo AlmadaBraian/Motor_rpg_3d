@@ -1,6 +1,7 @@
 {
   "scene": "test",
   "script": [
+    {"action": "lock_player"},
     {
     "action": "deploy_party"
     },
@@ -11,6 +12,7 @@
     {
       "action": "all_play_idle"
     },
+     {"action": "audio_play", "track": "combat_music", "music": "music/combate_01.mp3", "volume": 0.7, "loop": true},
     {
       "action": "show_dialog",
       "speaker": "Batman",
@@ -106,12 +108,18 @@
     {
   "action": "withdraw_party"
     },
+    {"action": "unlock_player"},
     {
       "action": "wait",
       "time": 2500
     },
     {
       "action": "start_combat"
-    }
+    },
+    {
+    "action": "audio_stop",
+    "track": "combat_music",
+    "fade_ms": 1000
+  }
   ]
 }

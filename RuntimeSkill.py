@@ -176,12 +176,12 @@ def update_skill_script(runtime_skill, dt):
         runtime_skill.index
     ]
 
-    run_skill_command(
+    run_combat_command(
         runtime_skill,
         cmd
     )
 
-def run_skill_command(
+def run_combat_command(
     runtime_skill,
     cmd
 ):
@@ -935,6 +935,75 @@ def run_skill_command(
         runtime_skill.index += 1
 
         return
+    
+    if action == "audio_play":
+            track_id = cmd.get("track", cmd.get("track_id", "sfx"))
+            path = cmd.get("sound", cmd.get("music", cmd.get("voice", "")))
+            category = cmd.get("category", "sfx")
+
+            if "music" in cmd:
+                category = "music"
+            elif "voice" in cmd:
+                category = "voice"
+
+            if cmd.get("combat_music", False):
+                o.current_music = track_id
+
+            if hasattr(o, "audio_manager"):
+                o.audio_manager.play(
+                    track_id=track_id,
+                    path=path,
+                    volume=cmd.get("volume", 1.0),
+                    loop=cmd.get("loop", category == "music"),
+                    category=category,
+                    replace=cmd.get("replace", True),
+                    fade_ms=cmd.get("fade_ms", 0)
+                )
+            return
+
+    if action == "audio_pause":
+            if hasattr(o, "audio_manager"):
+                o.audio_manager.pause(cmd.get("track", cmd.get("track_id")))
+            return
+
+    if action in ("audio_resume", "audio_unpause"):
+            if hasattr(o, "audio_manager"):
+                o.audio_manager.resume(cmd.get("track", cmd.get("track_id")))
+            return
+
+    if action == "audio_stop":
+            if hasattr(o, "audio_manager"):
+                o.audio_manager.stop(
+                    cmd.get("track", cmd.get("track_id")),
+                    fade_ms=cmd.get("fade_ms", 0)
+                )
+            return
+
+    if action == "audio_set_volume":
+            if hasattr(o, "audio_manager"):
+                o.audio_manager.set_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("volume", 1.0)
+                )
+            return
+
+    if action == "audio_change_volume":
+            if hasattr(o, "audio_manager"):
+                o.audio_manager.change_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("delta", 0.0)
+                )
+            return
+
+    if action == "audio_fade_volume":
+            if hasattr(o, "audio_manager"):
+                o.audio_manager.fade_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("volume", cmd.get("target_volume", 0.0)),
+                    duration=cmd.get("duration", 1.0),
+                    stop_on_finish=cmd.get("stop", False)
+                )
+            return
 
     # =====================================================
     # END SKILL

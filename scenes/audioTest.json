@@ -1,0 +1,6 @@
+{
+  "scene": "audio_test",
+  "script": [
+    {"action": "audio_play", "track": "bgm_town", "music": "music/Patricia.mp3", "volume": 0.3, "loop": true}
+  ]
+}

@@ -109,6 +109,7 @@ class Toolkit:
         self.runtime_camera_locked = False
         self.runtime_camera_catchup = False
         self.camera_preview_dirty = False
+        self.current_music = None
         self.camera_preview_presets = [
             "editor",
             "world",
@@ -1251,18 +1252,12 @@ class Toolkit:
         if self.runtime_world is None:
             return
 
+        if not self.runtime_world.main_actor:
+            return
+        
         if self.world_event_running:
             update_world_event(self,dt)
             #print(self.sprites.keys())
-            return
-
-        if check_runtime_autorun_events(self):
-            return
-
-        if not self.runtime_world.main_actor:
-            return
-
-        check_runtime_proximity_events(self)
             
         if self.battle_input_cooldown > 0:
             self.battle_input_cooldown -= dt

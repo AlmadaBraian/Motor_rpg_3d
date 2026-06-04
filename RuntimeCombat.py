@@ -4084,6 +4084,20 @@ class RuntimeCombat:
 
         o = self.owner
 
+        music = getattr(
+            o,
+            "current_music",
+            None
+        )
+
+        if music and hasattr(o, "audio_manager"):
+            o.audio_manager.stop(
+                music,
+                fade_ms=1000
+            )
+
+        o.current_combat_music = None
+
         o.battle_mode = False
 
         o.battle_units = []

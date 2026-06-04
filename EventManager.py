@@ -170,6 +170,8 @@ def run_world_event_command(self, cmd):
 
             return
         if action == "audio_play":
+
+            
             track_id = cmd.get("track", cmd.get("track_id", "sfx"))
             path = cmd.get("sound", cmd.get("music", cmd.get("voice", "")))
             category = cmd.get("category", "sfx")
@@ -178,6 +180,23 @@ def run_world_event_command(self, cmd):
                 category = "music"
             elif "voice" in cmd:
                 category = "voice"
+
+            if category == "music":
+
+                if self.current_music:
+
+                    self.audio_manager.stop(
+                        self.current_music,
+                        fade_ms=cmd.get("fade_ms", 0)
+                    )
+
+                self.current_music = track_id
+
+            
+            #self.current_music = track_id
+
+            print("STOP:", self.current_music)
+            print("PLAY:", track_id)
 
             if hasattr(self, "audio_manager"):
                 self.audio_manager.play(
@@ -577,6 +596,14 @@ def run_world_event_command(self, cmd):
 
             print("SHOW DIALOG")
             print(cmd.get("text", [""]))
+            return
+        
+        if action == "lock_player":
+            self.player_input_locked = True
+            return
+
+        if action == "unlock_player":
+            self.player_input_locked = False
             return
         
         # ==========================
@@ -1099,6 +1126,12 @@ def check_runtime_step_events(self):
 
         if ed.get("trigger", "") != "step":
             return
+        
+        print(
+            "AUTORUN:",
+            ed.get("once"),
+            ed.get("done")
+        )
 
         execute_runtime_tile_event(self,t)
 
