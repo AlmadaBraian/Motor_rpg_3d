@@ -123,6 +123,11 @@ class RuntimeSystem:
             self.finish_game_runtime_setup
         )
 
+        tkref.game_win.after(
+            350,
+            lambda: check_runtime_autorun_events(tkref)
+        )
+
     # =====================================================
     # FINISH SETUP
     # =====================================================

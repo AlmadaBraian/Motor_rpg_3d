@@ -9,7 +9,28 @@ from SpriteManager import Animator
 from config import *
 
 
+def resolve_runtime_scene_path(scene_file):
+        if not scene_file:
+            return ""
+
+        candidates = [scene_file]
+
+        if not os.path.isabs(scene_file):
+            candidates.append(os.path.join(os.getcwd(), scene_file))
+            candidates.append(os.path.join(os.path.dirname(__file__), scene_file))
+            candidates.append(os.path.join("scenes", os.path.basename(scene_file)))
+            candidates.append(os.path.join(os.path.dirname(__file__), "scenes", os.path.basename(scene_file)))
+
+        for candidate in candidates:
+            if candidate and os.path.exists(candidate):
+                return candidate
+
+        return scene_file
+
+
 def start_world_event(self, jsonfile):
+        jsonfile = resolve_runtime_scene_path(jsonfile)
+
         if not os.path.exists(jsonfile):
             print("EVENT FILE NOT FOUND:", jsonfile)
             return
@@ -1110,9 +1131,13 @@ def execute_runtime_tile_event(self, t):
         if dlg:
             self.show_runtime_dialog(dlg)
 
-        scene_file = ed.get("scene", "")
+        script = ed.get("script", [])
+        if script:
+            start_world_script(self, script)
+
+        scene_file = resolve_runtime_scene_path(ed.get("scene", ""))
         if scene_file and os.path.exists(scene_file):
-            start_world_event(self,scene_file)
+            start_world_event(self, scene_file)
 
         tp = ed.get("teleport", None)
         if tp:

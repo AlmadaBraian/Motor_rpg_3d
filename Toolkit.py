@@ -1251,15 +1251,18 @@ class Toolkit:
         if self.runtime_world is None:
             return
 
-        if not self.runtime_world.main_actor:
-            return
-        
         if self.world_event_running:
             update_world_event(self,dt)
             #print(self.sprites.keys())
-        else:
-            check_runtime_autorun_events(self)
-            check_runtime_proximity_events(self)
+            return
+
+        if check_runtime_autorun_events(self):
+            return
+
+        if not self.runtime_world.main_actor:
+            return
+
+        check_runtime_proximity_events(self)
             
         if self.battle_input_cooldown > 0:
             self.battle_input_cooldown -= dt
