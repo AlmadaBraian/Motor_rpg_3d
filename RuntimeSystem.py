@@ -6,6 +6,7 @@ from CameraAnimator import CameraAnimator
 from OpglManager import GLViewport
 
 from EventManager import (
+    check_runtime_autorun_events,
     execute_runtime_tile_event,
     get_near_event_cell,
     get_near_interactive_actor,
@@ -40,6 +41,8 @@ class RuntimeSystem:
 
         tkref.runtime_last_event_tile = None
         tkref.runtime_event_cooldown = 0
+        tkref._last_step_audio_tile = None
+        tkref._last_step_audio_time = 0.0
 
         tkref.play_mode = True
         tkref.viewport.preview_paused = True
@@ -160,6 +163,8 @@ class RuntimeSystem:
             lambda: tkref.game_view.focus_set()
         )
 
+        check_runtime_autorun_events(tkref)
+
     # =====================================================
     # BUILD RUNTIME COPY
     # =====================================================
@@ -193,6 +198,8 @@ class RuntimeSystem:
             for x in range(GRID_W):
                 src = source_grid[y][x]
                 t = copy.deepcopy(src)
+                t.gx = x
+                t.gy = y
 
                 # ----------------------------
                 # reiniciar animadores sprites
@@ -534,6 +541,9 @@ class RuntimeSystem:
         # =====================================
         # RUNTIME
         # =====================================
+        if hasattr(tkref, "audio_manager"):
+            tkref.audio_manager.stop()
+
         tkref.runtime_world = None
 
         tkref.runtime_event_cooldown = 0
