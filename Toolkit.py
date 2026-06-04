@@ -28,6 +28,7 @@ from RuntimeActor import RuntimeActor
 from RuntimeCombat import RuntimeCombat
 from RuntimeWorld import RuntimeWorld
 from RuntimeSystem import RuntimeSystem
+from SceneManager import RuntimeSceneManager
 from AudioManager import AudioManager
 from Tile import Tile
 from SpriteAsset import SpriteAsset
@@ -129,6 +130,7 @@ class Toolkit:
         self.current_wall_direction = ""
         self.skills = {}
         self.items = {}
+        self.scene_manager = RuntimeSceneManager(self)
         self.runtime_combat = RuntimeCombat(self)
         self.runtime = RuntimeSystem(self)
         self.audio_manager = AudioManager()

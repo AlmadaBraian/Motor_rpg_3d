@@ -3,6 +3,7 @@
 # =========================================================
 
 from config import GRID_H, GRID_W
+from SceneManager import get_runtime_scene_manager
 from BasicScripts import NORMAL_ATTACK_SCRIPT
 
 
@@ -32,7 +33,8 @@ class RuntimeSkill:
 
         self.action_data = action_data
 
-        self.script = script or []
+        manager = get_runtime_scene_manager(self.owner)
+        self.script = manager.build_combat_script(script)
 
         self.index = 0
 
@@ -1004,6 +1006,37 @@ def run_combat_command(
                     stop_on_finish=cmd.get("stop", False)
                 )
             return
+
+    # =====================================================
+    # RUN SCRIPT / SCENE
+    # =====================================================
+
+    if action in ("run_script", "run_scene", "next_scene", "change_scene"):
+
+        scene_file = cmd.get(
+            "scene_new",
+            cmd.get("scene", cmd.get("file", ""))
+        )
+
+        inline_script = cmd.get("script", [])
+
+        manager = get_runtime_scene_manager(o)
+
+        if scene_file:
+            nested_script = manager.build_combat_script(scene_file)
+        else:
+            nested_script = manager.build_combat_script(inline_script)
+
+        if nested_script:
+            runtime_skill.script = (
+                runtime_skill.script[:runtime_skill.index + 1]
+                + nested_script
+                + runtime_skill.script[runtime_skill.index + 1:]
+            )
+
+        runtime_skill.index += 1
+
+        return
 
     # =====================================================
     # END SKILL
