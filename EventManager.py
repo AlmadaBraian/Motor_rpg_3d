@@ -9,7 +9,28 @@ from SpriteManager import Animator
 from config import *
 
 
+def resolve_runtime_scene_path(scene_file):
+        if not scene_file:
+            return ""
+
+        candidates = [scene_file]
+
+        if not os.path.isabs(scene_file):
+            candidates.append(os.path.join(os.getcwd(), scene_file))
+            candidates.append(os.path.join(os.path.dirname(__file__), scene_file))
+            candidates.append(os.path.join("scenes", os.path.basename(scene_file)))
+            candidates.append(os.path.join(os.path.dirname(__file__), "scenes", os.path.basename(scene_file)))
+
+        for candidate in candidates:
+            if candidate and os.path.exists(candidate):
+                return candidate
+
+        return scene_file
+
+
 def start_world_event(self, jsonfile):
+        jsonfile = resolve_runtime_scene_path(jsonfile)
+
         if not os.path.exists(jsonfile):
             print("EVENT FILE NOT FOUND:", jsonfile)
             return
@@ -148,6 +169,82 @@ def run_world_event_command(self, cmd):
             print("PLAYING:", clip)
 
             return
+        if action == "audio_play":
+            track_id = cmd.get("track", cmd.get("track_id", "sfx"))
+            path = cmd.get("sound", cmd.get("music", cmd.get("voice", "")))
+            category = cmd.get("category", "sfx")
+
+            if "music" in cmd:
+                category = "music"
+            elif "voice" in cmd:
+                category = "voice"
+
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.play(
+                    track_id=track_id,
+                    path=path,
+                    volume=cmd.get("volume", 1.0),
+                    loop=cmd.get("loop", category == "music"),
+                    category=category,
+                    replace=cmd.get("replace", True),
+                    fade_ms=cmd.get("fade_ms", 0)
+                )
+            return
+
+        if action == "audio_pause":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.pause(cmd.get("track", cmd.get("track_id")))
+            return
+
+        if action in ("audio_resume", "audio_unpause"):
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.resume(cmd.get("track", cmd.get("track_id")))
+            return
+
+        if action == "audio_stop":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.stop(
+                    cmd.get("track", cmd.get("track_id")),
+                    fade_ms=cmd.get("fade_ms", 0)
+                )
+            return
+
+        if action == "audio_set_volume":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.set_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("volume", 1.0)
+                )
+            return
+
+        if action == "audio_change_volume":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.change_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("delta", 0.0)
+                )
+            return
+
+        if action == "audio_fade_volume":
+            if hasattr(self, "audio_manager"):
+                self.audio_manager.fade_volume(
+                    cmd.get("track", cmd.get("track_id", "master")),
+                    cmd.get("volume", cmd.get("target_volume", 0.0)),
+                    duration=cmd.get("duration", 1.0),
+                    stop_on_finish=cmd.get("stop", False)
+                )
+            return
+
+        if action == "set_floor_audio":
+            if hasattr(self, "set_floor_audio_link"):
+                self.set_floor_audio_link(
+                    cmd.get("texture", cmd.get("floor_tex", "")),
+                    cmd.get("sound", ""),
+                    volume=cmd.get("volume", 0.8),
+                    cooldown=cmd.get("cooldown", 0.25)
+                )
+            return
+
         if action == "camera_follow_player":
 
             self.runtime_camera_locked = False
@@ -787,6 +884,9 @@ def update_world_actor_move(self, pack, dt):
         if pack not in newtile.actors:
             newtile.actors.append(pack)
 
+        if hasattr(self, "play_runtime_floor_step"):
+            self.play_runtime_floor_step(newtile, pack)
+
         inst.world_move_queue.pop(0)
 
         # =====================================
@@ -836,6 +936,37 @@ def update_world_actor_move(self, pack, dt):
         * dt
     )
 
+def check_runtime_autorun_events(self):
+    if not hasattr(self, "runtime_world"):
+        return False
+
+    if not self.runtime_world:
+        return False
+
+    if self.world_event_running:
+        return False
+
+    if self.runtime_event_cooldown > 0:
+        return False
+
+    for row in self.runtime_world.grid:
+        for t in row:
+            ed = getattr(t, "event_data", None)
+
+            if not ed:
+                continue
+
+            if not ed.get("enabled", False):
+                continue
+
+            if ed.get("trigger", "") != "autorun":
+                continue
+
+            execute_runtime_tile_event(self, t)
+            return True
+
+    return False
+
 def check_runtime_proximity_events(self):
 
     if self.world_event_running:
@@ -871,7 +1002,7 @@ def check_runtime_proximity_events(self):
 
             trigger_dist = ed.get(
                 "distance",
-                2
+                ed.get("radius", 2)
             )
 
             if dist <= trigger_dist:
@@ -1000,9 +1131,13 @@ def execute_runtime_tile_event(self, t):
         if dlg:
             self.show_runtime_dialog(dlg)
 
-        scene_file = ed.get("scene", "")
+        script = ed.get("script", [])
+        if script:
+            start_world_script(self, script)
+
+        scene_file = resolve_runtime_scene_path(ed.get("scene", ""))
         if scene_file and os.path.exists(scene_file):
-            start_world_event(self,scene_file)
+            start_world_event(self, scene_file)
 
         tp = ed.get("teleport", None)
         if tp:
