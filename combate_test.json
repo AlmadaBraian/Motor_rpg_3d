@@ -8764,8 +8764,8 @@
                         "facing": "espalda",
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
-                        "frame": 0,
-                        "timer": 0.09214325141906783,
+                        "frame": 4,
+                        "timer": 0.08612146313985261,
                         "is_npc": false,
                         "npc_name": "E",
                         "interact_radius": 1.2,
@@ -10486,8 +10486,8 @@
                         "facing": "espalda",
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
-                        "frame": 3,
-                        "timer": 0.09214325141906783,
+                        "frame": 1,
+                        "timer": 0.08612146313985261,
                         "is_npc": false,
                         "npc_name": "Demonio",
                         "interact_radius": 1.2,
@@ -12266,8 +12266,8 @@
                         "facing": "espalda",
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
-                        "frame": 0,
-                        "timer": 0.09214325141906783,
+                        "frame": 4,
+                        "timer": 0.08612146313985261,
                         "is_npc": false,
                         "npc_name": "Frenazi",
                         "interact_radius": 1.2,
@@ -17468,8 +17468,8 @@
                         "facing": "espalda",
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
-                        "frame": 1,
-                        "timer": 0.09214325141906783,
+                        "frame": 5,
+                        "timer": 0.08612146313985261,
                         "is_npc": false,
                         "npc_name": "A",
                         "interact_radius": 1.2,
@@ -51260,8 +51260,8 @@
                                 "facing": "espalda",
                                 "visual_facing": "espalda",
                                 "current_anim": "walk_frente",
-                                "frame": 0,
-                                "timer": 0.09214325141906783,
+                                "frame": 4,
+                                "timer": 0.08612146313985261,
                                 "is_npc": false,
                                 "npc_name": "E",
                                 "interact_radius": 1.2,
@@ -52982,8 +52982,8 @@
                                 "facing": "espalda",
                                 "visual_facing": "espalda",
                                 "current_anim": "walk_frente",
-                                "frame": 3,
-                                "timer": 0.09214325141906783,
+                                "frame": 1,
+                                "timer": 0.08612146313985261,
                                 "is_npc": false,
                                 "npc_name": "Demonio",
                                 "interact_radius": 1.2,
@@ -54762,8 +54762,8 @@
                                 "facing": "espalda",
                                 "visual_facing": "espalda",
                                 "current_anim": "walk_frente",
-                                "frame": 0,
-                                "timer": 0.09214325141906783,
+                                "frame": 4,
+                                "timer": 0.08612146313985261,
                                 "is_npc": false,
                                 "npc_name": "Frenazi",
                                 "interact_radius": 1.2,
@@ -59964,8 +59964,8 @@
                                 "facing": "espalda",
                                 "visual_facing": "espalda",
                                 "current_anim": "walk_frente",
-                                "frame": 1,
-                                "timer": 0.09214325141906783,
+                                "frame": 5,
+                                "timer": 0.08612146313985261,
                                 "is_npc": false,
                                 "npc_name": "A",
                                 "interact_radius": 1.2,
@@ -109560,6 +109560,33 @@
                     }
                 ]
             ]
+        }
+    },
+    "camera_presets": {
+        "editor": {
+            "x": 12,
+            "y": 0,
+            "z": 12,
+            "yaw": 45,
+            "pitch": 55,
+            "distance": 35
+        },
+        "world": {
+            "y": 0.8,
+            "yaw": 0.0,
+            "pitch": 35.0,
+            "distance": 10.0
+        },
+        "battle_tactical": {
+            "y": 0,
+            "yaw": 0,
+            "pitch": 55,
+            "distance": 14
+        },
+        "battle_close": {
+            "y": 1,
+            "pitch": 20,
+            "distance": 6
         }
     }
 }
