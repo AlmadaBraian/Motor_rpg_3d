@@ -40,6 +40,8 @@ class RuntimeSystem:
 
         tkref.runtime_last_event_tile = None
         tkref.runtime_event_cooldown = 0
+        tkref._last_step_audio_tile = None
+        tkref._last_step_audio_time = 0.0
 
         tkref.play_mode = True
         tkref.viewport.preview_paused = True
@@ -193,6 +195,8 @@ class RuntimeSystem:
             for x in range(GRID_W):
                 src = source_grid[y][x]
                 t = copy.deepcopy(src)
+                t.gx = x
+                t.gy = y
 
                 # ----------------------------
                 # reiniciar animadores sprites
@@ -534,6 +538,9 @@ class RuntimeSystem:
         # =====================================
         # RUNTIME
         # =====================================
+        if hasattr(tkref, "audio_manager"):
+            tkref.audio_manager.stop()
+
         tkref.runtime_world = None
 
         tkref.runtime_event_cooldown = 0
