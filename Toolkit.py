@@ -316,8 +316,12 @@ class Toolkit:
         # CAMERA PRESETS CONTAINER
         # =========================================
 
-        self.camera_preset_frame = tk.Frame(prop_frame_3)
+        self.camera_preset_frame = tk.LabelFrame(prop_frame_3, text="Configurar Camara")
         self.camera_preset_frame.pack(fill="both", expand=True)
+
+        tk.Button(self.camera_preset_frame, text="Reset Camera", command=self.reset_camera).pack(fill="x")
+
+        self.cam_rot_speed = tk.DoubleVar(value=0.20)
 
         tk.Label(self.camera_preset_frame, text="Camera Preset").pack()
 
@@ -452,23 +456,6 @@ class Toolkit:
             textvariable=self.current_wall_height,
             width=8
         ).pack()
-
-        tk.Label(prop_frame, text="Configurar Camara").pack(pady=4)
-
-        tk.Button(prop_frame, text="Reset Camera", command=self.reset_camera).pack(fill="x")
-
-        tk.Label(prop_frame, text="Sens Rotacion").pack(pady=2)
-
-        self.cam_rot_speed = tk.DoubleVar(value=0.20)
-
-        tk.Scale(
-            prop_frame,
-            from_=0.05,
-            to=1.0,
-            resolution=0.05,
-            orient="horizontal",
-            variable=self.cam_rot_speed
-        ).pack(fill="x")
 
        
         self.obj_title_label = tk.Frame(prop_frame_2)

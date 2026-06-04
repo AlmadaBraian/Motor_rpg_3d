@@ -17,7 +17,7 @@ from EventManager import (
 from RuntimeWorld import RuntimeWorld
 
 from SpriteManager import Animator
-from config import CAMERA_PRESETS, GRID_H, GRID_W, SCREEN_H, SCREEN_W
+from config import GRID_H, GRID_W, SCREEN_H, SCREEN_W
 
 
 class RuntimeSystem:
@@ -481,7 +481,7 @@ class RuntimeSystem:
             # =====================================
             if tkref.battle_mode == False:
 
-                preset = CAMERA_PRESETS["world"]
+                preset = tkref.camera_presets["world"]
 
                 cam.y = preset["y"]
                 cam.yaw = preset["yaw"]
