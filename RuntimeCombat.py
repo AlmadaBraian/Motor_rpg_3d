@@ -2650,6 +2650,21 @@ class RuntimeCombat:
           #  lambda: self.end_battle_turn()
         #)
 
+    def get_unit_at(self, gx, gy):
+
+        o = self.owner
+
+        for unit in o.battle_units:
+
+            if (
+                unit["gx"] == gx
+                and
+                unit["gy"] == gy
+            ):
+                return unit
+
+        return None
+
     # =========================================================
     # ATTACK RANGE
     # =========================================================
@@ -2780,8 +2795,13 @@ class RuntimeCombat:
 
                 tiles.append((nx, ny))
 
+                if self.combat_tile_blocked(nx, ny):
+                    break
+
                 px = nx
                 py = ny
+
+                
 
         return tiles
 
@@ -3328,6 +3348,31 @@ class RuntimeCombat:
     # =========================================================
     # COLLISION
     # =========================================================
+
+    def combat_target_blocked(
+        self,
+        gx,
+        gy,
+        ignore_pack=None
+    ):
+
+        o = self.owner
+
+        t = o.runtime_world.grid[gy][gx]
+
+        for pack in getattr(t, "actors", []):
+
+            if pack == ignore_pack:
+                continue
+
+            inst = pack["inst"]
+
+            if getattr(inst, "battle_dead", False):
+                continue
+
+            return True
+
+        return False
 
     def combat_tile_blocked(
         self,

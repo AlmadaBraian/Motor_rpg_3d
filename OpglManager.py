@@ -2840,6 +2840,12 @@ class GLViewport(OpenGLFrame):
         # setup ortho 2D
         # ====================================
 
+        glEnable(GL_BLEND)
+        glBlendFunc(
+            GL_SRC_ALPHA,
+            GL_ONE_MINUS_SRC_ALPHA
+        )
+
         glMatrixMode(GL_PROJECTION)
         glPushMatrix()
         glLoadIdentity()
@@ -2882,12 +2888,13 @@ class GLViewport(OpenGLFrame):
                 glTranslatef(draw_x + 2, yy + 2, 0)
                 glScalef(scale, scale, 1)
 
-                glColor4f(0, 0, 0, color[3])
+                #glColor4f(0, 0, 0, color[3])
 
                 self.font_renderer.draw_text(
                     line,
                     0,
-                    0
+                    0,
+                    color=(0, 0, 0, 1)
                 )
 
                 glPopMatrix()
@@ -2901,7 +2908,7 @@ class GLViewport(OpenGLFrame):
             glTranslatef(draw_x, yy, 0)
             glScalef(scale, scale, 1)
 
-            glColor4f(*color)
+            #glColor4f(*color)
 
             self.font_renderer.draw_text(
                 line,
@@ -2917,6 +2924,7 @@ class GLViewport(OpenGLFrame):
         # ====================================
         # restore
         # ====================================
+        glDisable(GL_BLEND)
 
         glEnable(GL_DEPTH_TEST)
 
@@ -2994,11 +3002,31 @@ class GLViewport(OpenGLFrame):
         # ====================================
 
         if speaker:
+
+            speaker_w = len(speaker) * 12
+            speaker_h = 30
+
+            bx = 40
+            by = sh - box_h - 30
+
+            glDisable(GL_TEXTURE_2D)
+            glColor4f(0, 0, 0, 0.8)
+
+            glBegin(GL_QUADS)
+
+            glVertex2f(bx, by)
+            glVertex2f(bx + speaker_w + 20, by)
+
+            glVertex2f(bx + speaker_w + 20, by + speaker_h)
+            glVertex2f(bx, by + speaker_h)
+
+            glEnd()
+
             self.font_renderer.draw_text(
                 speaker,
-            40,
-            sh - box_h - 30
-        )
+                50,
+                sh - box_h - 30
+            )
 
         # ====================================
         # lineas
@@ -3059,6 +3087,38 @@ class GLViewport(OpenGLFrame):
         glPopMatrix()
 
         glMatrixMode(GL_MODELVIEW)
+
+    def draw_text_box(
+        self,
+        text,
+        x,
+        y,
+        padding=6,
+        bg_color=(0,0,0,0.7),
+        text_color=(1,1,1,1)
+    ):
+        text_w = len(text) * 16
+        text_h = 20
+
+        glDisable(GL_TEXTURE_2D)
+
+        glColor4f(*bg_color)
+
+        glBegin(GL_QUADS)
+
+        glVertex2f(x-padding, y-padding)
+        glVertex2f(x+text_w+padding, y-padding)
+        glVertex2f(x+text_w+padding, y+text_h+padding)
+        glVertex2f(x-padding, y+text_h+padding)
+
+        glEnd()
+
+        self.font_renderer.draw_text(
+            text,
+            x,
+            y,
+            color=text_color
+        )
 
     def draw_ui_sprite(self, sprite, inst, x, y, w, h):
 

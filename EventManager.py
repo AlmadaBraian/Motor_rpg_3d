@@ -594,6 +594,9 @@ def run_world_event_command(self, cmd):
             manager.change_world_scene(self, scene_file)
 
             return
+        
+        if action == "show_ui":
+            self.show_ui = True
 
         # ==========================
         # END EVENT

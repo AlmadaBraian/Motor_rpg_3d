@@ -13,6 +13,7 @@
       "volume": 0.1,
       "loop": true
     },
+    {"action": "show_ui"},
     {
       "action": "wait",
       "time": 250
