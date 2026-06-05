@@ -7,7 +7,7 @@
     "sprites": [
       {
         "name": "Anibal",
-        "image": "sprites/Anibal.png",
+        "image": "png/Anibal.png",
         "x": -96,
         "y": 60,
         "w": 270,
@@ -17,7 +17,7 @@
       },
       {
         "name": "Marisa",
-        "image": "sprites/Marisa.png",
+        "image": "png/Marisa.png",
         "x": -96,
         "y": 60,
         "w": 270,

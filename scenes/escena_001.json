@@ -1,0 +1,264 @@
+{
+  "scene": "Prologo",
+  "type": "visual_novel",
+  "visual_novel": {
+    "enabled": true,
+    "width": 640,
+    "height": 480,
+    "sprites": [
+        {
+        "name": "BuenosAiresNoche",
+        "image": "png/BuenosAiresNoche.png",
+        "x": 0,
+        "y": 0,
+        "w": 640,
+        "h": 480,
+        "visible": false,
+        "z": 0
+      },
+      {
+        "name": "EstacionSubte",
+        "image": "png/EstacionSubte.png",
+        "x": 0,
+        "y": 0,
+        "w": 640,
+        "h": 480,
+        "visible": false,
+        "z": 0
+      },
+      {
+        "name": "subte",
+        "image": "png/subte.png",
+        "x": 0,
+        "y": 0,
+        "w": 640,
+        "h": 480,
+        "visible": false,
+        "z": 0
+      },
+      {
+        "name": "linea-a-subte",
+        "image": "png/linea-a-subte.png",
+        "x": 0,
+        "y": 0,
+        "w": 640,
+        "h": 480,
+        "visible": false,
+        "z": 0
+      }
+
+    ]
+    },
+  "script": [
+
+    {
+        "action": "fade_in",
+        "duration": 2.5
+    },
+
+    {
+      "action": "audio_play",
+      "track": "music",
+      "music": "cd/sound/city_pc.wav",
+      "loop": true,
+      "volume": 0.67
+    },
+
+    {
+      "action": "wait",
+      "time": 2000
+    },
+
+    {
+      "action": "vn_animation",
+      "sprite": "BuenosAiresNoche",
+      "animation": "fade_in",
+      "x": 0,
+      "y": 0,
+      "duration": 2.0,
+      "wait": true
+    },
+
+    {
+      "action": "show_dialog",
+      "text": [
+        "La ciudad de Buenos Aires.",
+        "La ciudad de la furia.",
+        "Las luces de los autos,\nlas carteleras de los teatros\nme deslumbran.",
+        "Es la primera vez\nque tengo contacto fisico\ncon la ciudad.",
+        "Buenos Aires me recibe\ncon los brazos abiertos y me dejo poseer\npor la agitada noche.",
+        "Me gustaria poder recorrerla\nen su plenitud.\nPero eso debera esperar a otro dia,\nen otro momento.",
+        "Vuelvo en si de mi trance.",
+        "Si bien hay muchas caras amistosas,\nno debo de confiarme.\nY menos a estas horas de la noche.",
+        "Si bien estoy caminando por\nuna de las zonas más seguras\nde la ciudad...",
+        "No es buena idea confiarse.",
+        "...",
+        "A lo lejos, veo un grupo\nde tres jovenes hablando.",
+        "No se porque, pero siento\nque estan hablando de mi.",
+        "Miran hacia donde estoy.\nUno de ellos hace un gesto.",
+        "¿Acaso sera esto? ¿Me han marcado?\nMe asaltaran, me violaran, me mataran,\ny abandonaran mi cuerpo\na su suerte en una zanja.",
+        "No, no quiero.\nMi primer dia de trabajo\nno deberia terminar asi.",
+        "Agarro mi cartera con fuerza\ny acelero mi paso hasta llegar\na la estacion de subte."
+      ]
+    },
+
+    {
+      "action": "vn_animation",
+      "sprite": "BuenosAiresNoche",
+      "animation": "fade_out",
+      "duration": 1.0,
+      "wait": true
+    },
+
+    {
+      "action": "wait",
+      "time": 500
+    },
+
+    {
+      "action": "audio_play",
+      "track": "sfx",
+      "sound": "cd/sound/Escaleras_pc.wav",
+      "volume": 1.0
+    },
+
+    {
+      "action": "wait",
+      "time": 5000
+    },
+
+    {
+      "action": "audio_stop",
+      "track": "music"
+    },
+
+    {
+      "action": "vn_animation",
+      "sprite": "EstacionSubte",
+      "animation": "fade_in",
+      "x": 0,
+      "y": 0,
+      "duration": 3.0,
+      "wait": true
+    },
+
+    {
+      "action": "show_dialog",
+      "text": [
+        "Bajo las escaleras, paso la sube\ny ya estoy dentro.",
+        "Mi corazon va a mil.",
+        "Estoy un poco nerviosa,\nme sudan las manos.",
+        "Al parecer,\nesos jovenes no me siguieron.",
+        "¿Sera que los nervios\nme estan volviendo paranoica?",
+        "...",
+        "Me tranquilizo.\nRecuerdo que debo llegar presentable\na mi primer dia de trabajo.",
+        "Mi hermano, Anibal,\nse esforzo mucho para\nconseguirme este trabajo.",
+        "El conoce a alguien de recursos humanos,\nme consiguio un puesto, como seguridad\ndel edificio donde trabaja.",
+        "La plata me estaba\nhaciendo mucha falta.\nAsi que no tuve más opcion\nque aceptar.",
+        "No puedo más de los nervios,\nme sudan las manos.\nSiento un fuerte apreton\nen el estomago.",
+        "Tranquila Erika,\ntodo va a estar bien."
+      ]
+    },
+
+    {
+      "action": "audio_play",
+      "track": "sfx",
+      "sound": "cd/sound/subte_llega_pc.wav",
+      "volume": 1.0
+    },
+
+    {
+      "action": "wait",
+      "time": 10000
+    },
+
+    {
+      "action": "show_dialog",
+      "text": [
+        "El subte finalmente llega\ny se detiene frente a mi."
+      ]
+    },
+
+    {
+      "action": "wait",
+      "time": 2000
+    },
+
+    {
+      "action": "vn_animation",
+      "sprite": "EstacionSubte",
+      "animation": "fade_out",
+      "duration": 3.0,
+      "wait": true
+    },
+
+    {
+      "action": "vn_animation",
+      "sprite": "subte",
+      "animation": "fade_in",
+      "x": 0,
+      "y": 0,
+      "duration": 3.0,
+      "wait": true
+    },
+
+    {
+      "action": "show_dialog",
+      "text": [
+        "Rapidamente subo y busco un asiento."
+      ]
+    },
+
+    {
+      "action": "vn_animation",
+      "sprite": "subte",
+      "animation": "fade_out",
+      "duration": 3.0,
+      "wait": true
+    },
+
+    {
+      "action": "vn_animation",
+      "sprite": "linea-a-subte",
+      "animation": "fade_in",
+      "x": 0,
+      "y": 0,
+      "duration": 3.0,
+      "wait": true
+    },
+
+    {
+      "action": "show_dialog",
+      "text": [
+        "El vagon está totalmente vacio.\nSoy la unica pasajera.",
+        "Se nota que es de los ultimos viajes\nde la noche."
+      ]
+    },
+
+    {
+      "action": "audio_play",
+      "track": "sfx",
+      "sound": "cd/sound/Ruido_subte_pc.wav",
+      "volume": 1.0
+    },
+
+    {
+      "action": "wait",
+      "time": 13000
+    },
+
+    {
+      "action": "vn_animation",
+      "sprite": "linea-a-subte",
+      "animation": "fade_out",
+      "duration": 0.5,
+      "wait": true
+    },
+
+    {
+      "action": "change_scene",
+      "scene": "escena2.json"
+    }
+
+  ]
+}

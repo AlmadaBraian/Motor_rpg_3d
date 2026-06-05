@@ -8,7 +8,7 @@
     "sprites": [
       {
         "name": "bg_room",
-        "image": "sprites/BuenosAiresNoche.png",
+        "image": "png/BuenosAiresNoche.png",
         "x": 0,
         "y": 0,
         "w": 640,
@@ -17,15 +17,55 @@
       },
       {
         "name": "hero",
-        "image": "sprites/Marisa.png",
+        "image": "png/Marisa.png",
         "x": -96,
         "y": 60,
         "w": 270,
         "h": 480,
         "visible": false,
         "z": 10
-      }
+      },
+    {
+      "image": "png/EstacionSubte.png",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 328,
+      "h": 185,
+      "name": "EstacionSubte",
+      "alpha": 0,
+      "visible": false,
+      "fondo": 1,
+      "scale": 1
+    },
+    {
+      "image": "png/linea-a-subte.png",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 495,
+      "h": 371,
+      "name": "linea-a-subte",
+      "alpha": 0,
+      "fondo": 1,
+      "scale": 1,
+      "visible": false
+    },
+    {
+      "image": "png/subte.png",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 300,
+      "h": 263,
+      "name": "subte",
+      "visible": false,
+      "alpha": 0,
+      "fondo": 1,
+      "scale": 1
+    }
     ]
+    
   },
   "script": [
     {
@@ -67,7 +107,7 @@
     },
     {
       "action": "change_scene",
-      "scene_new": "scene_inicial.json"
+      "scene_new": "escena_001.json"
     }
   ]
 }
