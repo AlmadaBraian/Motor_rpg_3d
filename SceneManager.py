@@ -2,7 +2,7 @@ import copy
 import json
 import os
 
-from VisualNovelScene import is_visual_novel_scene
+from VisualNovelScene import has_visual_novel_layer, is_visual_novel_scene
 
 
 class RuntimeSceneManager:
@@ -163,7 +163,10 @@ class RuntimeSceneManager:
             return
 
         owner.runtime_scene_mode = "world"
-        owner.visual_novel_scene.reset()
+        if has_visual_novel_layer(scene_data):
+            owner.visual_novel_scene.load_from_scene_data(scene_data)
+        else:
+            owner.visual_novel_scene.reset()
 
         target_map = self.get_scene_start_map(scene_data)
         if target_map and hasattr(owner, "runtime"):

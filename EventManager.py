@@ -107,7 +107,8 @@ def run_world_event_command(self, cmd):
         
         if action in ("vn_add_sprite", "vn_show_sprite", "vn_set_sprite"):
             if hasattr(self, "visual_novel_scene"):
-                self.runtime_scene_mode = "visual_novel"
+                if getattr(self, "runtime_world", None) is None:
+                    self.runtime_scene_mode = "visual_novel"
                 self.visual_novel_scene.active = True
                 self.visual_novel_scene.set_sprite(cmd)
             return
@@ -124,7 +125,8 @@ def run_world_event_command(self, cmd):
 
         if action in ("vn_start_animation", "vn_animation", "start_animation"):
             if hasattr(self, "visual_novel_scene"):
-                self.runtime_scene_mode = "visual_novel"
+                if getattr(self, "runtime_world", None) is None:
+                    self.runtime_scene_mode = "visual_novel"
                 self.visual_novel_scene.active = True
                 self.visual_novel_scene.start_animation(
                     cmd.get("sprite", cmd.get("sprite_name", cmd.get("name", ""))),

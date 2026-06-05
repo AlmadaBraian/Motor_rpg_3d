@@ -2965,6 +2965,8 @@ class GLViewport(OpenGLFrame):
         glLoadIdentity()
 
         glDisable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # ====================================
         # fondo
@@ -2972,6 +2974,7 @@ class GLViewport(OpenGLFrame):
 
         box_h = 160
 
+        glDisable(GL_TEXTURE_2D)
         glColor4f(0, 0, 0, 0.8)
 
         glBegin(GL_QUADS)
@@ -2983,6 +2986,8 @@ class GLViewport(OpenGLFrame):
         glVertex2f(40, sh - 40)
 
         glEnd()
+
+        glColor4f(1, 1, 1, 1)
 
         # ====================================
         # speaker
@@ -3044,6 +3049,8 @@ class GLViewport(OpenGLFrame):
                 )
 
         # restore
+        glColor4f(1, 1, 1, 1)
+        glDisable(GL_TEXTURE_2D)
         glEnable(GL_DEPTH_TEST)
 
         glPopMatrix()
@@ -3266,12 +3273,13 @@ class GLViewport(OpenGLFrame):
             and getattr(tool, "runtime_scene_mode", "world") == "visual_novel"
         )
 
-    def draw_visual_novel_scene(self):
+    def draw_visual_novel_scene(self, clear_screen=True):
         tool = self.toolkit_ref
         vn_scene = tool.visual_novel_scene
 
         glViewport(0, 0, self.width, self.height)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        if clear_screen:
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         self.begin_ui()
 
@@ -3313,8 +3321,20 @@ class GLViewport(OpenGLFrame):
 
         self.end_ui()
 
-        if getattr(tool, "dialog_visible", False):
+        if clear_screen and getattr(tool, "dialog_visible", False):
             self.draw_dialog()
+
+    def draw_visual_novel_overlay(self):
+        tool = self.toolkit_ref
+        vn_scene = getattr(tool, "visual_novel_scene", None)
+
+        if not (vn_scene and vn_scene.active):
+            return
+
+        if getattr(tool, "runtime_scene_mode", "world") == "visual_novel":
+            return
+
+        self.draw_visual_novel_scene(clear_screen=False)
 
     def begin_ui(self):
 
@@ -3428,6 +3448,8 @@ class GLViewport(OpenGLFrame):
             if "gx" in inst and "gy" in inst:
                 fh = tool.grid[inst["gy"]][inst["gx"]].floor_height
                 self.draw_transform_gizmo(inst, fh)
+
+        self.draw_visual_novel_overlay()
 
         if hasattr(tool, "dialog_visible"):
             if tool.dialog_visible:
