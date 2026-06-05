@@ -571,7 +571,16 @@ class GLViewport(OpenGLFrame):
                 
 
         # =====================================================
-        # 4. construir matrices con cámara ya actualizada
+        # 4. escenas narrativas 2D sin escenario 3D
+        # =====================================================
+        if self.should_draw_visual_novel_scene():
+            self.draw_visual_novel_scene()
+            self.draw_screen_fade()
+            glFlush()
+            return
+
+        # =====================================================
+        # 5. construir matrices con cámara ya actualizada
         # =====================================================
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -3237,6 +3246,75 @@ class GLViewport(OpenGLFrame):
         glDisable(GL_BLEND)
         glEnable(GL_TEXTURE_2D)
         glColor4f(0, 0, 1, 0.35)
+
+    def should_draw_visual_novel_scene(self):
+        if not hasattr(self, "toolkit_ref"):
+            return False
+
+        tool = self.toolkit_ref
+
+        if not getattr(tool, "play_mode", False):
+            return False
+
+        if self is getattr(tool, "viewport", None):
+            return False
+
+        vn_scene = getattr(tool, "visual_novel_scene", None)
+        return bool(
+            vn_scene
+            and vn_scene.active
+            and getattr(tool, "runtime_scene_mode", "world") == "visual_novel"
+        )
+
+    def draw_visual_novel_scene(self):
+        tool = self.toolkit_ref
+        vn_scene = tool.visual_novel_scene
+
+        glViewport(0, 0, self.width, self.height)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        self.begin_ui()
+
+        glDisable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_TEXTURE_2D)
+
+        for sprite in vn_scene.sorted_sprites():
+            if not sprite.visible or sprite.alpha <= 0.0:
+                continue
+
+            texture_path = vn_scene.resolve_image_path(sprite.image)
+            texid = self.local_texture_manager.load_gl_texture(texture_path)
+
+            if not texid:
+                continue
+
+            glBindTexture(GL_TEXTURE_2D, texid)
+            glColor4f(1, 1, 1, max(0.0, min(1.0, sprite.alpha)))
+
+            x = sprite.x
+            y = sprite.y
+            w = sprite.width
+            h = sprite.height
+
+            glBegin(GL_QUADS)
+            glTexCoord2f(0, 1)
+            glVertex2f(x, y)
+            glTexCoord2f(1, 1)
+            glVertex2f(x + w, y)
+            glTexCoord2f(1, 0)
+            glVertex2f(x + w, y + h)
+            glTexCoord2f(0, 0)
+            glVertex2f(x, y + h)
+            glEnd()
+
+        glColor4f(1, 1, 1, 1)
+
+        self.end_ui()
+
+        if getattr(tool, "dialog_visible", False):
+            self.draw_dialog()
 
     def begin_ui(self):
 

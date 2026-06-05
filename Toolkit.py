@@ -28,6 +28,7 @@ from RuntimeActor import RuntimeActor
 from RuntimeCombat import RuntimeCombat
 from RuntimeWorld import RuntimeWorld
 from RuntimeSystem import RuntimeSystem
+from VisualNovelScene import VisualNovelSceneState
 from SceneManager import RuntimeSceneManager
 from AudioManager import AudioManager
 from Tile import Tile
@@ -104,6 +105,9 @@ class Toolkit:
         self.selected_actor = None
         self.actor_cycle_index = {}
         self.runtime_world = None
+        self.visual_novel_scene = VisualNovelSceneState()
+        self.runtime_scene_mode = "world"
+        self.event_wait_vn_animation = False
         self.runtime_message = ""
         self.runtime_message_timer = 0.0
         self.runtime_climb_action = None
@@ -1232,6 +1236,27 @@ class Toolkit:
         return None
 
 
+    def update_runtime_dialog_text(self, dt):
+
+        if not self.dialog_pages or self.dialog_index >= len(self.dialog_pages):
+            return
+
+        page = self.dialog_pages[self.dialog_index]
+
+        if hasattr(self, "dialog_continue_actor"):
+            self.dialog_continue_actor.animator.update(dt)
+
+        if self.dialog_visible_chars < len(page):
+            self.dialog_char_timer += dt
+
+            while self.dialog_char_timer >= self.dialog_char_speed:
+                self.dialog_char_timer -= self.dialog_char_speed
+                self.dialog_visible_chars += 1
+
+                if self.dialog_visible_chars >= len(page):
+                    self.dialog_visible_chars = len(page)
+                    break
+
     def update_runtime_actor(self, dt):
 
         if hasattr(self, "audio_manager"):
@@ -1239,6 +1264,18 @@ class Toolkit:
 
         if self.runtime_event_cooldown > 0:
             self.runtime_event_cooldown -= dt
+
+        if hasattr(self, "visual_novel_scene"):
+            self.visual_novel_scene.update(dt)
+
+        if self.world_event_running and (
+            getattr(self, "runtime_scene_mode", "world") == "visual_novel"
+            or self.runtime_world is None
+        ):
+            update_world_event(self, dt)
+
+        if self.dialog_visible:
+            self.update_runtime_dialog_text(dt)
 
         if self.runtime_climb_action:
             self.update_runtime_climb(dt)
@@ -1265,25 +1302,6 @@ class Toolkit:
             
         if self.battle_input_cooldown > 0:
             self.battle_input_cooldown -= dt
-
-        if self.dialog_visible:
-
-            if hasattr(self, "dialog_continue_actor"):
-
-                self.dialog_continue_actor.animator.update(dt)
-
-                page = self.dialog_pages[self.dialog_index]
-
-                self.dialog_char_timer += dt
-
-                while self.dialog_char_timer >= self.dialog_char_speed:
-
-                    self.dialog_char_timer -= self.dialog_char_speed
-                    self.dialog_visible_chars += 1
-
-                    if self.dialog_visible_chars >= len(page):
-                        self.dialog_visible_chars = len(page)
-                        break
 
         pack = self.runtime_world.main_actor
         inst = pack["inst"]

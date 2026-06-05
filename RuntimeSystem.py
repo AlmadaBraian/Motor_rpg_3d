@@ -19,6 +19,7 @@ from SceneManager import get_runtime_scene_manager
 
 from SpriteManager import Animator
 from config import GRID_H, GRID_W, SCREEN_H, SCREEN_W
+from VisualNovelScene import VisualNovelSceneState
 
 
 class RuntimeSystem:
@@ -58,6 +59,12 @@ class RuntimeSystem:
         tkref.dialog_index = 0
         tkref.show_ui = True
 
+        if not hasattr(tkref, "visual_novel_scene"):
+            tkref.visual_novel_scene = VisualNovelSceneState()
+        else:
+            tkref.visual_novel_scene.reset()
+        tkref.event_wait_vn_animation = False
+
         if hasattr(tkref, "ensure_project_maps"):
             tkref.ensure_project_maps()
 
@@ -72,26 +79,35 @@ class RuntimeSystem:
             initial_scene_file
         )
         initial_map_id = scene_manager.get_scene_start_map(initial_scene_data)
+        initial_is_vn = scene_manager.is_visual_novel_scene(initial_scene_data)
 
         if initial_scene_data is None:
             initial_scene_path = ""
-
-        if not initial_map_id:
-            initial_map_id = getattr(tkref, "current_map_id", "Map001")
-
-        if not hasattr(tkref, "maps") or initial_map_id not in tkref.maps:
-            print("INITIAL MAP NOT FOUND, USING EDITOR MAP:", initial_map_id)
-            initial_map_id = getattr(tkref, "current_map_id", "Map001")
 
         tkref.current_runtime_map_id = initial_map_id
         tkref.runtime_initial_scene_file = initial_scene_file
         tkref.runtime_initial_scene_path = initial_scene_path
         tkref.runtime_initial_scene_data = initial_scene_data or {}
-        tkref.runtime_world = self.build_runtime_world_copy(tkref.current_runtime_map_id)
+        tkref.runtime_scene_mode = "visual_novel" if initial_is_vn else "world"
 
-        player_start = scene_manager.get_scene_player_start(initial_scene_data)
-        if player_start:
-            self.apply_runtime_player_start(player_start)
+        if initial_is_vn:
+            tkref.visual_novel_scene.load_from_scene_data(initial_scene_data or {})
+            tkref.runtime_world = None
+            tkref.show_ui = False
+        else:
+            if not initial_map_id:
+                initial_map_id = getattr(tkref, "current_map_id", "Map001")
+
+            if not hasattr(tkref, "maps") or initial_map_id not in tkref.maps:
+                print("INITIAL MAP NOT FOUND, USING EDITOR MAP:", initial_map_id)
+                initial_map_id = getattr(tkref, "current_map_id", "Map001")
+
+            tkref.current_runtime_map_id = initial_map_id
+            tkref.runtime_world = self.build_runtime_world_copy(tkref.current_runtime_map_id)
+
+            player_start = scene_manager.get_scene_player_start(initial_scene_data)
+            if player_start:
+                self.apply_runtime_player_start(player_start)
 
         # ==========================================
         # WINDOW
@@ -373,14 +389,52 @@ class RuntimeSystem:
     # INPUT
     # =====================================================
 
+    def advance_runtime_dialog(self):
+
+        tkref = self.toolkit
+
+        if not tkref.dialog_pages or tkref.dialog_index >= len(tkref.dialog_pages):
+            tkref.dialog_visible = False
+            tkref.event_wait_input = False
+            tkref.dialog_index = 0
+            return
+
+        page = tkref.dialog_pages[tkref.dialog_index]
+
+        if tkref.dialog_visible_chars < len(page):
+            tkref.dialog_visible_chars = len(page)
+            return
+
+        print("SPACE DIALOG")
+        print("INDEX:", tkref.dialog_index)
+        print("LEN:", len(tkref.dialog_pages))
+
+        if tkref.dialog_index < len(tkref.dialog_pages) - 1:
+            tkref.dialog_index += 1
+            tkref.dialog_visible_chars = 0
+            tkref.dialog_char_timer = 0
+            print("NEXT PAGE:", tkref.dialog_index)
+            return
+
+        print("END DIALOG")
+        tkref.dialog_visible = False
+        tkref.event_wait_input = False
+        tkref.dialog_index = 0
+
     def game_key_down(self, event):
 
         tkref = self.toolkit
 
-        if not tkref.runtime_world:
+        k = event.keysym.lower()
+
+        if event.keysym == "space" and tkref.world_event_running and tkref.event_wait_input:
+            if tkref.space_pressed:
+                return
+            tkref.space_pressed = True
+            self.advance_runtime_dialog()
             return
 
-        if not tkref.runtime_world.main_actor:
+        if not tkref.runtime_world or not tkref.runtime_world.main_actor:
             return
         
         if tkref.battle_mode:
@@ -388,8 +442,6 @@ class RuntimeSystem:
             return
 
         p = tkref.runtime_world.main_actor["inst"]
-
-        k = event.keysym.lower()
 
         if not tkref.world_event_running:
 
@@ -416,36 +468,8 @@ class RuntimeSystem:
             tkref.space_pressed = True
 
             if tkref.world_event_running and tkref.event_wait_input:
-
-                page = tkref.dialog_pages[tkref.dialog_index]
-
-                if tkref.dialog_visible_chars < len(page):
-
-                    tkref.dialog_visible_chars = len(page)
-
-                else:
-
-                    print("SPACE DIALOG")
-                    print("INDEX:", tkref.dialog_index)
-                    print("LEN:", len(tkref.dialog_pages))
-
-                    if tkref.dialog_index < len(tkref.dialog_pages) - 1:
-
-                        tkref.dialog_index += 1
-
-                        tkref.dialog_visible_chars = 0
-                        tkref.dialog_char_timer = 0
-
-                        print("NEXT PAGE:", tkref.dialog_index)
-
-                        return
-
-                    print("END DIALOG")
-
-                    tkref.dialog_visible = False
-                    tkref.event_wait_input = False
-                    tkref.dialog_index = 0
-                    return
+                self.advance_runtime_dialog()
+                return
             if tkref.world_event_running:
                 tkref.show_ui = False
                 return
@@ -473,10 +497,10 @@ class RuntimeSystem:
 
         tkref = self.toolkit
 
-        if not tkref.runtime_world:
-            return
+        if event.keysym == "space":
+            tkref.space_pressed = False
 
-        if not tkref.runtime_world.main_actor:
+        if not tkref.runtime_world or not tkref.runtime_world.main_actor:
             return
         
         if tkref.battle_mode:
@@ -604,6 +628,10 @@ class RuntimeSystem:
         tkref.game_over = False
 
         tkref.runtime_world = None
+        if hasattr(tkref, "visual_novel_scene"):
+            tkref.visual_novel_scene.reset()
+        tkref.runtime_scene_mode = "world"
+        tkref.event_wait_vn_animation = False
 
         tkref.viewport.preview_paused = False
 

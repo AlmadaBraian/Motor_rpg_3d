@@ -60,6 +60,12 @@ def update_world_event(self, dt):
         if self.event_wait_fade:
             return
 
+        if getattr(self, "event_wait_vn_animation", False):
+            vn_scene = getattr(self, "visual_novel_scene", None)
+            if vn_scene and vn_scene.has_running_animations():
+                return
+            self.event_wait_vn_animation = False
+
         cmd = self.current_event_script[self.current_event_index]
         self.current_event_index += 1
 
@@ -79,6 +85,7 @@ def end_world_event(self):
         self.event_wait_input = False
         self.event_wait_timer = 0
         self.event_wait_move = None
+        self.event_wait_vn_animation = False
 
         if self.pending_combat_enemy:
             enemy = self.pending_combat_enemy
@@ -98,6 +105,43 @@ def run_world_event_command(self, cmd):
             self.event_wait_timer = cmd.get("time", 1000) / 1000.0
             return
         
+        if action in ("vn_add_sprite", "vn_show_sprite", "vn_set_sprite"):
+            if hasattr(self, "visual_novel_scene"):
+                self.runtime_scene_mode = "visual_novel"
+                self.visual_novel_scene.active = True
+                self.visual_novel_scene.set_sprite(cmd)
+            return
+
+        if action in ("vn_hide_sprite", "vn_remove_sprite"):
+            if hasattr(self, "visual_novel_scene"):
+                self.visual_novel_scene.hide_sprite(cmd.get("sprite", cmd.get("name", "")))
+            return
+
+        if action in ("vn_clear", "vn_clear_sprites"):
+            if hasattr(self, "visual_novel_scene"):
+                self.visual_novel_scene.clear()
+            return
+
+        if action in ("vn_start_animation", "vn_animation", "start_animation"):
+            if hasattr(self, "visual_novel_scene"):
+                self.runtime_scene_mode = "visual_novel"
+                self.visual_novel_scene.active = True
+                self.visual_novel_scene.start_animation(
+                    cmd.get("sprite", cmd.get("sprite_name", cmd.get("name", ""))),
+                    cmd.get("animation", cmd.get("anim_name", cmd.get("animation_name", ""))),
+                    cmd.get("final_x", cmd.get("x", 0)),
+                    cmd.get("final_y", cmd.get("y", 0)),
+                    cmd.get("delta_ms", cmd.get("time_step", 16)),
+                    cmd.get("speed", 300),
+                    cmd.get("duration"),
+                )
+                self.event_wait_vn_animation = bool(cmd.get("wait", False))
+            return
+
+        if action in ("vn_wait_animation", "wait_animation"):
+            self.event_wait_vn_animation = True
+            return
+
         if action == "play_animation":
 
             clip = cmd.get("animation_clip", "")
