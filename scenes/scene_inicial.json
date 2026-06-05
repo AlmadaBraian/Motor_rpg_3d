@@ -1,0 +1,20 @@
+{
+  "scene": "scene_inicial",
+  "start_map": "Map001",
+  "script": [
+    {
+      "action": "audio_play",
+      "track": "bgm_town",
+      "music": "music/Patricia.mp3",
+      "volume": 0.1,
+      "loop": true
+    },
+    {
+      "action": "wait",
+      "time": 250
+    },
+    {
+      "action": "end_event"
+    }
+  ]
+}

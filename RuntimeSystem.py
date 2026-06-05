@@ -15,6 +15,7 @@ from EventManager import (
 )
 
 from RuntimeWorld import RuntimeWorld
+from SceneManager import get_runtime_scene_manager
 
 from SpriteManager import Animator
 from config import GRID_H, GRID_W, SCREEN_H, SCREEN_W
@@ -57,8 +58,40 @@ class RuntimeSystem:
         tkref.dialog_index = 0
         tkref.show_ui = True
 
-        tkref.current_runtime_map_id = getattr(tkref, "current_map_id", "Map001")
+        if hasattr(tkref, "ensure_project_maps"):
+            tkref.ensure_project_maps()
+
+        initial_scene_file = getattr(
+            tkref,
+            "initial_scene_file",
+            "scenes/scene_inicial.json"
+        )
+
+        scene_manager = get_runtime_scene_manager(tkref)
+        initial_scene_data, initial_scene_path = scene_manager.load_scene_data(
+            initial_scene_file
+        )
+        initial_map_id = scene_manager.get_scene_start_map(initial_scene_data)
+
+        if initial_scene_data is None:
+            initial_scene_path = ""
+
+        if not initial_map_id:
+            initial_map_id = getattr(tkref, "current_map_id", "Map001")
+
+        if not hasattr(tkref, "maps") or initial_map_id not in tkref.maps:
+            print("INITIAL MAP NOT FOUND, USING EDITOR MAP:", initial_map_id)
+            initial_map_id = getattr(tkref, "current_map_id", "Map001")
+
+        tkref.current_runtime_map_id = initial_map_id
+        tkref.runtime_initial_scene_file = initial_scene_file
+        tkref.runtime_initial_scene_path = initial_scene_path
+        tkref.runtime_initial_scene_data = initial_scene_data or {}
         tkref.runtime_world = self.build_runtime_world_copy(tkref.current_runtime_map_id)
+
+        player_start = scene_manager.get_scene_player_start(initial_scene_data)
+        if player_start:
+            self.apply_runtime_player_start(player_start)
 
         # ==========================================
         # WINDOW
@@ -163,7 +196,57 @@ class RuntimeSystem:
             lambda: tkref.game_view.focus_set()
         )
 
-        check_runtime_autorun_events(tkref)
+        initial_scene_path = getattr(tkref, "runtime_initial_scene_path", "")
+
+        if initial_scene_path:
+            start_world_event(tkref, initial_scene_path)
+        else:
+            check_runtime_autorun_events(tkref)
+
+    # =====================================================
+    # PLAYER START
+    # =====================================================
+
+    def apply_runtime_player_start(self, player_start):
+
+        tkref = self.toolkit
+
+        if not tkref.runtime_world:
+            return
+
+        pack = tkref.runtime_world.main_actor
+
+        if not pack:
+            return
+
+        x = int(player_start.get("x", player_start.get("gx", pack["gx"])))
+        y = int(player_start.get("y", player_start.get("gy", pack["gy"])))
+
+        if x < 0 or y < 0 or x >= GRID_W or y >= GRID_H:
+            print("INVALID INITIAL PLAYER START:", x, y)
+            return
+
+        old_tile = tkref.runtime_world.grid[pack["gy"]][pack["gx"]]
+
+        if pack in old_tile.actors:
+            old_tile.actors.remove(pack)
+
+        pack["gx"] = x
+        pack["gy"] = y
+        pack["inst"].offx = 0
+        pack["inst"].offy = 0
+
+        facing = player_start.get("facing", "")
+
+        if facing:
+            pack["inst"].facing = facing
+
+        new_tile = tkref.runtime_world.grid[y][x]
+
+        if pack not in new_tile.actors:
+            new_tile.actors.append(pack)
+
+        print("INITIAL PLAYER START:", x, y)
 
     # =====================================================
     # BUILD RUNTIME COPY

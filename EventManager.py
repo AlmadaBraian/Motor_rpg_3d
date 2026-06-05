@@ -1,76 +1,31 @@
-import json
 import math
 import os
+from SceneManager import get_runtime_scene_manager
+from SceneManager import resolve_runtime_scene_path as central_resolve_runtime_scene_path
 from ActorInstance import ActorInstance
 from CameraAnimator import CameraAnimator
 from CameraKeyframe import CameraKeyframe
 from RuntimeCombat import RuntimeCombat
+from RuntimeMusic import play_runtime_audio, stop_runtime_audio
 from SpriteManager import Animator
 from config import *
 
 
 def resolve_runtime_scene_path(scene_file):
-        if not scene_file:
-            return ""
-
-        candidates = [scene_file]
-
-        if not os.path.isabs(scene_file):
-            candidates.append(os.path.join(os.getcwd(), scene_file))
-            candidates.append(os.path.join(os.path.dirname(__file__), scene_file))
-            candidates.append(os.path.join("scenes", os.path.basename(scene_file)))
-            candidates.append(os.path.join(os.path.dirname(__file__), "scenes", os.path.basename(scene_file)))
-
-        for candidate in candidates:
-            if candidate and os.path.exists(candidate):
-                return candidate
-
-        return scene_file
+        return central_resolve_runtime_scene_path(scene_file)
 
 
 def start_world_event(self, jsonfile):
-        jsonfile = resolve_runtime_scene_path(jsonfile)
-
-        if not os.path.exists(jsonfile):
-            print("EVENT FILE NOT FOUND:", jsonfile)
-            return
-
-        with open(jsonfile, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        self.current_event_data = data
-        self.current_event_script = data.get("script", [])
-        self.current_event_index = 0
-
-        self.world_event_running = True
-        self.world_event_locked = True
-
-        self.event_wait_timer = 0
-        self.event_wait_input = False
-        self.event_wait_move = None
-        self.event_advance_block = False
-
-        print("WORLD EVENT START:", jsonfile)
+        manager = get_runtime_scene_manager(self)
+        manager.start_world_event(self, jsonfile)
 
 def start_world_script(
     self,
     script
 ):
 
-    self.current_event_data = {}
-
-    self.current_event_script = script
-    self.current_event_index = 0
-
-    self.world_event_running = True
-    self.world_event_locked = True
-
-    self.event_wait_timer = 0
-    self.event_wait_input = False
-    self.event_wait_move = None
-    self.event_advance_block = False
-
-    print("WORLD SCRIPT START")
+    manager = get_runtime_scene_manager(self)
+    manager.start_world_script(self, script)
 
 def update_world_event(self, dt):
         if not self.world_event_running:
@@ -170,44 +125,7 @@ def run_world_event_command(self, cmd):
 
             return
         if action == "audio_play":
-
-            
-            track_id = cmd.get("track", cmd.get("track_id", "sfx"))
-            path = cmd.get("sound", cmd.get("music", cmd.get("voice", "")))
-            category = cmd.get("category", "sfx")
-
-            if "music" in cmd:
-                category = "music"
-            elif "voice" in cmd:
-                category = "voice"
-
-            if category == "music":
-
-                if self.current_music:
-
-                    self.audio_manager.stop(
-                        self.current_music,
-                        fade_ms=cmd.get("fade_ms", 0)
-                    )
-
-                self.current_music = track_id
-
-            
-            #self.current_music = track_id
-
-            print("STOP:", self.current_music)
-            print("PLAY:", track_id)
-
-            if hasattr(self, "audio_manager"):
-                self.audio_manager.play(
-                    track_id=track_id,
-                    path=path,
-                    volume=cmd.get("volume", 1.0),
-                    loop=cmd.get("loop", category == "music"),
-                    category=category,
-                    replace=cmd.get("replace", True),
-                    fade_ms=cmd.get("fade_ms", 0)
-                )
+            play_runtime_audio(self, cmd, source="world")
             return
 
         if action == "audio_pause":
@@ -221,11 +139,7 @@ def run_world_event_command(self, cmd):
             return
 
         if action == "audio_stop":
-            if hasattr(self, "audio_manager"):
-                self.audio_manager.stop(
-                    cmd.get("track", cmd.get("track_id")),
-                    fade_ms=cmd.get("fade_ms", 0)
-                )
+            stop_runtime_audio(self, cmd)
             return
 
         if action == "audio_set_volume":
@@ -616,6 +530,25 @@ def run_world_event_command(self, cmd):
             end_world_event(self)
 
             return
+        # ==========================
+        # CHANGE SCENE
+        # ==========================
+        if action in ("next_scene", "change_scene"):
+
+            scene_file = cmd.get(
+                "scene_new",
+                cmd.get("scene", cmd.get("file", ""))
+            )
+
+            if not scene_file:
+                print("NEXT SCENE WITHOUT TARGET")
+                return
+
+            manager = get_runtime_scene_manager(self)
+            manager.change_world_scene(self, scene_file)
+
+            return
+
         # ==========================
         # END EVENT
         # ==========================

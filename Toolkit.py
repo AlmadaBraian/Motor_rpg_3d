@@ -28,6 +28,7 @@ from RuntimeActor import RuntimeActor
 from RuntimeCombat import RuntimeCombat
 from RuntimeWorld import RuntimeWorld
 from RuntimeSystem import RuntimeSystem
+from SceneManager import RuntimeSceneManager
 from AudioManager import AudioManager
 from Tile import Tile
 from SpriteAsset import SpriteAsset
@@ -110,6 +111,8 @@ class Toolkit:
         self.runtime_camera_catchup = False
         self.camera_preview_dirty = False
         self.current_music = None
+        self.current_combat_music = None
+        self.current_map_music = None
         self.camera_preview_presets = [
             "editor",
             "world",
@@ -129,6 +132,7 @@ class Toolkit:
         self.current_wall_direction = ""
         self.skills = {}
         self.items = {}
+        self.scene_manager = RuntimeSceneManager(self)
         self.runtime_combat = RuntimeCombat(self)
         self.runtime = RuntimeSystem(self)
         self.audio_manager = AudioManager()
