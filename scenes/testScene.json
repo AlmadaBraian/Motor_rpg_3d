@@ -1,5 +1,32 @@
 {
   "scene": "test",
+  "visual_novel": {
+    "enabled": true,
+    "width": 640,
+    "height": 480,
+    "sprites": [
+      {
+        "name": "Anibal",
+        "image": "sprites/Anibal.png",
+        "x": -96,
+        "y": 260,
+        "w": 96,
+        "h": 96,
+        "visible": false,
+        "z": 10
+      },
+      {
+        "name": "Marisa",
+        "image": "sprites/Marisa.png",
+        "x": -96,
+        "y": 260,
+        "w": 96,
+        "h": 96,
+        "visible": false,
+        "z": 10
+      }
+    ]
+  },
   "script": [
     {"action": "lock_player"},
     {
@@ -22,8 +49,17 @@
       "time": 500
     },
     {
+      "action": "vn_start_animation",
+      "sprite": "Anibal",
+      "animation": "entrar_izquierda",
+      "final_x": 80,
+      "final_y": 260,
+      "speed": 320,
+      "wait": true
+    },
+    {
       "action": "show_dialog",
-      "speaker": "Batman",
+      "speaker": "Anibal",
       "text": [
         "¡Epa!. \n¿Que hacemo?",
         "Vo, no pode estar acá."
@@ -32,6 +68,13 @@
     {
     "action": "fade_out",
     "duration": 1.5
+    },
+    {
+      "action": "vn_start_animation",
+      "sprite": "hero",
+      "animation": "salir_derecha",
+      "speed": 320,
+      "wait": true
     },
     {
         "action": "camera_move",
@@ -103,6 +146,15 @@
       "actor_name": "A",
       "animation_clip": "idle"
       },
+      {
+      "action": "vn_start_animation",
+      "sprite": "Marisa",
+      "animation": "entrar_derecha",
+      "final_x": 80,
+      "final_y": 260,
+      "speed": 320,
+      "wait": true
+    },
     {
       "action": "show_dialog",
       "speaker": "Marisa",
@@ -110,6 +162,18 @@
         "¡No me digas lo que puedo y no puedo hacer!"
       ]
     },
+    {
+      "action": "wait",
+      "time": 500
+    },
+    {
+      "action": "vn_start_animation",
+      "sprite": "Marisa",
+      "animation": "salir_derecha",
+      "speed": 320,
+      "wait": true
+    },
+
     {
     "action": "camera_follow_player"
   },

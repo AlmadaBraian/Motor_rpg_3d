@@ -71,7 +71,7 @@ class RuntimeSystem:
         initial_scene_file = getattr(
             tkref,
             "initial_scene_file",
-            "scenes/scene_inicial.json"
+            "scenes/visual_novel_example.json"
         )
 
         scene_manager = get_runtime_scene_manager(tkref)
