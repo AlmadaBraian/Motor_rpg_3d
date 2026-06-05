@@ -4,6 +4,7 @@
 
 from config import GRID_H, GRID_W
 from SceneManager import get_runtime_scene_manager
+from RuntimeMusic import play_runtime_audio, stop_runtime_audio
 from BasicScripts import NORMAL_ATTACK_SCRIPT
 
 
@@ -939,28 +940,7 @@ def run_combat_command(
         return
     
     if action == "audio_play":
-            track_id = cmd.get("track", cmd.get("track_id", "sfx"))
-            path = cmd.get("sound", cmd.get("music", cmd.get("voice", "")))
-            category = cmd.get("category", "sfx")
-
-            if "music" in cmd:
-                category = "music"
-            elif "voice" in cmd:
-                category = "voice"
-
-            if cmd.get("combat_music", False):
-                o.current_music = track_id
-
-            if hasattr(o, "audio_manager"):
-                o.audio_manager.play(
-                    track_id=track_id,
-                    path=path,
-                    volume=cmd.get("volume", 1.0),
-                    loop=cmd.get("loop", category == "music"),
-                    category=category,
-                    replace=cmd.get("replace", True),
-                    fade_ms=cmd.get("fade_ms", 0)
-                )
+            play_runtime_audio(o, cmd, source="combat")
             return
 
     if action == "audio_pause":
@@ -974,11 +954,7 @@ def run_combat_command(
             return
 
     if action == "audio_stop":
-            if hasattr(o, "audio_manager"):
-                o.audio_manager.stop(
-                    cmd.get("track", cmd.get("track_id")),
-                    fade_ms=cmd.get("fade_ms", 0)
-                )
+            stop_runtime_audio(o, cmd)
             return
 
     if action == "audio_set_volume":

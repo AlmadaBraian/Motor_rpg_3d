@@ -111,6 +111,8 @@ class Toolkit:
         self.runtime_camera_catchup = False
         self.camera_preview_dirty = False
         self.current_music = None
+        self.current_combat_music = None
+        self.current_map_music = None
         self.camera_preview_presets = [
             "editor",
             "world",

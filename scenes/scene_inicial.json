@@ -1,12 +1,14 @@
 {
   "scene": "scene_inicial",
   "start_map": "Map001",
-  "player_start": {
-    "x": 0,
-    "y": 0,
-    "facing": "frente"
-  },
   "script": [
+    {
+      "action": "audio_play",
+      "track": "bgm_town",
+      "music": "music/Patricia.mp3",
+      "volume": 0.1,
+      "loop": true
+    },
     {
       "action": "wait",
       "time": 250
