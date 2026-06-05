@@ -5,7 +5,8 @@ from ActorInstance import ActorInstance
 import IA
 from RuntimeSkill import RuntimeSkill, update_knockback
 from SpriteManager import Animator
-from config import CAMERA_PRESETS, GRID_H, GRID_W
+from config import CAMERA_PRESETS, GRID_H, GRID_W, SETTINGS
+from motor_rpg.domain.combat import CombatRules, actor_stats_from_object
 from BasicScripts import NORMAL_ATTACK_SCRIPT
 from SceneManager import get_runtime_scene_manager
 from RuntimeMusic import restore_map_music
@@ -1867,106 +1868,22 @@ class RuntimeCombat:
         if not atk_def or not tgt_def:
             return None
 
-        # =========================================
-        # BODY TYPE
-        # =========================================
-
-        body_type_tgt = getattr(tgt_def, "body_type", "normal")
-        body_type_atk = getattr(atk_def, "body_type", "normal")
-
-        body_type_tgt_bonus = o.body_type_list[body_type_tgt]
-        body_type_atk_bonus = o.body_type_list[body_type_atk]
-
-        # =========================================
-        # STATS
-        # =========================================
-
-        speed_bonus = 1
-
-        if getattr(atk_def, "speed", 0) > 4:
-            speed_bonus = 1.25
-
-        attack_bonus = getattr(atk_def, "attack_bonus", 0) * speed_bonus
-
-        armor_class = getattr(tgt_def, "armor_class", 10)
-        armor_class *= body_type_tgt_bonus
-
-        if getattr(target, "guard_mode", False):
-            armor_class += 4
-
-        # =========================================
-        # ROLL
-        # =========================================
-
-        roll = random.randint(1, 20)
-
-        total_attack = roll
-
-        critical_hit = False
-        critical_miss = False
-
-        if roll == 20:
-            hit = True
-            critical_hit = True
-            result="critical"
-
-        elif roll == 1:
-            hit = False
-            critical_miss = True
-            result="critical_miss"
-
-        else:
-            accuracy = getattr(atk_def, "accuracy", 0)
-            evasion = getattr(atk_def, "evasion", 0)
-            hit = roll + accuracy >= evasion
-            if hit:
-
-                result="hit"
-            else:
-                result="miss"
-
-        # =========================================
-        # DAMAGE
-        # =========================================
-
-        damage = 0
-
-        if hit:
-
-            dmg_min = getattr(atk_def, "damage_min", 4)
-            dmg_max = getattr(atk_def, "damage_max", 10)
-
-            print("dmg_max", dmg_max)
-
-            base_damage = random.randint(dmg_min, dmg_max)
-
-            print("base_damage", base_damage)
-
-            defense = getattr(tgt_def, "defense", 0)
-            #defense *= body_type_tgt_bonus
-
-            mitigation = 100 / (100 + defense * 10)
-            damage = round(base_damage * mitigation)
-
-            if critical_hit:
-                damage *= 2
-                #dmg_max -= 2
-
-            if getattr(target, "guard_mode", False):
-
-                damage = round(damage * 0.6)
-
-            damage = max(1, damage)
+        rules = CombatRules(config=SETTINGS.combat, rng=random)
+        resolved = rules.resolve_attack(
+            actor_stats_from_object(attacker.actor_name, atk_def),
+            actor_stats_from_object(target.actor_name, tgt_def),
+            target_guarding=getattr(target, "guard_mode", False),
+        )
 
         return {
-            "hit": hit,
-            "critical_hit": critical_hit,
-            "critical_miss": critical_miss,
-            "result":result,
-            "damage": damage,
-            "roll": roll,
-            "attack_total": total_attack,
-            "armor_class": armor_class
+            "hit": resolved.hit,
+            "critical_hit": resolved.critical_hit,
+            "critical_miss": resolved.critical_miss,
+            "result": resolved.result,
+            "damage": resolved.damage,
+            "roll": resolved.roll,
+            "attack_total": resolved.attack_total,
+            "armor_class": resolved.armor_class,
         }
                 
     def use_selected_item(self):

@@ -24,10 +24,36 @@ python "editor de mapas v12.py"
 - `textures/`, `sprites/`, `fonts/`, `obj/`, `scenes/`: recursos del proyecto.
 - `legacy/` y `src - copia/`: código histórico que debería aislarse o retirarse del paquete activo.
 
+
+## Paquetes Python explícitos
+
+El código nuevo debe vivir bajo `motor_rpg/` con límites claros:
+
+- `motor_rpg.domain`: configuración tipada, serialización de escenas y reglas puras de combate.
+- `motor_rpg.runtime`: servicios de ejecución, carga de assets y validación de manifiestos.
+- `motor_rpg.rendering`: renderizado/OpenGL y adaptadores visuales.
+- `motor_rpg.editor`: herramientas Tkinter y flujos de autoría.
+
+Los módulos históricos en la raíz permanecen como puntos de entrada de compatibilidad,
+pero deben delegar gradualmente en estos paquetes. La configuración global se expone
+desde `config.py` como wrapper compatible sobre `motor_rpg.domain.config.GameConfig`.
+
+## Calidad, tests y assets
+
+```bash
+python -m compileall -q motor_rpg tests
+pytest
+ruff check motor_rpg tests
+mypy
+python tools/validate_assets.py
+```
+
+La política de assets está documentada en [`docs/ASSETS.md`](docs/ASSETS.md).
+
 ## Verificación básica
 
 ```bash
 python -m compileall -q .
 ```
 
-Actualmente no existe configuración formal de tests, linting, tipado ni CI/CD. Ver la hoja de ruta propuesta en la auditoría.
+El repositorio incluye `pyproject.toml`, CI, linting con Ruff, tipado incremental con mypy y pruebas de dominio/runtime.

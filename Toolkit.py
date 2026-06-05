@@ -271,11 +271,7 @@ class Toolkit:
         self.enemy_target_tile = None
         self.enemy_ai_state = None
 
-        self.body_type_list = {
-        "delgado": 0.75,
-        "normal": 1,
-        "robusto": 1.25
-        }
+        self.body_type_list = dict(BODY_TYPE_ARMOR_SCALE)
 
 
         self.build_ui()
