@@ -53,11 +53,11 @@ class VisualNovelSceneState:
     def load_from_scene_data(self, scene_data):
         self.reset()
 
-        if not is_visual_novel_scene(scene_data):
+        config = get_visual_novel_config(scene_data)
+        if not config.get("enabled", False):
             return
 
         self.active = True
-        config = get_visual_novel_config(scene_data)
         self.screen_width = int(config.get("width", scene_data.get("width", SCREEN_W)))
         self.screen_height = int(config.get("height", scene_data.get("height", SCREEN_H)))
 
@@ -344,6 +344,14 @@ def get_visual_novel_config(scene_data):
     return {}
 
 
+def has_visual_novel_layer(scene_data):
+    if not isinstance(scene_data, dict):
+        return False
+
+    config = get_visual_novel_config(scene_data)
+    return bool(config.get("enabled", False))
+
+
 def is_visual_novel_scene(scene_data):
     if not isinstance(scene_data, dict):
         return False
@@ -355,5 +363,4 @@ def is_visual_novel_scene(scene_data):
     if scene_data.get("no_3d") or scene_data.get("without_3d"):
         return True
 
-    config = get_visual_novel_config(scene_data)
-    return bool(config.get("enabled", False))
+    return False

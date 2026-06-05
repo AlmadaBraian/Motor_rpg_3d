@@ -1905,6 +1905,9 @@ class Toolkit:
         self.check_runtime_fall(pack)
 
     def check_runtime_fall(self, pack):
+        if getattr(self, "runtime_world", None) is None:
+            return
+
         inst = pack["inst"]
 
         if inst.is_mantling:

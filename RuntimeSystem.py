@@ -19,7 +19,7 @@ from SceneManager import get_runtime_scene_manager
 
 from SpriteManager import Animator
 from config import GRID_H, GRID_W, SCREEN_H, SCREEN_W
-from VisualNovelScene import VisualNovelSceneState
+from VisualNovelScene import VisualNovelSceneState, has_visual_novel_layer
 
 
 class RuntimeSystem:
@@ -95,6 +95,9 @@ class RuntimeSystem:
             tkref.runtime_world = None
             tkref.show_ui = False
         else:
+            if has_visual_novel_layer(initial_scene_data):
+                tkref.visual_novel_scene.load_from_scene_data(initial_scene_data or {})
+
             if not initial_map_id:
                 initial_map_id = getattr(tkref, "current_map_id", "Map001")
 
