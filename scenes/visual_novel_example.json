@@ -1,0 +1,68 @@
+{
+  "scene": "visual_novel_example",
+  "type": "visual_novel",
+  "visual_novel": {
+    "enabled": true,
+    "width": 640,
+    "height": 480,
+    "sprites": [
+      {
+        "name": "bg_room",
+        "image": "textures/redbrick.png",
+        "x": 0,
+        "y": 0,
+        "w": 640,
+        "h": 480,
+        "z": 0
+      },
+      {
+        "name": "hero",
+        "image": "sprites/button_a.png",
+        "x": -96,
+        "y": 260,
+        "w": 96,
+        "h": 96,
+        "visible": false,
+        "z": 10
+      }
+    ]
+  },
+  "script": [
+    {
+      "action": "vn_start_animation",
+      "sprite": "bg_room",
+      "animation": "fade_in",
+      "final_x": 0,
+      "final_y": 0,
+      "duration": 1.0,
+      "wait": true
+    },
+    {
+      "action": "vn_start_animation",
+      "sprite": "hero",
+      "animation": "entrar_izquierda",
+      "final_x": 80,
+      "final_y": 260,
+      "speed": 320,
+      "wait": true
+    },
+    {
+      "action": "show_dialog",
+      "speaker": "Narrador",
+      "text": [
+        "Esta escena no carga un mapa 3D.",
+        "El fondo y el retrato son sprites 2D animables."
+      ]
+    },
+    {
+      "action": "vn_start_animation",
+      "sprite": "hero",
+      "animation": "salir_derecha",
+      "speed": 320,
+      "wait": true
+    },
+    {
+      "action": "end_event"
+    }
+  ]
+}

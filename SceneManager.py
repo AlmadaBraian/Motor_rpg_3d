@@ -2,6 +2,8 @@ import copy
 import json
 import os
 
+from VisualNovelScene import is_visual_novel_scene
+
 
 class RuntimeSceneManager:
 
@@ -72,6 +74,10 @@ class RuntimeSceneManager:
             or ""
         )
 
+
+    def is_visual_novel_scene(self, scene_data):
+        return is_visual_novel_scene(scene_data)
+
     def get_scene_player_start(self, scene_data):
         if not isinstance(scene_data, dict):
             return None
@@ -140,11 +146,40 @@ class RuntimeSceneManager:
     # WORLD EVENT LIFECYCLE
     # =====================================================
 
+
+    def apply_runtime_scene_mode(self, owner, scene_data):
+        if scene_data is None:
+            return
+
+        if not hasattr(owner, "visual_novel_scene"):
+            from VisualNovelScene import VisualNovelSceneState
+            owner.visual_novel_scene = VisualNovelSceneState()
+
+        if self.is_visual_novel_scene(scene_data):
+            owner.runtime_scene_mode = "visual_novel"
+            owner.visual_novel_scene.load_from_scene_data(scene_data)
+            owner.runtime_world = None
+            owner.show_ui = False
+            return
+
+        owner.runtime_scene_mode = "world"
+        owner.visual_novel_scene.reset()
+
+        target_map = self.get_scene_start_map(scene_data)
+        if target_map and hasattr(owner, "runtime"):
+            owner.current_runtime_map_id = target_map
+            owner.runtime_world = owner.runtime.build_runtime_world_copy(target_map)
+            player_start = self.get_scene_player_start(scene_data)
+            if player_start:
+                owner.runtime.apply_runtime_player_start(player_start)
+
     def start_world_event(self, owner, scene_file):
         script, scene_path, data = self.get_scene_script(scene_file)
 
         if not script and not data:
             return False
+
+        self.apply_runtime_scene_mode(owner, data)
 
         owner.current_event_data = data
         owner.current_event_scene_path = scene_path
@@ -158,6 +193,7 @@ class RuntimeSceneManager:
         owner.event_wait_timer = 0
         owner.event_wait_input = False
         owner.event_wait_move = None
+        owner.event_wait_vn_animation = False
         owner.event_advance_block = False
 
         print("WORLD EVENT START:", scene_path)
@@ -177,6 +213,7 @@ class RuntimeSceneManager:
         owner.event_wait_timer = 0
         owner.event_wait_input = False
         owner.event_wait_move = None
+        owner.event_wait_vn_animation = False
         owner.event_advance_block = False
 
         print("WORLD SCRIPT START:", source_name)
