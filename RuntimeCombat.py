@@ -6,7 +6,7 @@ import IA
 from RuntimeSkill import RuntimeSkill, update_knockback
 from SpriteManager import Animator
 from config import CAMERA_PRESETS, GRID_H, GRID_W
-from BasicScripts import END_COMBAT_SCRIPT, NORMAL_ATTACK_SCRIPT
+from BasicScripts import NORMAL_ATTACK_SCRIPT
 from SceneManager import get_runtime_scene_manager
 import random
 
