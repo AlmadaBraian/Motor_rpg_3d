@@ -8,6 +8,7 @@ from SpriteManager import Animator
 from config import CAMERA_PRESETS, GRID_H, GRID_W
 from BasicScripts import NORMAL_ATTACK_SCRIPT
 from SceneManager import get_runtime_scene_manager
+from RuntimeMusic import restore_map_music
 import random
 
 
@@ -4088,19 +4089,30 @@ class RuntimeCombat:
 
         o = self.owner
 
-        music = getattr(
+        combat_music = getattr(
+            o,
+            "current_combat_music",
+            None
+        )
+
+        current_music = getattr(
             o,
             "current_music",
             None
         )
 
-        if music and hasattr(o, "audio_manager"):
+        music_to_stop = combat_music or current_music
+
+        if music_to_stop and hasattr(o, "audio_manager"):
             o.audio_manager.stop(
-                music,
+                music_to_stop,
                 fade_ms=1000
             )
 
+        o.current_music = None
         o.current_combat_music = None
+
+        restore_map_music(o, fade_ms=1000)
 
         o.battle_mode = False
 
