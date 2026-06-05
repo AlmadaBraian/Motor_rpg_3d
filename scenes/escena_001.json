@@ -257,7 +257,7 @@
 
     {
       "action": "change_scene",
-      "scene": "escena2.json"
+      "scene": "escena_inicial.json"
     }
 
   ]

@@ -3185,6 +3185,160 @@
                 ],
                 "fps": 2,
                 "loop": false
+            },
+            {
+                "name": "shoot_pistol_izq_x2",
+                "frames": [
+                    {
+                        "frame": 36,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    },
+                    {
+                        "frame": 37,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    },
+                    {
+                        "frame": 36,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    },
+                    {
+                        "frame": 36,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    },
+                    {
+                        "frame": 37,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 2,
+                "loop": false
+            },
+            {
+                "name": "shoot_pistol_dere_x2",
+                "frames": [
+                    {
+                        "frame": 36,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": true,
+                        "rot": 0
+                    },
+                    {
+                        "frame": 37,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": true,
+                        "rot": 0
+                    },
+                    {
+                        "frame": 36,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": true,
+                        "rot": 0
+                    },
+                    {
+                        "frame": 36,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": true,
+                        "rot": 0
+                    },
+                    {
+                        "frame": 37,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": true,
+                        "rot": 0
+                    }
+                ],
+                "fps": 2,
+                "loop": false
             }
         ]
     },

@@ -7,7 +7,7 @@ from RuntimeSkill import RuntimeSkill, update_knockback
 from SpriteManager import Animator
 from config import CAMERA_PRESETS, GRID_H, GRID_W, SETTINGS
 from motor_rpg.domain.combat import CombatRules, actor_stats_from_object
-from BasicScripts import NORMAL_ATTACK_SCRIPT
+from BasicScripts import NORMAL_ATTACK_SCRIPT, GUN_ATTACK_SCRIPT
 from SceneManager import get_runtime_scene_manager
 from RuntimeMusic import restore_map_music
 import random
@@ -1538,9 +1538,9 @@ class RuntimeCombat:
                         if target:
                             o.battle_attacker_unit = o.battle_selected_unit
                             self.attack_performed = True
+                            o.current_action_type = "attack"
                             #self.perform_attack(target)
-                            self.start_runtime_skill(
-                                NORMAL_ATTACK_SCRIPT,
+                            self.execute_combat_action(
                                 o.battle_attacker_unit,
                                 target
                             )
@@ -1656,20 +1656,123 @@ class RuntimeCombat:
                 f"{item_name} x{inventory.count(item_name)}"
             )
 
+    def has_ammo(
+        self,
+        actor_name,
+        ammo_name,
+        amount=1
+    ):
+
+        o = self.owner
+
+        actor_def = o.actors.get(actor_name)
+
+        if not actor_def:
+            return False
+
+        inventory = getattr(
+            actor_def,
+            "inventory",
+            []
+        )
+
+        return inventory.count(ammo_name) >= amount
+
+    def consume_ammo(
+        self,
+        actor_name,
+        ammo_name,
+        amount=1
+    ):
+
+        o = self.owner
+
+        actor_def = o.actors.get(actor_name)
+
+        if not actor_def:
+            return False
+
+        inventory = getattr(
+            actor_def,
+            "inventory",
+            []
+        )
+
+        if inventory.count(ammo_name) < amount:
+            return False
+
+        for _ in range(amount):
+
+            inventory.remove(ammo_name)
+
+        print ("BALAS RESTANTES", inventory.count(ammo_name))
+
+        return True
+
     def execute_attack_action(
     self,
     user_pack,
-    target_pack
+    target_pack,
+    is_counter=False
     ):
+        o = self.owner
+        self.current_attack_is_counter = is_counter
 
-        runtime_skill = RuntimeSkill(
-            combat=self,
-            script=NORMAL_ATTACK_SCRIPT,
-            user_pack=user_pack,
-            target_pack=target_pack
+        inst = user_pack["inst"]
+        
+        weapon_name = getattr(
+        o.actors[inst.actor_name],
+        "weapon",
+        ""
         )
 
+        script = NORMAL_ATTACK_SCRIPT
+
+        if weapon_name:
+
+            weapon = o.weapons.get(
+                weapon_name
+            )
+
+            if weapon and weapon.use_bullets:
+
+                if not self.has_ammo(
+                    inst.actor_name,
+                    weapon.ammo_item,
+                    weapon.ammo_per_shot
+                ):
+
+                    print("OUT OF AMMO")
+                    return
+
+            if weapon and weapon.script:
+
+                script = weapon.script
+
+                if weapon and weapon.use_bullets:
+
+                    if weapon and weapon.use_bullets:
+
+                        self.consume_ammo(
+                            inst.actor_name,
+                            weapon.ammo_item,
+                            weapon.ammo_per_shot
+                        )
+
+        runtime_skill = RuntimeSkill(
+        combat=self,
+        script=script,
+        user_pack=user_pack,
+        target_pack=target_pack
+        )
+
+        runtime_skill.data[
+            "is_counter"
+        ] = is_counter
+
         self.active_runtime_skill = runtime_skill
+
+        return runtime_skill
 
     def execute_skill_action(
     self,
@@ -2998,11 +3101,30 @@ class RuntimeCombat:
 
         if o.current_action_type == "attack":
 
-            action_range = getattr(
+            weapon_name = getattr(
                 actor_def,
-                "attack_range",
-                1
+                "weapon",
+                ""
             )
+
+            weapon = o.weapons.get(
+                weapon_name
+            )
+
+            if weapon:
+
+                action_range = weapon.range
+                shape = weapon.target_shape
+
+            else:
+
+                action_range = getattr(
+                    actor_def,
+                    "attack_range",
+                    1
+                )
+
+                shape = "diamond"
 
         # =========================================
         # SKILL / ITEM
@@ -3344,6 +3466,10 @@ class RuntimeCombat:
 
         if not o.battle_mode:
             return
+        
+        if o.runtime_camera_locked:
+            return
+        
         if o.runtime_cam_orbit is None:
             o.runtime_cam_orbit = 0
 
@@ -3625,7 +3751,8 @@ class RuntimeCombat:
                 self.performing_attack = True
 
         # ORBITAL
-        cam.yaw = o.runtime_cam_orbit
+        if not o.runtime_camera_locked:
+            cam.yaw = o.runtime_cam_orbit
 
     def runtime_skill_attack_camera(
     self,
@@ -3769,70 +3896,6 @@ class RuntimeCombat:
         )
 
         self.runtime_attack_camera = True
-
-    def perform_attack(self,attacker_pack,target_pack, is_counter=False):
-
-        o = self.owner
-        self.current_attack_is_counter = is_counter
-
-        if not attacker_pack or not target_pack:
-            return False
-
-        attacker = attacker_pack["inst"]
-        target = target_pack["inst"]
-
-        self.attack_anim_inst = attacker
-        self.damage_anim_inst = target
-
-        self.attack_result_type = "normal"
-
-        self.start_attack_camera(
-            attacker_pack,
-            target_pack
-        )
-
-        result = self.calculate_combat_result(
-            attacker_pack,
-            target_pack
-        )
-
-        if not result:
-            return False
-        
-        if result["critical_hit"]:
-            self.attack_result_type = "critical"
-
-        elif not result["hit"]:
-            self.attack_result_type = "miss"
-
-        else:
-            self.attack_result_type = "normal"
-        
-        self.last_attack_attacker = attacker_pack
-        self.last_attack_target = target_pack
-
-        print("result", result)
-
-        self.current_attack_context = {
-
-                                "attacker": attacker_pack,
-                                "target": target_pack,
-
-                                "result": result,
-
-                                "damage": result["damage"]
-                            }
-
-        self.apply_damage(
-            attacker_pack,
-            target_pack,
-            result
-        )
-
-        o.battle_attack_tiles = []
-        o.battle_move_tiles = []
-
-        return True
     
     def remove_dead_unit_from_turn_order(self, pack):
 
@@ -3903,10 +3966,12 @@ class RuntimeCombat:
         main_dead = False
 
         is_main = getattr(
-            o.actors[inst.actor_name],
-            "is_main",
-            False
+        o.actors[inst.actor_name],
+        "is_main",
+        False
         )
+
+        print ("IS MAIN? 1", str(is_main))
 
         if is_main and getattr(inst, "battle_dead", False):
             main_dead = True

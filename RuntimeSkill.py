@@ -2,6 +2,8 @@
 # RUNTIME SKILL
 # =========================================================
 
+from CameraAnimator import CameraAnimator
+from CameraKeyframe import CameraKeyframe
 from config import GRID_H, GRID_W
 from SceneManager import get_runtime_scene_manager
 from RuntimeMusic import play_runtime_audio, stop_runtime_audio
@@ -236,6 +238,80 @@ def run_combat_command(
         )
 
         return
+    
+    if action == "camera_look_actor":
+            
+            combat.runtime_attack_camera = False
+
+
+            actor = cmd.get("actor", "")
+
+            if actor == "user":
+                actor_name = user.actor_name
+
+            elif actor == "target":
+                actor_name = target.actor_name
+
+            else:
+                actor_name = actor
+
+            pack = o.find_actor_pack_by_name(actor_name)
+
+            if not pack:
+                return
+
+            camx = pack["gx"]
+            camz = pack["gy"]
+
+            if not hasattr(o.game_view, "game_cam_anim"):
+
+                o.game_view.game_cam_anim = CameraAnimator(
+                    o.game_view.game_camera
+                )
+
+            anim = o.game_view.game_cam_anim
+
+            cam = o.game_view.game_camera
+
+            anim = o.game_view.game_cam_anim
+
+            anim.clear()
+
+            cam = o.game_view.game_camera
+
+            anim.add_key(
+                CameraKeyframe(
+                    cam.x,
+                    cam.y,
+                    cam.z,
+                    cam.yaw,
+                    cam.pitch,
+                    cam.distance,
+                    0
+                )
+            )
+
+            anim.add_key(
+                CameraKeyframe(
+                    camx,
+                    cmd.get("height", cam.y),
+                    camz,
+                    cmd.get("yaw", cam.yaw),
+                    cmd.get("pitch", cam.pitch),
+                    cmd.get("distance", cam.distance),
+                    cmd.get("duration", 2.0)
+                )
+            )
+
+            o.runtime_camera_locked = True
+
+            anim.play()
+
+            o.event_wait_camera = True
+
+            runtime_skill.index += 1
+
+            return
 
     # =====================================================
     # PLAY ANIMATION
@@ -285,7 +361,16 @@ def run_combat_command(
                     "animation_clip_izq",
                     ""
                 )
+        else:
+            if side == "dere":
 
+                clip = cmd.get("animation_clip_dere", "")
+
+            else:
+
+                clip = cmd.get("animation_clip_izq", "")
+            
+        print("CLIP", str(clip))
         # fallback opcional
         if not clip:
             clip = cmd.get("clip", "")
@@ -393,6 +478,55 @@ def run_combat_command(
         runtime_skill.index += 1
         return
     
+    if action == "play_shoot_animation":
+
+        side = combat.attack_anim_side
+
+        runtime_skill.data["attack_side"] = side
+
+        result = runtime_skill.data.get(
+            "combat_result"
+        )
+
+        result_type = "normal"
+
+        if result:
+
+            if result["critical_hit"]:
+                result_type = "critical"
+
+            elif not result["hit"]:
+                result_type = "miss"
+
+        # =====================================
+        # CLIP
+        # =====================================
+
+        if result_type == "critical":
+
+            clip = (
+                "shoot_pistol_dere_x2"
+                if side == "dere"
+                else "shoot_pistol_izq_x2"
+            )
+
+        else:
+
+            clip = (
+                "shoot_pistol_dere"
+                if side == "dere"
+                else "shoot_pistol_izq"
+            )
+
+        if user and user.animator:
+
+            if clip in user.animator.clips:
+
+                user.animator.play(clip)
+
+        runtime_skill.index += 1
+        return
+    
     if action == "play_attack_animation":
 
         side = combat.attack_anim_side
@@ -480,6 +614,7 @@ def run_combat_command(
 
         combat.attack_anim_inst = user
         combat.damage_anim_inst = target
+        o.runtime_camera_locked = False
 
         if not target:
             end_runtime_skill(
@@ -720,11 +855,16 @@ def run_combat_command(
         # START COUNTER SKILL
         # =====================================
 
-        counter_skill = combat.start_runtime_skill(
-            NORMAL_ATTACK_SCRIPT,
+        counter_skill = combat.execute_attack_action(
             tgt_pack,
-            atk_pack
+            atk_pack,
+            is_counter=True
         )
+
+        if not counter_skill:
+
+            runtime_skill.index += 1
+            return
 
         counter_skill.data["is_counter"] = True
 
@@ -1258,7 +1398,13 @@ def end_runtime_skill(runtime_skill):
             "counter_finished"
         ] = True
 
-    combat.active_runtime_skill = None
+        combat.active_runtime_skill = parent
+
+    else:
+
+        combat.active_runtime_skill = None
+
+    #combat.active_runtime_skill = None
 
     combat.battle_camera_mode = 0
 

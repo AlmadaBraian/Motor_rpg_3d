@@ -114,6 +114,11 @@ def open_actor_creator_window(self, actor_name=None):
         body_type_combo.set("normal")
         body_type_combo.grid(row=2,column=7,columnspan=2,sticky="ew")
 
+        tk.Label(combat_frame, text="Weapon").grid(row=3,column=6)
+        weapon_combo = ttk.Combobox(combat_frame, state="readonly")
+        weapon_combo["values"] = list(self.weapons.keys())
+        weapon_combo.grid(row=3,column=7,columnspan=2,sticky="ew")
+
         tk.Label(combat_frame, text="Battle Team").grid(row=0,column=6)
 
         team_combo = ttk.Combobox(combat_frame, state="readonly")
@@ -221,13 +226,22 @@ def open_actor_creator_window(self, actor_name=None):
             if not item_name:
                 return
 
-            # evitar duplicados
-            existing = inventory_list.get(0, tk.END)
+            qty = simpledialog.askinteger(
+                "Cantidad",
+                f"¿Cuántos {item_name}?",
+                minvalue=1,
+                initialvalue=1
+            )
 
-            if item_name in existing:
+            if not qty:
                 return
 
-            inventory_list.insert(tk.END, item_name)
+            for _ in range(qty):
+
+                inventory_list.insert(
+                    tk.END,
+                    item_name
+                )
 
         def remove_inventory_item():
 
@@ -322,6 +336,7 @@ def open_actor_creator_window(self, actor_name=None):
             damage_max_entry.insert(0, editing_actor.damage_max)
 
             body_type_combo.set(editing_actor.body_type)
+            weapon_combo.set(editing_actor.weapon)
             team_combo.set(editing_actor.kind)
             ai_combo.set(editing_actor.ai_mode)
             move_entry.insert(0, editing_actor.move_range)
@@ -432,6 +447,7 @@ def open_actor_creator_window(self, actor_name=None):
             actor.armor_class = int(CA_entry.get())
             actor.damage_max = int(damage_max_entry.get())
             actor.body_type = body_type_combo.get()
+            actor.weapon = weapon_combo.get()
 
             actor.team = team_combo.get()
             actor.ai_mode = ai_combo.get()

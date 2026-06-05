@@ -107,7 +107,7 @@
     },
     {
       "action": "change_scene",
-      "scene_new": "escena_001.json"
+      "scene_new": "scene_inicial.json"
     }
   ]
 }

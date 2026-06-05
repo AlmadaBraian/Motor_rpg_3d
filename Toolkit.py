@@ -18,7 +18,7 @@ from EventTileEditor import EventTileEditor
 from ItemAsset import ItemAsset
 from ItemCreatorWindows import open_item_editor
 from SkillAsset import SkillAsset
-from SkillCreatorWindows import open_skill_editor
+from AssetEditor import AssetEditor
 from ActorInstance import ActorInstance
 from CameraKeyframe import CameraKeyframe
 from EventManager import *
@@ -136,6 +136,7 @@ class Toolkit:
         self.current_wall_direction = ""
         self.skills = {}
         self.items = {}
+        self.weapons = {}
         self.scene_manager = RuntimeSceneManager(self)
         self.runtime_combat = RuntimeCombat(self)
         self.runtime = RuntimeSystem(self)
@@ -413,9 +414,9 @@ class Toolkit:
         self.tool_status = tk.Label(left, text="TOOL: smartselect", bg="#222", fg="white")
         self.tool_status.pack(fill="x", pady=5)
 
-        tk.Button(left, text="Create/Edit Skill", command=self.open_skill_editor).pack(fill='x')
+        tk.Button(left, text="Create/Edit Assets", command=self.open_AssetEditor).pack(fill='x')
 
-        tk.Button(left, text="Create/Edit Item", command=self.open_item_editor).pack(fill='x')
+        #tk.Button(left, text="Create/Edit Item", command=self.open_item_editor).pack(fill='x')
 
         tk.Label(prop_frame, text="Importar").pack(pady=4)
         tk.Button(prop_frame,text='Import OBJ Asset',command=self.import_obj_asset).pack(fill='x')
@@ -569,13 +570,11 @@ class Toolkit:
         
         open_actor_creator_window(self, self.selected_actor_asset)
 
-    def open_skill_editor (self):
+    def open_AssetEditor (self):
         
-        open_skill_editor(self)
+        AssetEditor(self)
 
-    def open_item_editor (self):
-        
-        open_item_editor(self)
+    
 
     def on_camera_preset_changed(self, event=None):
 
@@ -4180,6 +4179,7 @@ class Toolkit:
             "actors": {},
             "skills": {},
             "items": {},
+            "weapons": {},
             "audio": {}
         }
 
@@ -4268,6 +4268,31 @@ class Toolkit:
                 "animation_clip_izq": skill.animation_clip_izq,
                 "status_effect": skill.status_effect,
                 "script": skill.script
+
+            }
+
+         # =========================================
+        # SAVE WEAPONS DATABASE
+        # =========================================
+
+        for name, weapon  in self.weapons.items():
+            data["weapons"][name] = {
+                "name": weapon.name,
+                "description": weapon.description,
+                "range": weapon.range,
+                "weapon_type": weapon.weapon_type,
+                "use_bullets": weapon.use_bullets,
+                "target_type": weapon.target_type,
+                "effect_type": weapon.effect_type,
+                "ammo_item": weapon.ammo_item,
+                "ammo_per_shot": weapon.ammo_per_shot,
+                "target_shape": weapon.target_shape,
+                "power": weapon.power,
+                "animation_sprite": weapon.animation_sprite,
+                "animation_clip_dere": weapon.animation_clip_dere,
+                "animation_clip_izq": weapon.animation_clip_izq,
+                "status_effect": weapon.status_effect,
+                "script": weapon.script
 
             }
 
@@ -4627,6 +4652,32 @@ class Toolkit:
             skill.script = ad.get("script", [])
 
             self.skills[name] = skill
+
+        # =========================================
+        # LOAD WEAPON DEFINITIONS
+        # =========================================
+        self.weapons = {}
+
+        for name, ad in data.get("weapons", {}).items():
+            weapon = SkillAsset(name)
+
+            weapon.description = ad.get("description", "")
+            weapon.range = ad.get("range", 1)
+            weapon.target_type = ad.get("target_type", "enemy")
+            weapon.weapon_type = ad.get("weapon_type", "mele")
+            weapon.use_bullets = ad.get("use_bullets", False)
+            weapon.effect_type = ad.get("effect_type", "damage")
+            weapon.ammo_per_shot = ad.get("ammo_per_shot", 1)
+            weapon.ammo_item = ad.get("ammo_item", "")
+            weapon.target_shape = ad.get("target_shape", "diamond")
+            weapon.power = ad.get("power", 10)
+            weapon.animation_sprite = ad.get("animation_sprite", "")
+            weapon.animation_clip_dere = ad.get("animation_clip_dere", "")
+            weapon.animation_clip_izq = ad.get("animation_clip_izq", "")
+            weapon.status_effect = ad.get("status_effect", "")
+            weapon.script = ad.get("script", [])
+
+            self.weapons[name] = weapon
 
         # =========================================
         # LOAD ACTOR DEFINITIONS
