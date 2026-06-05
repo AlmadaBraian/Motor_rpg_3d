@@ -1830,6 +1830,15 @@ class RuntimeCombat:
             target.battle_dead = True
             target.pending_remove = True
 
+            is_main = getattr(
+                o.actors[target.actor_name],
+                "is_main",
+                False
+            )
+
+            if is_main:
+                return
+
             # La unidad queda visible hasta terminar su animacion de muerte,
             # pero sale del orden de turno para que no pueda actuar.
             self.remove_dead_unit_from_turn_order(target_pack)
@@ -2541,6 +2550,7 @@ class RuntimeCombat:
         if inst.battle_team == "enemy":
 
             o.waiting_enemy_turn_start = True
+            o.show_ui = False
 
         else:
 
@@ -3912,39 +3922,7 @@ class RuntimeCombat:
 
         if pack not in o.battle_units:
             return
-
-        # índice antes de remover
-        removed_index = -1
-
-        if pack in o.battle_turn_order:
-            removed_index = o.battle_turn_order.index(pack)
-
-        # remover del tile
-        tile = o.runtime_world.grid[
-            pack["gy"]
-        ][
-            pack["gx"]
-        ]
-
-        if pack in tile.actors:
-            tile.actors.remove(pack)
-
-        # remover listas
-        if pack in o.battle_units:
-            o.battle_units.remove(pack)
-
-        if pack in o.battle_turn_order:
-            o.battle_turn_order.remove(pack)
-
-        # ajustar turn index
-        if removed_index != -1:
-
-            if removed_index < o.battle_turn_index:
-                o.battle_turn_index -= 1
-
-            if o.battle_turn_index >= len(o.battle_turn_order):
-                o.battle_turn_index = 0
-
+        
         enemy_alive = False
         player_alive = False
         main_dead = False
@@ -3954,7 +3932,7 @@ class RuntimeCombat:
             inst = p["inst"]
 
             is_main = getattr(
-                p,
+                o.actors[inst.actor_name],
                 "is_main",
                 False
             )
@@ -3991,6 +3969,38 @@ class RuntimeCombat:
             )
 
             return
+
+        # índice antes de remover
+        removed_index = -1
+
+        if pack in o.battle_turn_order:
+            removed_index = o.battle_turn_order.index(pack)
+
+        # remover del tile
+        tile = o.runtime_world.grid[
+            pack["gy"]
+        ][
+            pack["gx"]
+        ]
+
+        if pack in tile.actors:
+            tile.actors.remove(pack)
+
+        # remover listas
+        if pack in o.battle_units:
+            o.battle_units.remove(pack)
+
+        if pack in o.battle_turn_order:
+            o.battle_turn_order.remove(pack)
+
+        # ajustar turn index
+        if removed_index != -1:
+
+            if removed_index < o.battle_turn_index:
+                o.battle_turn_index -= 1
+
+            if o.battle_turn_index >= len(o.battle_turn_order):
+                o.battle_turn_index = 0
         
     def update_combat_end(self, dt):
 

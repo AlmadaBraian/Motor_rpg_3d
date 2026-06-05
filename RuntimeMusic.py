@@ -113,6 +113,7 @@ def restore_map_music(owner, fade_ms=1000):
         return False
 
     track_id = map_music.get("track_id")
+    volume = map_music.get("volume")
     path = map_music.get("path")
 
     if not track_id or not path:
@@ -125,7 +126,7 @@ def restore_map_music(owner, fade_ms=1000):
         owner.audio_manager.play(
             track_id=track_id,
             path=path,
-            volume=map_music.get("volume", 1.0),
+            volume=map_music.get("volume", 0.1),
             loop=map_music.get("loop", True),
             category=map_music.get("category", "music"),
             replace=True,
@@ -136,5 +137,6 @@ def restore_map_music(owner, fade_ms=1000):
     owner.current_combat_music = None
 
     print("RESTORE MAP MUSIC:", track_id)
+    print("MAP MUSIC VOLUME:", volume)
 
     return True
