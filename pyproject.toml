@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "motor-rpg-3d"
+version = "0.1.0"
+description = "Editor y runtime experimental para mapas RPG 3D con límites de paquete explícitos."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Proprietary"}
+authors = [{name = "Motor RPG 3D contributors"}]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.10",
+  "pytest>=8.2",
+  "ruff>=0.5",
+]
+
+[tool.setuptools.packages.find]
+include = ["motor_rpg*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+  "legacy",
+  "src - copia",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["motor_rpg"]
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+check_untyped_defs = true

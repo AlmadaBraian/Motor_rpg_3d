@@ -1,51 +1,26 @@
-import os
+from __future__ import annotations
+
+from pathlib import Path
+
+from motor_rpg.domain.config import GameConfig
 
 
-GRID_W = 24
-GRID_H = 24
-SCREEN_W = 640
-SCREEN_H = 480
-CELL_PIXELS = 28
-ASSET_GRID = 16
-ASSET_CELL = 20
+SETTINGS = GameConfig.from_root(Path(__file__).resolve().parent)
 
+GRID_W = SETTINGS.grid.width
+GRID_H = SETTINGS.grid.height
+SCREEN_W = SETTINGS.render.screen_width
+SCREEN_H = SETTINGS.render.screen_height
+CELL_PIXELS = SETTINGS.grid.cell_pixels
+ASSET_GRID = SETTINGS.grid.asset_grid
+ASSET_CELL = SETTINGS.grid.asset_cell
 
-base_path = os.path.dirname(__file__)
-tex_path = os.path.join(base_path, "textures")
+base_path = str(SETTINGS.paths.root)
+tex_path = str(SETTINGS.paths.textures)
 TEXTURE_FOLDER = tex_path
-EXPORT_FOLDER = base_path + "/export_dc"
+EXPORT_FOLDER = str(SETTINGS.paths.export)
+media_folder = str(SETTINGS.paths.media)
+scene_folder = str(SETTINGS.paths.scenes)
 
-media_folder = base_path + "/media"
-
-scene_folder = base_path + "/scenes"
-
-CAMERA_PRESETS = {
-    "editor": {
-        "x": 12,
-        "y": 0,
-        "z": 12,
-        "yaw": 45,
-        "pitch": 55,
-        "distance": 35
-    },
-
-    "world": {
-        "y": 0.8,
-        "yaw": 0,
-        "pitch": 35,
-        "distance": 7
-    },
-
-    "battle_tactical": {
-        "y": 0,
-        "yaw":0,
-        "pitch": 55,
-        "distance": 14
-    },
-
-    "battle_close": {
-        "y": 1,
-        "pitch": 20,
-        "distance": 6
-    }
-}
+CAMERA_PRESETS = {name: dict(values) for name, values in SETTINGS.render.camera_presets.items()}
+BODY_TYPE_ARMOR_SCALE = dict(SETTINGS.combat.body_type_armor_scale)
