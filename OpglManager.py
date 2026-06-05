@@ -2965,6 +2965,8 @@ class GLViewport(OpenGLFrame):
         glLoadIdentity()
 
         glDisable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # ====================================
         # fondo
@@ -2972,6 +2974,7 @@ class GLViewport(OpenGLFrame):
 
         box_h = 160
 
+        glDisable(GL_TEXTURE_2D)
         glColor4f(0, 0, 0, 0.8)
 
         glBegin(GL_QUADS)
@@ -2983,6 +2986,8 @@ class GLViewport(OpenGLFrame):
         glVertex2f(40, sh - 40)
 
         glEnd()
+
+        glColor4f(1, 1, 1, 1)
 
         # ====================================
         # speaker
@@ -3044,6 +3049,8 @@ class GLViewport(OpenGLFrame):
                 )
 
         # restore
+        glColor4f(1, 1, 1, 1)
+        glDisable(GL_TEXTURE_2D)
         glEnable(GL_DEPTH_TEST)
 
         glPopMatrix()
