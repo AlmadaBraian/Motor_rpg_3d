@@ -19,7 +19,7 @@
         "name": "hero",
         "image": "sprites/Marisa.png",
         "x": -96,
-        "y": 260,
+        "y": 60,
         "w": 270,
         "h": 480,
         "visible": false,
@@ -42,7 +42,7 @@
       "sprite": "hero",
       "animation": "entrar_izquierda",
       "final_x": 80,
-      "final_y": 260,
+      "final_y": 60,
       "speed": 320,
       "wait": true
     },
