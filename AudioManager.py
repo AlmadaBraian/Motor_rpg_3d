@@ -39,6 +39,7 @@ class AudioManager:
             "sfx": 1.0,
             "footstep": 1.0
         }
+        self.delayed_calls = []
         self.decode_cache = {}
         self.decode_cache_dir = os.path.join(
             tempfile.gettempdir(),
@@ -157,7 +158,24 @@ class AudioManager:
             return
 
         volume = track.volume * self.master_volume * self._get_category_volume(track.category)
+
+        print(
+        "APPLY VOLUME",
+        track.track_id,
+        track.volume,
+        self.master_volume,
+        self._get_category_volume(track.category),
+        volume
+        )
         track.channel.set_volume(max(0.0, min(1.0, volume)))
+
+    def call_later(self, delay, callback, *args, **kwargs):
+        self.delayed_calls.append({
+            "execute_at": time.time() + float(delay),
+            "callback": callback,
+            "args": args,
+            "kwargs": kwargs
+        })
 
     def play(self, track_id, path, volume=1.0, loop=False, category="sfx", replace=True, fade_ms=0):
         if not self.ready or not path:
@@ -183,6 +201,13 @@ class AudioManager:
         if not channel:
             print("AUDIO CHANNEL UNAVAILABLE:", track_id)
             return None
+        
+        print(
+            "PLAY TRACK",
+            track_id,
+            "CHANNEL",
+            channel
+        )
 
         track = AudioTrack(
             track_id=track_id,
@@ -195,8 +220,15 @@ class AudioManager:
             playback_path=playback_path
         )
 
+        print("PLAY MUSIC VOLUME", volume)
+
         self.tracks[track_id] = track
         self._apply_track_volume(track)
+        print(
+            "CHANNEL VOLUME",
+            track.track_id,
+            track.channel.get_volume()
+        )
         return track
 
     def pause(self, track_id=None):
@@ -233,6 +265,12 @@ class AudioManager:
                 return
 
             if track.channel:
+                print(
+                    "STOP TRACK",
+                    track.track_id,
+                    "CHANNEL",
+                    track.channel
+                )
                 if fade_ms > 0:
                     track.channel.fadeout(int(fade_ms))
                 else:
@@ -301,7 +339,27 @@ class AudioManager:
 
         finished = []
 
+        now = time.time()
+
+        pending = []
+
+        for item in self.delayed_calls:
+            if now >= item["execute_at"]:
+                try:
+                    item["callback"](
+                        *item["args"],
+                        **item["kwargs"]
+                    )
+                except Exception as exc:
+                    print("DELAYED CALL ERROR:", exc)
+            else:
+                pending.append(item)
+
+        self.delayed_calls = pending
+
+
         for track_id, track in list(self.tracks.items()):
+            
             if track.channel and not track.channel.get_busy() and track.fade_duration <= 0:
                 finished.append(track_id)
                 continue
