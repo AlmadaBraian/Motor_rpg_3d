@@ -59,6 +59,30 @@ class RuntimeSceneManager:
 
         return data, scene_path
 
+
+    def get_scene_start_map(self, scene_data):
+        if not isinstance(scene_data, dict):
+            return ""
+
+        return (
+            scene_data.get("start_map")
+            or scene_data.get("map")
+            or scene_data.get("map_id")
+            or scene_data.get("map_name")
+            or ""
+        )
+
+    def get_scene_player_start(self, scene_data):
+        if not isinstance(scene_data, dict):
+            return None
+
+        start = scene_data.get("player_start")
+
+        if isinstance(start, dict):
+            return start
+
+        return None
+
     def get_scene_script(self, scene_file):
         data, scene_path = self.load_scene_data(scene_file)
 
