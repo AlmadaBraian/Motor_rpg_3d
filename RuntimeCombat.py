@@ -3964,6 +3964,8 @@ class RuntimeCombat:
 
             print("GAME OVER")
 
+            o.game_over = True
+
             o.start_fade_out(
                 self.finish_combat_fade
             )
@@ -4091,6 +4093,9 @@ class RuntimeCombat:
 
         self.end_runtime_combat()
 
+        if o.game_over:
+            return
+
         o.start_fade_in()
         
     def end_runtime_combat(self):
@@ -4122,7 +4127,9 @@ class RuntimeCombat:
         o.current_music = None
         o.current_combat_music = None
 
-        restore_map_music(o, fade_ms=1000)
+        if not o.game_over:
+
+            restore_map_music(o, fade_ms=1000)
 
         o.battle_mode = False
 

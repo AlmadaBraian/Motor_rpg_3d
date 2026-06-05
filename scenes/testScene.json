@@ -17,6 +17,10 @@
       "time": 500
     },
      {"action": "audio_play", "track": "combat_music", "music": "music/combate_01.mp3", "volume": 0.7, "loop": true},
+     {
+      "action": "wait",
+      "time": 500
+    },
     {
       "action": "show_dialog",
       "speaker": "Batman",

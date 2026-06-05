@@ -2,7 +2,10 @@
   "scene": "scene_inicial",
   "start_map": "Map001",
   "script": [
-    {"action": "audio_play", "track": "bgm_town", "music": "music/Patricia.mp3", "volume": 0.1, "loop": true},
+    {
+        "action": "fade_in",
+        "duration": 2.5
+    },
     {
       "action": "audio_play",
       "track": "bgm_town",
