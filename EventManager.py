@@ -1,6 +1,7 @@
-import json
 import math
 import os
+from SceneManager import get_runtime_scene_manager
+from SceneManager import resolve_runtime_scene_path as central_resolve_runtime_scene_path
 from ActorInstance import ActorInstance
 from CameraAnimator import CameraAnimator
 from CameraKeyframe import CameraKeyframe
@@ -10,67 +11,20 @@ from config import *
 
 
 def resolve_runtime_scene_path(scene_file):
-        if not scene_file:
-            return ""
-
-        candidates = [scene_file]
-
-        if not os.path.isabs(scene_file):
-            candidates.append(os.path.join(os.getcwd(), scene_file))
-            candidates.append(os.path.join(os.path.dirname(__file__), scene_file))
-            candidates.append(os.path.join("scenes", os.path.basename(scene_file)))
-            candidates.append(os.path.join(os.path.dirname(__file__), "scenes", os.path.basename(scene_file)))
-
-        for candidate in candidates:
-            if candidate and os.path.exists(candidate):
-                return candidate
-
-        return scene_file
+        return central_resolve_runtime_scene_path(scene_file)
 
 
 def start_world_event(self, jsonfile):
-        jsonfile = resolve_runtime_scene_path(jsonfile)
-
-        if not os.path.exists(jsonfile):
-            print("EVENT FILE NOT FOUND:", jsonfile)
-            return
-
-        with open(jsonfile, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        self.current_event_data = data
-        self.current_event_script = data.get("script", [])
-        self.current_event_index = 0
-
-        self.world_event_running = True
-        self.world_event_locked = True
-
-        self.event_wait_timer = 0
-        self.event_wait_input = False
-        self.event_wait_move = None
-        self.event_advance_block = False
-
-        print("WORLD EVENT START:", jsonfile)
+        manager = get_runtime_scene_manager(self)
+        manager.start_world_event(self, jsonfile)
 
 def start_world_script(
     self,
     script
 ):
 
-    self.current_event_data = {}
-
-    self.current_event_script = script
-    self.current_event_index = 0
-
-    self.world_event_running = True
-    self.world_event_locked = True
-
-    self.event_wait_timer = 0
-    self.event_wait_input = False
-    self.event_wait_move = None
-    self.event_advance_block = False
-
-    print("WORLD SCRIPT START")
+    manager = get_runtime_scene_manager(self)
+    manager.start_world_script(self, script)
 
 def update_world_event(self, dt):
         if not self.world_event_running:
@@ -616,6 +570,25 @@ def run_world_event_command(self, cmd):
             end_world_event(self)
 
             return
+        # ==========================
+        # CHANGE SCENE
+        # ==========================
+        if action in ("next_scene", "change_scene"):
+
+            scene_file = cmd.get(
+                "scene_new",
+                cmd.get("scene", cmd.get("file", ""))
+            )
+
+            if not scene_file:
+                print("NEXT SCENE WITHOUT TARGET")
+                return
+
+            manager = get_runtime_scene_manager(self)
+            manager.change_world_scene(self, scene_file)
+
+            return
+
         # ==========================
         # END EVENT
         # ==========================

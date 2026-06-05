@@ -1,0 +1,18 @@
+{
+  "scene": "scene_inicial",
+  "start_map": "Map001",
+  "player_start": {
+    "x": 0,
+    "y": 0,
+    "facing": "frente"
+  },
+  "script": [
+    {
+      "action": "wait",
+      "time": 250
+    },
+    {
+      "action": "end_event"
+    }
+  ]
+}
