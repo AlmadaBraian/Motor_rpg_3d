@@ -57,7 +57,15 @@ class FontRenderer:
         color=(1,1,1,1)
     ):
 
-        texid, w, h = self.make_texture(text)
+        texid, w, h = self.make_texture(
+        text,
+        (
+            int(color[0] * 255),
+            int(color[1] * 255),
+            int(color[2] * 255),
+            int(color[3] * 255)
+        )
+    )
 
         glEnable(GL_TEXTURE_2D)
 

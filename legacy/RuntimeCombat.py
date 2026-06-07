@@ -776,7 +776,7 @@ class RuntimeCombat:
             self.battle_camera_mode = 1
             o.show_ui = True
             o.button_A_command = "Seleccionar"
-            o.button_X_command = "Guardia"
+            #o.button_X_command = "Guardia"
 
         print(
             "CURRENT UNIT:",

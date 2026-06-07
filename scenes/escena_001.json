@@ -85,14 +85,14 @@
         "La ciudad de Buenos Aires.",
         "La ciudad de la furia.",
         "Las luces de los autos,\nlas carteleras de los teatros\nme deslumbran.",
-        "Es la primera vez\nque tengo contacto fisico\ncon la ciudad.",
+        "Es la primera vez que tengo contacto fisico\ncon la ciudad.",
         "Buenos Aires me recibe\ncon los brazos abiertos y me dejo poseer\npor la agitada noche.",
-        "Me gustaria poder recorrerla\nen su plenitud.\nPero eso debera esperar a otro dia,\nen otro momento.",
+        "Me gustaria poder recorrerla en su plenitud.\nPero eso debera esperar a otro dia,\nen otro momento.",
         "Vuelvo en si de mi trance.",
         "Si bien hay muchas caras amistosas,\nno debo de confiarme.\nY menos a estas horas de la noche.",
         "Si bien estoy caminando por\nuna de las zonas más seguras\nde la ciudad...",
         "No es buena idea confiarse.",
-        "...",
+        ".............",
         "A lo lejos, veo un grupo\nde tres jovenes hablando.",
         "No se porque, pero siento\nque estan hablando de mi.",
         "Miran hacia donde estoy.\nUno de ellos hace un gesto.",
@@ -106,7 +106,7 @@
       "action": "vn_animation",
       "sprite": "BuenosAiresNoche",
       "animation": "fade_out",
-      "duration": 1.0,
+      "duration": 2.0,
       "wait": true
     },
 
@@ -124,7 +124,7 @@
 
     {
       "action": "wait",
-      "time": 5000
+      "time": 6000
     },
 
     {
@@ -138,8 +138,13 @@
       "animation": "fade_in",
       "x": 0,
       "y": 0,
-      "duration": 3.0,
+      "duration": 4.0,
       "wait": true
+    },
+
+    {
+      "action": "wait",
+      "time": 3000
     },
 
     {
@@ -150,12 +155,12 @@
         "Estoy un poco nerviosa,\nme sudan las manos.",
         "Al parecer,\nesos jovenes no me siguieron.",
         "¿Sera que los nervios\nme estan volviendo paranoica?",
-        "...",
+        ". . . . . . . . . . . . . . .",
         "Me tranquilizo.\nRecuerdo que debo llegar presentable\na mi primer dia de trabajo.",
         "Mi hermano, Anibal,\nse esforzo mucho para\nconseguirme este trabajo.",
         "El conoce a alguien de recursos humanos,\nme consiguio un puesto, como seguridad\ndel edificio donde trabaja.",
-        "La plata me estaba\nhaciendo mucha falta.\nAsi que no tuve más opcion\nque aceptar.",
-        "No puedo más de los nervios,\nme sudan las manos.\nSiento un fuerte apreton\nen el estomago.",
+        "La plata me estaba haciendo mucha falta.\nAsi que no tuve más opcion que aceptar.",
+        "No puedo más de los nervios.\nSiento un fuerte apreton en el estomago.",
         "Tranquila Erika,\ntodo va a estar bien."
       ]
     },
@@ -169,7 +174,7 @@
 
     {
       "action": "wait",
-      "time": 10000
+      "time": 20000
     },
 
     {
@@ -181,7 +186,7 @@
 
     {
       "action": "wait",
-      "time": 2000
+      "time": 3000
     },
 
     {
@@ -223,7 +228,7 @@
       "animation": "fade_in",
       "x": 0,
       "y": 0,
-      "duration": 3.0,
+      "duration": 4.0,
       "wait": true
     },
 
@@ -244,7 +249,7 @@
 
     {
       "action": "wait",
-      "time": 13000
+      "time": 23000
     },
 
     {
@@ -256,8 +261,13 @@
     },
 
     {
+      "action": "wait",
+      "time": 3000
+    },
+
+    {
       "action": "change_scene",
-      "scene": "escena_inicial.json"
+      "scene": "scene_inicial.json"
     }
 
   ]

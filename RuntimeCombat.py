@@ -1,5 +1,5 @@
 import math
-from collections import deque
+from collections import Counter, deque
 
 from ActorInstance import ActorInstance
 import IA
@@ -95,9 +95,9 @@ class RuntimeCombat:
         self.battle_camera_mode = 0
 
         o.button_A_command = "Seleccionar"
-        o.button_X_command = "Guardia"
+        o.button_X_command = "Menú"
         o.button_Y_command = "Items"
-        o.button_B_command = "Especial"
+        o.button_B_command = "Cancelar"
 
         # =====================================
         # PARTY
@@ -673,55 +673,118 @@ class RuntimeCombat:
             
     def confirm_item_target(self):
 
+        print("confirm_item_target")
+
         o = self.owner
 
-        if not o.battle_selected_unit:
+        if o.battle_state != "select_target":
             return
 
-        target = None
+        user_pack = o.battle_selected_unit
 
-        if o.battle_state == "select_target":
-                        
-            if not o.battle_target_tiles:
+        if not user_pack:
+            return
 
-                self.build_battle_target_tiles(
-                            o.battle_selected_unit
-                )
+        action_data = o.selected_combat_action
+
+        if not action_data:
+            return
+
+        script = self.get_item_value(
+            action_data,
+            "script",
+            []
+        )
+
+        print("ITEM SCRIPT 1:", script)
+        
+        item_name = getattr(
+                action_data,
+                "name",
+                ""
+            )
 
         for pack in o.battle_units:
 
             if getattr(pack["inst"], "battle_dead", False):
-                continue
+                    continue
 
             if (
                 pack["gx"] == o.battle_cursor_x
                 and
                 pack["gy"] == o.battle_cursor_y
             ):
+
                 target = pack
                 break
 
         if not target:
+
             print("NO TARGET")
 
-            o.battle_target_tiles = []
-
-            self.build_battle_move_tiles(
-                o.battle_selected_unit
-            )
             return
 
-        inst = o.battle_selected_unit["inst"]
+        # =====================================
+        # TARGET TYPE VALIDATION
+        # =====================================
 
-        print("selected_combat_action " + str(o.selected_combat_action))
-
-        self.execute_combat_action(
-            o.battle_selected_unit,
-            target,
-            o.selected_combat_action
+        target_type = self.get_skill_value(
+                action_data,
+                "target_type",
+                "enemy"
         )
 
+        user_team = user_pack["inst"].battle_team
+        target_team = target["inst"].battle_team
+
+        # -------------------------------------
+        # ENEMY
+        # -------------------------------------
+
+        if target_type == "enemy":
+            print("user_team", user_team)
+
+            if user_team == target_team:
+
+                print("INVALID ENEMY TARGET")
+
+                return
+
+        # -------------------------------------
+        # ALLY
+        # -------------------------------------
+
+        elif target_type == "ally":
+
+            if user_team != target_team:
+
+                print("INVALID ALLY TARGET")
+
+                return
+
+        # -------------------------------------
+        # SELF
+        # -------------------------------------
+
+        elif target_type == "self":
+
+            if target != user_pack:
+
+                print("INVALID SELF TARGET")
+
+                return
+
+        self.execute_combat_action(
+            user_pack,
+            target_pack=target,
+            action_data=action_data
+        )
+
+        inst = user_pack["inst"]
+
         inst.used_item_this_turn = True
+
+        #o.button_X_command = "Guard"
 
     # =========================================================
     # MANTLE SKILL
@@ -866,12 +929,26 @@ class RuntimeCombat:
         # MOVIMIENTO
         # =====================================================
 
+        if adjacent_tile is None:
+            print("NO ADJACENT TILE")
+            return False
+
         path = self.build_mantle_path(
             ux,
             uy,
             adjacent_tile[0],
             adjacent_tile[1]
         )
+
+        # =====================================================
+        # GUARDAR CONTEXTO
+        # =====================================================
+
+        self.mantle_skill_active = True
+        self.mantle_skill_user = user_pack
+        self.mantle_skill_action = action_data
+        self.mantle_skill_target_tile = (tx, ty)
+
 
         if adjacent_tile != (ux, uy) and not path:
 
@@ -882,6 +959,10 @@ class RuntimeCombat:
         
         if adjacent_tile == (ux, uy):
 
+            self.setup_mantle_context(user, user_pack, tx, ty)
+
+            user.mantle_started = True
+
             self.finish_mantle_skill()
             print("MANTLE VALIDATION 5")
 
@@ -889,19 +970,13 @@ class RuntimeCombat:
 
         o.combat_move_queue = path
 
-        user.combat_using_mantle = True
-
-        user.combat_mantle_target = (
-            tx,
-            ty
-        )
+        
 
         user.is_battle_moving = True
         user.battle_move_timer = 0.0
         user.battle_moved = True
 
-        o.combat_actor_moving = True
-        o.combat_moving_unit = user_pack
+        self.setup_mantle_context(user, user_pack, tx, ty)
 
         o.battle_selected_unit = None
 
@@ -909,25 +984,18 @@ class RuntimeCombat:
 
         o.battle_state = "idle"
 
-        # =====================================================
-        # GUARDAR CONTEXTO
-        # =====================================================
-
-        self.mantle_skill_active = True
-
-        self.mantle_skill_user = user_pack
-
-        self.mantle_skill_action = action_data
-
-        self.mantle_skill_target_tile = (
-            tx,
-            ty
-        )
-
         print("MANTLE MOVE START")
         print("MANTLE VALIDATION 6")
 
         return "async"
+    
+    def setup_mantle_context(self, user, user_pack, tx, ty):
+
+        user.combat_using_mantle = True
+        user.combat_mantle_target = (tx, ty)
+
+        self.owner.combat_actor_moving = True
+        self.owner.combat_moving_unit = user_pack
 
 
     # =========================================================
@@ -938,7 +1006,7 @@ class RuntimeCombat:
         o = self.owner
 
         user_pack = self.mantle_skill_user
-        user = user_pack["inst"]
+        #user = user_pack["inst"]
 
         tx, ty = self.mantle_skill_target_tile
 
@@ -990,6 +1058,8 @@ class RuntimeCombat:
 
         o = self.owner
 
+        pack = None
+
         if o.battle_state != "select_target":
             return
 
@@ -997,6 +1067,8 @@ class RuntimeCombat:
 
         if not user_pack:
             return
+        
+        inst = user_pack["inst"]
 
         action_data = o.selected_combat_action
 
@@ -1112,6 +1184,9 @@ class RuntimeCombat:
                 action_data=action_data
             )
 
+            inst.battle_moved = True
+            inst.battle_acted = True
+
         else:
 
             self.execute_combat_action(
@@ -1120,9 +1195,11 @@ class RuntimeCombat:
                 action_data=action_data
             )
 
-        inst = user_pack["inst"]
-
         inst.used_skill_this_turn = True
+
+        o.command_menu = self.build_unit_command_menu(user_pack)
+
+        #o.button_X_command = "Guard"
 
     # =========================================================
     # INPUT
@@ -1139,7 +1216,7 @@ class RuntimeCombat:
             return
 
         k = event.keysym.lower()
-
+        
         # =====================================
         # CURSOR MOVEMENT
         # =====================================
@@ -1147,17 +1224,68 @@ class RuntimeCombat:
         mx = 0
         my = 0
 
-        if k == "w":
-            my = -1
+        if o.battle_state not in ["command_menu","skill_menu","item_menu"]:
 
-        if k == "s":
-            my = 1
+            if k == "w":
+                my = -1
 
-        if k == "a":
-            mx = -1
+            if k == "s":
+                my = 1
 
-        if k == "d":
-            mx = 1
+            if k == "a":
+                mx = -1
+
+            if k == "d":
+                mx = 1
+
+        # =====================================
+        # CHANGE BATTLE MODE
+        # =====================================
+
+        else:
+
+            if event.keysym == "Up" or k == "w":
+                o.battle_input_cooldown = 0.25
+                if o.battle_state == "skill_menu":
+                    o.skill_menu_index -= 1
+
+                if o.battle_state == "item_menu":
+                    o.item_menu_index -= 1
+
+                if o.battle_state == "command_menu":
+                    o.menu_index -= 1
+
+            if event.keysym == "Down" or k == "s":
+                o.battle_input_cooldown = 0.25
+                if o.battle_state == "skill_menu":
+                    o.skill_menu_index += 1
+
+                if o.battle_state == "item_menu":
+                    o.item_menu_index += 1
+
+                if o.battle_state == "command_menu":
+                    o.menu_index += 1
+
+            if len(o.skill_menu) > 0:
+
+                o.skill_menu_index %= len(o.skill_menu)
+
+            if len(o.item_menu) > 0:
+
+                o.item_menu_index %= len(o.item_menu)
+
+            o.menu_index %= len(o.command_menu)
+
+        o.menu_index %= len(o.command_menu)
+
+        if len(o.skill_menu) > 0:
+
+            o.skill_menu_index %= len(o.skill_menu)
+
+        if len(o.item_menu) > 0:
+
+            o.item_menu_index %= len(o.item_menu)
+        
 
         # =====================================
         # CAMERA RELATIVE ROTATION
@@ -1269,14 +1397,11 @@ class RuntimeCombat:
             p.rot_r = True
 
         if event.keysym == "x":
-
-            print("APRETE X")
-
+            o.battle_input_cooldown = 0.25
             self.execute_x_command()
-            o.battle_input_cooldown = 0.12
-            return
 
         if event.keysym == "z":
+            o.battle_input_cooldown = 0.25
 
             # =====================================
             # ENTER ITEM MODE
@@ -1296,16 +1421,7 @@ class RuntimeCombat:
         if event.keysym == "c":
             o.battle_input_cooldown = 0.25
             print("APRETE C")
-
-            if o.battle_state in [
-                "select_move",
-                "select_target"
-            ]:
-                o.battle_move_tiles = []
-                o.battle_target_tiles = []
-                self.cycle_battle_specials()
-
-                self.use_selected_skill()
+            self.execute_b_command()
             return
 
         o.battle_cursor_x = max(
@@ -1318,35 +1434,6 @@ class RuntimeCombat:
             min(GRID_H - 1, o.battle_cursor_y)
         )
 
-        # =====================================
-        # CHANGE BATTLE MODE
-        # =====================================
-
-        if event.keysym == "Down":
-
-            o.battle_input_cooldown = 0.25
-            self.switch_attack_move()
-
-        elif event.keysym == "Left":
-
-            o.battle_input_cooldown = 0.25
-            self.switch_x_command()
-
-        elif event.keysym == "Up":
-
-            o.battle_input_cooldown = 0.25
-
-            self.cycle_battle_items()
-
-            if o.battle_state == "select_item":
-
-                self.use_selected_item()
-
-        elif event.keysym == "Right":
-
-            o.battle_input_cooldown = 0.25
-            self.cycle_battle_specials()
-            self.use_selected_skill()
 
         # =====================================
         # END TURN
@@ -1390,6 +1477,7 @@ class RuntimeCombat:
 
                     self.end_battle_turn()
 
+
             # =====================================
             # SELECT UNIT
             # =====================================
@@ -1407,7 +1495,7 @@ class RuntimeCombat:
 
                 return
 
-            elif o.battle_selected_unit is None:
+            if o.battle_selected_unit is None:
 
                 print(
                     "CURSOR:",
@@ -1435,22 +1523,171 @@ class RuntimeCombat:
 
                         o.battle_selected_unit = pack
 
-                        # SOLO CAMBIA ESTADO
-                        o.battle_state = "select_move"
+                        o.command_menu = self.build_unit_command_menu(pack)
 
-                        o.button_A_command = "Mover a"
+                        o.menu_index = 0
+                        o.battle_state = "command_menu"
 
-                        o.current_action_type = "move"
+                        #o.button_A_command = "Mover a"
 
-                        if not o.battle_move_tiles:
+                        #o.current_action_type = "move"
 
-                            self.build_battle_move_tiles(
-                                o.battle_selected_unit
-                            )
-
-                        print("UNIT SELECTED")
 
                         return
+                    
+            else:
+                #o.button_X_command = "Guard"
+                print("")
+                    
+            # --------------------------------
+            # menu
+            # --------------------------------
+
+            if o.battle_state in [
+                "command_menu",
+                "skill_menu",
+                "item_menu"
+            ]:
+
+                if o.battle_state == "skill_menu":
+
+                    skill_name = o.skill_menu[
+                        o.skill_menu_index
+                    ]
+
+                    skill_data = o.skills.get(skill_name)
+
+                    if not skill_data:
+                        return
+
+                    o.selected_combat_action = skill_data
+
+                    o.current_action_type = "skill"
+
+                    self.build_battle_target_tiles(
+                        o.battle_selected_unit
+                    )
+
+                    o.battle_state = "select_target"
+
+                    return
+                
+                if o.battle_state == "item_menu":
+
+                    item_name = o.item_menu_data[
+                        o.item_menu_index
+                    ]
+
+                    item_data = o.items.get(item_name)
+
+                    if not item_data:
+                        return
+
+                    o.selected_combat_action = item_data
+
+                    o.current_action_type = "item"
+
+                    self.build_battle_target_tiles(
+                        o.battle_selected_unit
+                    )
+
+                    o.battle_state = "select_target"
+
+                    return
+
+                selected, enabled = o.command_menu[o.menu_index]
+
+                if not enabled:
+                    return
+                    
+
+                if selected == "Mover":
+
+                    o.current_action_type = "move"
+
+                    o.battle_state = "select_move"
+
+                    o.button_X_command = "Menú"
+
+                    self.build_battle_move_tiles(
+                        o.battle_selected_unit
+                    )
+
+                elif selected == "Atacar":
+
+                    o.current_action_type = "attack"
+
+                    o.battle_state = "select_target"
+
+                    o.button_X_command = "Menú"
+
+                    self.build_battle_target_tiles(
+                        o.battle_selected_unit
+                    )
+
+                elif selected == "Especial":
+
+                    actor_def = o.actors.get(
+                        o.battle_selected_unit["inst"].actor_name
+                    )
+
+                    if not actor_def:
+                        return
+
+                    skills = getattr(actor_def, "skills", [])
+
+                    if not skills:
+                        return
+
+                    o.skill_menu = skills
+                    o.skill_menu_index = 0
+
+                    o.battle_state = "skill_menu"
+
+                    print(str(o.skill_menu))
+
+                elif selected == "Items":
+
+                    actor_def = o.actors.get(
+                        o.battle_selected_unit["inst"].actor_name
+                    )
+
+                    if not actor_def:
+                        return
+
+                    inventory = getattr(actor_def, "inventory", [])
+
+                    counter = Counter(inventory)
+
+                    o.item_menu = [
+                        f"{name} x{qty}"
+                        for name, qty in counter.items()
+                    ]
+
+                    o.item_menu_data = list(counter.keys())
+
+                    if not inventory:
+                        return
+
+                    #o.item_menu = inventory
+                    o.item_menu_index = 0
+
+                    o.battle_state = "item_menu"
+
+                elif selected == "Guardia":
+
+                    o.button_X_command = "Menú"
+
+                    #self.execute_b_command()
+                    print("GUARD")
+                    inst = o.battle_current_unit["inst"]
+
+                    inst.guard_mode = True
+
+                    self.end_battle_turn()
+                    
+
+                return
 
             # =====================================
             # MOVE UNIT
@@ -1510,16 +1747,16 @@ class RuntimeCombat:
 
                     print("UNIT MOVING")
 
-                if o.battle_state == "select_item":
-
-                    self.confirm_item_target()
-                    return
                 
                 if o.battle_state == "select_target":
 
                     if o.current_action_type == "skill":
                         
                         self.confirm_selected_skill()
+
+                    elif o.current_action_type == "item":
+                        self.confirm_item_target()
+
 
                     else:
                         tx = o.battle_cursor_x
@@ -1531,6 +1768,9 @@ class RuntimeCombat:
                             if getattr(pack["inst"], "battle_dead", False):
                                 continue
 
+                            if pack["inst"].battle_team in ["player", "ally"]:
+                                return
+
                             if pack["gx"] == tx and pack["gy"] == ty:
                                 target = pack
                                 break
@@ -1538,18 +1778,36 @@ class RuntimeCombat:
                         if target:
                             o.battle_attacker_unit = o.battle_selected_unit
                             self.attack_performed = True
+                            o.battle_attacker_unit["inst"].battle_attacked = True
                             o.current_action_type = "attack"
                             #self.perform_attack(target)
                             self.execute_combat_action(
                                 o.battle_attacker_unit,
                                 target
                             )
+                            o.command_menu = self.build_unit_command_menu(o.battle_attacker_unit)
                             #inst.battle_acted = True
                             
                         print ("max_actions " + str(o.max_actions))
                         return
 
                     return
+
+    def build_unit_command_menu(self, pack):
+
+        inst = pack["inst"]
+
+        menu = []
+
+        menu = [
+            ("Mover", not inst.battle_moved),
+            ("Atacar", not inst.battle_attacked),
+            ("Especial", not inst.used_skill_this_turn),
+            ("Items", not inst.used_item_this_turn),
+            ("Guardia", not inst.guard_mode)
+        ]
+
+        return menu
 
     def consume_combat_action(
         self,
@@ -1593,26 +1851,7 @@ class RuntimeCombat:
 
         inst = user_pack["inst"]
 
-        if inst.battle_moved:
-
-            o.battle_state = "select_target"
-
-            self.build_battle_target_tiles(
-                user_pack
-            )
-
-            o.button_A_command = "Atacar"
-
-        else:
-
-            o.battle_state = "select_move"
-
-            o.button_A_command = "Mover a"
-
-            self.build_battle_move_tiles(
-                user_pack
-            )
-
+        
     def consume_item_inventory(
     self,
     user_pack,
@@ -1635,6 +1874,8 @@ class RuntimeCombat:
             "inventory",
             []
         )
+
+        print("ITEM DATA", str(item_data))
 
         item_name = item_data.name
 
@@ -2017,17 +2258,15 @@ class RuntimeCombat:
 
             if not inst.battle_moved:
 
-                o.current_action_type = "move"
+                #o.current_action_type = "move"
 
-                o.battle_state = "select_move"
+                o.command_menu = self.build_unit_command_menu(pack)
+
+                o.menu_index = 0
+                o.battle_state = "command_menu"
 
                 o.battle_target_tiles = []
-
-                self.build_battle_move_tiles(
-                    o.battle_selected_unit
-                )
-
-                o.button_A_command = "Mover a"
+                o.battle_move_tiles = []
 
             return
 
@@ -2067,7 +2306,7 @@ class RuntimeCombat:
 
         o.battle_move_tiles = []
 
-        self.build_battle_target_tiles(pack)
+        o.battle_target_tiles = []
 
         print(
             "TARGET TILES:",
@@ -2117,17 +2356,16 @@ class RuntimeCombat:
             print("SKILL NOT FOUND:", skill_name)
             if not inst.battle_moved:
 
-                o.current_action_type = "move"
+                #o.current_action_type = "move"
 
-                o.battle_state = "select_move"
+                o.command_menu = self.build_unit_command_menu(pack)
+
+                o.menu_index = 0
+                o.battle_state = "command_menu"
 
                 o.battle_target_tiles = []
+                o.battle_move_tiles = []
 
-                self.build_battle_move_tiles(
-                    o.battle_selected_unit
-                )
-
-                o.button_A_command = "Mover a"
             return
 
         o.selected_combat_action = skill_data
@@ -2142,7 +2380,7 @@ class RuntimeCombat:
 
         o.battle_state = "select_target"
 
-        o.button_B_command = skill_data.name
+        #o.button_B_command = skill_data.name
 
         o.button_A_command = "Seleccionar"
 
@@ -2193,6 +2431,44 @@ class RuntimeCombat:
 
         o = self.owner
 
+        if o.battle_state == "command_menu":
+                print("GUARD")
+
+                o.battle_selected_unit["inst"].guard_mode = True
+
+                self.end_battle_turn()
+
+
+        elif o.battle_state == "select_move":
+
+                o.command_menu = self.build_unit_command_menu(o.battle_selected_unit)
+
+                o.menu_index = 0
+                o.battle_state = "command_menu"
+
+                o.battle_move_tiles = []
+
+                #o.button_X_command = "Guard"
+
+                return
+
+        elif o.battle_state == "select_target":
+
+                o.command_menu = self.build_unit_command_menu(o.battle_selected_unit)
+
+                o.menu_index = 0
+                o.battle_state = "command_menu"
+
+                o.battle_target_tiles = []
+
+                #o.button_X_command = "Guard"
+
+                return
+
+    def execute_b_command(self):
+
+        o = self.owner
+
         pack = o.battle_current_unit
 
         if not pack:
@@ -2204,7 +2480,16 @@ class RuntimeCombat:
         # CANCELAR MOVIMIENTO
         # =====================================
 
-        if o.button_X_command == "Cancelar":
+        if o.button_B_command == "Cancelar":
+
+            if o.battle_state in ["skill_menu","item_menu", "select_target", "select_move", "select_target"]:
+                o.command_menu = self.build_unit_command_menu(pack)
+
+                o.menu_index = 0
+                o.battle_state = "command_menu"          
+
+            if not inst.battle_moved:
+                return
 
             oldtile = o.runtime_world.grid[
                 pack["gy"]
@@ -2239,7 +2524,7 @@ class RuntimeCombat:
 
             self.build_battle_move_tiles(pack)
 
-            o.button_X_command = "Guardia"
+            #o.button_X_command = "Guardia"
 
             self.focus_battle_camera_on_current(pack)
 
@@ -2249,18 +2534,6 @@ class RuntimeCombat:
             print("MOVE CANCELED")
 
             return
-
-        # =====================================
-        # GUARD
-        # =====================================
-
-        else:
-
-            print("GUARD")
-
-            inst.guard_mode = True
-
-            self.end_battle_turn()
 
     def switch_x_command(self):
 
@@ -2323,9 +2596,20 @@ class RuntimeCombat:
 
         inventory = getattr(actor_def, "inventory", [])
 
+        counter = Counter(inventory)
+
+        o.item_menu = [
+            f"{name} x{qty}"
+            for name, qty in counter.items()
+        ]
+
+        o.item_menu_data = list(counter.keys())
+
+        o.command_menu = inventory
+
         if not inventory:
 
-            o.button_Y_command = "Sin Items"
+
             return
 
         inst.selected_item_index += 1
@@ -2367,7 +2651,7 @@ class RuntimeCombat:
 
         if not skills:
 
-            o.button_B_command = "Sin Especial"
+            #o.button_B_command = "Sin Especial"
             return
 
         inst.selected_special_index += 1
@@ -2377,7 +2661,7 @@ class RuntimeCombat:
 
         skill = skills[inst.selected_special_index]
 
-        o.button_B_command = skill
+        #o.button_B_command = skill
 
         print("SPECIAL:", skill)
 
@@ -2442,9 +2726,9 @@ class RuntimeCombat:
                 inst.battle_moved = False
                 inst.battle_acted = False
 
-        self.begin_battle_turn()
-
         print("TURN END")
+
+        self.begin_battle_turn()
 
     def begin_battle_turn(self):
 
@@ -2529,6 +2813,7 @@ class RuntimeCombat:
 
         inst.used_skill_this_turn = False
         inst.used_item_this_turn = False
+        inst.battle_attacked = False
 
         print("TURN:", inst.actor_name)
 
@@ -2577,7 +2862,7 @@ class RuntimeCombat:
             self.battle_camera_mode = 0
             o.show_ui = True
             o.button_A_command = "Seleccionar"
-            o.button_X_command = "Guardia"
+            #o.button_X_command = "Menú"
 
             actor_def = o.actors.get(inst.actor_name)
 
@@ -2594,7 +2879,7 @@ class RuntimeCombat:
 
             skills = getattr(actor_def, "skills", [])
 
-            o.button_B_command = "Especial"
+            #o.button_B_command = "Especial"
 
         print(
             "CURRENT UNIT:",
@@ -2698,7 +2983,8 @@ class RuntimeCombat:
         startx,
         starty,
         action_range,
-        allow_mantle=False
+        allow_mantle=False,
+        include_self=False
     ):
 
         o = self.owner
@@ -2723,11 +3009,14 @@ class RuntimeCombat:
 
             visited.add((x, y))
 
-            if not (
+            if (
                 x == startx
                 and
                 y == starty
             ):
+                if include_self:
+                    tiles.append((x, y))
+            else:
                 tiles.append((x, y))
 
             dirs = [
@@ -2776,7 +3065,8 @@ class RuntimeCombat:
         startx,
         starty,
         action_range,
-        allow_mantle=False
+        allow_mantle=False,
+        include_self=False
     ):
 
         tiles = []
@@ -2813,7 +3103,16 @@ class RuntimeCombat:
                 ):
                     break
 
-                tiles.append((nx, ny))
+                if (
+                    nx == startx
+                    and
+                    ny == starty
+                ):
+                    if include_self:
+                        tiles.append((nx, ny))
+                else:
+
+                    tiles.append((nx, ny))
 
                 if self.combat_tile_blocked(nx, ny):
                     break
@@ -2835,7 +3134,8 @@ class RuntimeCombat:
         self,
         pack,
         action_range,
-        allow_mantle=False
+        allow_mantle=False,
+        include_self=False
     ):
 
         tiles = []
@@ -2886,7 +3186,15 @@ class RuntimeCombat:
             ):
                 break
 
-            tiles.append((nx, ny))
+            if (
+                nx == startx
+                and
+                ny == starty
+                ):
+                if include_self:
+                    tiles.append((nx, ny))
+                else:
+                    tiles.append((nx, ny))
 
             px = nx
             py = ny
@@ -2902,7 +3210,8 @@ class RuntimeCombat:
         self,
         startx,
         starty,
-        action_range
+        action_range,
+        include_self=False
     ):
 
         tiles = []
@@ -2943,7 +3252,8 @@ class RuntimeCombat:
         self,
         startx,
         starty,
-        action_range
+        action_range,
+        include_self=False
     ):
 
         tiles = []
@@ -2981,7 +3291,8 @@ class RuntimeCombat:
     def build_target_shape_cone(
         self,
         pack,
-        action_range
+        action_range,
+        include_self=False
     ):
 
         tiles = []
@@ -3095,6 +3406,8 @@ class RuntimeCombat:
         shape = "diamond"
         action_data = None
 
+        target_type = "enemy"
+
         # =========================================
         # NORMAL ATTACK
         # =========================================
@@ -3149,18 +3462,41 @@ class RuntimeCombat:
                 ""
             )
 
-            target_type = self.get_skill_value(
-                action_data,
-                "target_type",
-                "enemy"
-            )
-            script = self.get_skill_value(
-            action_data,
-            "script",
-            []
-            )
+            if o.current_action_type == "skill":
 
-            print("SKILL SCRIPT:", script)
+                target_type = self.get_skill_value(
+                    action_data,
+                    "target_type",
+                    "enemy"
+                )
+
+                script = self.get_skill_value(
+                action_data,
+                "script",
+                []
+                )
+
+                print("SKILL SCRIPT:", script)
+
+            else:
+                target_type = self.get_item_value(
+                    action_data,
+                    "target_type",
+                    "enemy"
+                )
+
+                script = self.get_item_value(
+                action_data,
+                "script",
+                []
+                )
+
+                print("ITEM SCRIPT:", script)
+
+
+            if target_type in ["self", "ally"]:
+                include_self = True
+                
 
             shape = getattr(
                 action_data,
@@ -3185,7 +3521,8 @@ class RuntimeCombat:
                     startx,
                     starty,
                     action_range,
-                    allow_mantle
+                    allow_mantle,
+                    include_self=include_self
                 )
             )
 
@@ -3196,7 +3533,8 @@ class RuntimeCombat:
                     startx,
                     starty,
                     action_range,
-                    allow_mantle
+                    allow_mantle,
+                    include_self=include_self
                 )
             )
 
@@ -3206,7 +3544,8 @@ class RuntimeCombat:
                 self.build_target_shape_line(
                     pack,
                     action_range,
-                    allow_mantle
+                    allow_mantle,
+                    include_self=include_self
                 )
             )
 
@@ -3216,7 +3555,8 @@ class RuntimeCombat:
                 self.build_target_shape_square(
                     startx,
                     starty,
-                    action_range
+                    action_range,
+                    include_self=include_self
                 )
             )
 
@@ -3226,7 +3566,8 @@ class RuntimeCombat:
                 self.build_target_shape_ring(
                     startx,
                     starty,
-                    action_range
+                    action_range,
+                    include_self=include_self
                 )
             )
 
@@ -3235,7 +3576,8 @@ class RuntimeCombat:
             o.battle_target_tiles = (
                 self.build_target_shape_cone(
                     pack,
-                    action_range
+                    action_range,
+                    include_self=include_self
                 )
             )
 
@@ -3251,6 +3593,9 @@ class RuntimeCombat:
             pack
         )
 
+        if include_self:
+            target = pack
+
         if not target:
 
             print("NO TARGET IN RANGE")
@@ -3264,13 +3609,13 @@ class RuntimeCombat:
 
                 for tx, ty in o.battle_target_tiles:
 
-                    # evitar self tile
-                    if tx == ux and ty == uy:
-                        continue
+                    if not include_self:
+
+                        if tx == ux and ty == uy:
+                            continue
 
                     o.battle_cursor_x = tx
                     o.battle_cursor_y = ty
-
                     break
             return
 
@@ -3290,6 +3635,10 @@ class RuntimeCombat:
             o.enemy_ai_state = "confirm_attack"
             o.battle_move_tiles = []
 
+        #if not target_type == "enemy" and not inst.battle_team  == "enemy":
+
+
+
         o.battle_target_unit = target
 
         o.battle_cursor_x = target["gx"]
@@ -3306,6 +3655,13 @@ class RuntimeCombat:
             return skill.get(key, default)
 
         return getattr(skill, key, default)
+    
+    def get_item_value(self,item, key, default=None):
+
+        if isinstance(item, dict):
+            return item.get(key, default)
+
+        return getattr(item, key, default)
     
     # =========================================================
     # MOVE RANGE
@@ -3971,7 +4327,7 @@ class RuntimeCombat:
         False
         )
 
-        print ("IS MAIN? 1", str(is_main))
+        print ("IS MAIN?", str(is_main))
 
         if is_main and getattr(inst, "battle_dead", False):
             main_dead = True
@@ -4119,7 +4475,7 @@ class RuntimeCombat:
                 p["inst"].actor_name
             )
 
-        self.end_runtime_combat()
+        #self.end_runtime_combat()
 
         if o.game_over:
             return
@@ -4186,9 +4542,10 @@ class RuntimeCombat:
         self.runtime_attack_camera = False
 
         o.button_A_command = "Interactuar"
-        o.button_X_command = "Guardia"
+        o.button_X_command = "Menú"
         o.button_Y_command = "Items"
-        o.button_B_command = "Especial"
+        o.button_B_command = "Cancelar"
+        o.battle_mode = False
 
         # =====================================
         # RESET FLAGS
@@ -4270,101 +4627,11 @@ class RuntimeCombat:
 
         else:
 
-            o.battle_state = "select_move"
+            o.command_menu = self.build_unit_command_menu(o.battle_selected_unit)
 
-            o.button_A_command = "Mover a"
+            o.menu_index = 0
+            o.battle_state = "command_menu"
 
-            o.current_action_type = "select move"
-
-            if o.battle_selected_unit:
-                self.build_battle_move_tiles(
-                    o.battle_selected_unit
-                )
-
-
-    def update_combat_actor_attack(self, dt):
-
-        o = self.owner
-
-        if not o.play_mode:
-            return
-
-        if not self.performing_attack:
-            return
-
-        inst = self.attack_anim_inst
-
-        if not inst:
-            self.performing_attack = False
-            return
-
-        if not inst.animator:
-            self.performing_attack = False
-            return
-        
-        ctx = self.current_attack_context
-
-        if not ctx:
-
-            self.performing_attack = False
-            return
-
-        target_pack = ctx["target"]
-
-        # actualizar animacion
-        inst.animator.update(dt)
-
-        is_charge = getattr(
-                inst,
-                "charge_running",
-                False
-            )
-        
-        if is_charge:
-            print("charge_running update_combat_actor_attack")
-            return
-        
-        self.show_popup(target_pack, ctx["result"])
-            
-        # terminó
-        if inst.animator.finished:
-
-            target_inst = target_pack["inst"]
-            target_animator = getattr(target_inst, "animator", None)
-
-            if (
-                getattr(target_inst, "pending_remove", False)
-                and
-                target_animator
-                and
-                not target_animator.finished
-            ):
-                return
-
-            self.finalize_pending_dead_unit(target_pack)
-
-            self.performing_attack = False
-
-            if self.attack_result_type == "miss":
-                    
-                idle_anim = (
-                        "sitdown_dere"
-                        if self.attack_anim_side == "dere"
-                        else "sitdown_izq"
-                    )
-                    
-            else:     
-                # volver a idle
-                idle_anim = (
-                    "idle_dere"
-                    if self.attack_anim_side == "dere"
-                    else "idle_izq"
-                )
-
-            if idle_anim in inst.animator.clips:
-                inst.animator.play(idle_anim)
-
-            #self.try_finish_attack_sequence()
 
     def show_popup(
     self,
@@ -4601,6 +4868,7 @@ class RuntimeCombat:
                 scale=scale
             )
 
+
     def update_battle_animations(self, dt):
 
         o = self.owner
@@ -4687,14 +4955,7 @@ class RuntimeCombat:
 
                 user_pack = self.mantle_skill_user
 
-                o.battle_target_tiles = []
-
-                if user_pack:
-                    self.build_battle_target_tiles(user_pack)
-
-                o.battle_state = "select_target"
-
-                o.button_X_command = "Guardia"
+                #o.button_X_command = "Guardia"
 
                 self.focus_battle_camera_on_current(user_pack)
 
@@ -4743,21 +5004,18 @@ class RuntimeCombat:
                 # volver a seleccionar unidad
                 o.battle_selected_unit = o.combat_moving_unit
 
-                o.button_A_command = "Atacar"
+                #o.button_A_command = "Atacar"
 
-                o.battle_state = "select_target"
+                o.command_menu = self.build_unit_command_menu(o.battle_selected_unit)
 
-                o.current_action_type = "attack"
+                o.menu_index = 0
+                o.battle_state = "command_menu"
+
+                #o.current_action_type = "attack"
 
                 #self.switch_x_command()
 
                 o.combat_moving_unit = None
-                
-                if not o.battle_target_tiles:
-
-                    self.build_battle_target_tiles(
-                        o.battle_selected_unit
-                    )
 
             # FIN TURNO
             else:

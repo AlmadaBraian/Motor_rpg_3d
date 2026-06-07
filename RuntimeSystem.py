@@ -71,7 +71,7 @@ class RuntimeSystem:
         initial_scene_file = getattr(
             tkref,
             "initial_scene_file",
-            "scenes/visual_novel_example.json"
+            "scenes/scene_inicial.json"
         )
 
         scene_manager = get_runtime_scene_manager(tkref)
@@ -694,9 +694,9 @@ class RuntimeSystem:
         tkref.battle_cam_active = False
 
         tkref.button_A_command = "Interactuar"
-        tkref.button_X_command = "Guardia"
+        tkref.button_X_command = ""
         tkref.button_Y_command = "Items"
-        tkref.button_B_command = "Especial"
+        tkref.button_B_command = "Cancelar"
 
         # =====================================
         # INPUTS

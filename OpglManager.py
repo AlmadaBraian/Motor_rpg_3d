@@ -654,6 +654,7 @@ class GLViewport(OpenGLFrame):
             
             if self.toolkit_ref.battle_mode:
                 self.toolkit_ref.runtime_combat.draw_combat_popups()
+                self.draw_command_menu()
 
             self.begin_ui()
             self.end_ui()
@@ -2935,6 +2936,178 @@ class GLViewport(OpenGLFrame):
 
         glMatrixMode(GL_MODELVIEW)
 
+    
+
+
+    def draw_list_menu(
+    self,
+    items,
+    selected_index,
+    screen_x,
+    screen_y,
+    w=1,
+    h=1
+    ):
+
+        if not items:
+            return
+
+        o = self.toolkit_ref
+
+        longest = max(len(str(x)) for x in items)
+
+        box_w = longest * w + 40
+        box_h = len(items) * 55 + 20
+
+        bx = screen_x
+        by = screen_y
+
+        # =========================
+        # fondo
+        # =========================
+
+        o.viewport.begin_ui()
+
+        glDisable(GL_TEXTURE_2D)
+
+        glEnable(GL_BLEND)
+        glBlendFunc(
+            GL_SRC_ALPHA,
+            GL_ONE_MINUS_SRC_ALPHA
+        )
+
+        glColor4f(0, 0, 0, 0.75)
+
+        glBegin(GL_QUADS)
+
+        glVertex2f(bx, by)
+        glVertex2f(bx + box_w, by)
+
+        glVertex2f(bx + box_w, by + box_h)
+        glVertex2f(bx, by + box_h)
+
+        glEnd()
+
+        # borde
+
+        glColor4f(1, 1, 1, 0.25)
+
+        glBegin(GL_LINE_LOOP)
+
+        glVertex2f(bx, by)
+        glVertex2f(bx + box_w, by)
+
+        glVertex2f(bx + box_w, by + box_h)
+        glVertex2f(bx, by + box_h)
+
+        glEnd()
+
+        o.viewport.end_ui()
+
+        # =========================
+        # texto
+        # =========================
+
+        for i, entry in enumerate(items):
+
+            if isinstance(entry, tuple):
+                text, enabled = entry
+            else:
+                text = str(entry)
+                enabled = True
+
+            color = (1,1,1,1)
+
+            if not enabled:
+                color = (0.5,0.5,0.5,1)
+
+            prefix = "> " if i == selected_index else "  "
+
+            o.viewport.draw_ui_text(
+                prefix + text,
+                bx + 15,
+                by + 15 + (i * 40),
+                color=color,
+                centered=False,
+                scale=1.2
+            )
+
+    def draw_command_menu(self):
+
+        o = self.toolkit_ref
+
+        if o.battle_state not in ["command_menu","skill_menu","item_menu"]:
+            return
+
+        pack = o.battle_selected_unit
+
+        if not pack:
+            return
+
+        screen = o.viewport.world_to_screen(
+            pack["gx"] + 0.5,
+            pack["inst"].ground_z + 2.5,
+            pack["gy"] + 0.5
+        )
+
+        if not screen:
+            return
+
+        sx, sy = screen
+
+        actor_name = pack["inst"].actor_name
+
+        if pack["inst"].battle_team == "enemy":
+
+            o.viewport.draw_ui_text(
+                actor_name,
+                sx,
+                sy + 150,
+                color=(1,1,0,1),
+                centered=False,
+                scale=1.5
+            )
+            return
+        
+        o.viewport.draw_ui_text(
+                actor_name,
+                sx + 90,
+                sy - 70,
+                color=(1,1,0,1),
+                centered=False,
+                scale=1.5
+            )
+
+        self.draw_list_menu(
+            o.command_menu,
+            o.menu_index,
+            sx + 90,
+            sy,
+            w=8
+        )
+
+        if o.battle_state == "skill_menu":
+
+            self.draw_list_menu(
+                o.skill_menu,
+                o.skill_menu_index,
+                sx + 220,
+                sy + 20,
+                w=20
+            )
+
+        if o.battle_state == "item_menu":
+
+            self.draw_list_menu(
+                o.item_menu,
+                o.item_menu_index,
+                sx + 220,
+                sy + 20,
+                w=20
+            )
+
+
+
 
     def draw_dialog(self):
 
@@ -2980,7 +3153,7 @@ class GLViewport(OpenGLFrame):
         # fondo
         # ====================================
 
-        box_h = 160
+        box_h = 190
 
         glDisable(GL_TEXTURE_2D)
         glColor4f(0, 0, 0, 0.8)
@@ -3435,7 +3608,7 @@ class GLViewport(OpenGLFrame):
 
             self.draw_ui_text(tool.button_B_command,sw - 25,sh - 105,color=tool.text_B_button_color, shadow=False, centered=True, scale=0.68)
             self.draw_ui_text(tool.button_X_command,sw - 140,sh - 105,color=tool.text_X_button_color, shadow=False, centered=True, scale=0.7)
-            self.draw_ui_text(tool.button_Y_command,sw - 65,sh - 135,color=tool.text_Y_button_color, shadow=False, centered=True, scale=0.7)
+            #self.draw_ui_text(tool.button_Y_command,sw - 65,sh - 135,color=tool.text_Y_button_color, shadow=False, centered=True, scale=0.7)
             self.draw_ui_texture("sprites/botones_ui.png",sw - 90,sh - 70,150,130, centered=True)
             self.end_ui()
 

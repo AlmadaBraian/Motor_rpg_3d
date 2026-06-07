@@ -203,7 +203,7 @@ class Toolkit:
         self.text_A_button_color = (1, 0.2, 0.2, 1)
         self.button_Y_command = "Items"
         self.text_Y_button_color = (0.2, 1, 0.2, 1)
-        self.button_B_command = "Especial"
+        self.button_B_command = "Cancelar"
         self.text_B_button_color = (0.2, 0.2, 1, 1)
         self.button_X_command = ""
         self.text_X_button_color = (0.85, 0.75, 0.25, 1)
@@ -243,6 +243,26 @@ class Toolkit:
         self.battle_deploy_party = []
         self.battle_deploy_finished = False
         self.party = ["A","b","c"]
+
+        self.command_menu = [
+        ("Mover", False),
+        ("Atacar", False),
+        ("Especial", False),
+        ("Items", False),
+        ("Guardia", False)
+    ]
+
+        self.skill_menu = []
+
+        self.item_menu = []
+
+        self.item_menu_data = []
+        
+        self.menu_index = 0
+
+        self.skill_menu_index = 0
+
+        self.item_menu_index = 0
 
         self.battle_selected_unit = None
         self.battle_attacker_unit = None

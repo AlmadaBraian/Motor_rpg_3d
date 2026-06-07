@@ -1362,15 +1362,7 @@ def end_runtime_skill(runtime_skill):
 
         if effect_type == "move":
 
-            o.battle_state = "select_target"
-
-            o.current_action_type = "attack"
-
-            o.button_A_command = "Atacar"
-
-            combat.build_battle_target_tiles(
-                o.battle_selected_unit
-            )
+            o.battle_state = "command_menu"
 
         # =====================================
         # NORMAL SKILLS
@@ -1378,15 +1370,9 @@ def end_runtime_skill(runtime_skill):
 
         else:
 
-            o.battle_state = "select_move"
+            o.battle_state = "command_menu"
 
-            o.button_A_command = "Mover a"
 
-            o.current_action_type = "select move"
-
-            combat.build_battle_move_tiles(
-                o.battle_selected_unit
-            )
 
     parent = runtime_skill.data.get(
     "parent_runtime_skill"

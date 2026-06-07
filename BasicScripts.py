@@ -47,7 +47,7 @@ NORMAL_ATTACK_SCRIPT = [
 
     {
         "action": "wait",
-        "time": 300
+        "time": 400
     },
 
     {

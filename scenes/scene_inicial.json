@@ -3,10 +3,6 @@
   "start_map": "Map001",
   "script": [
     {
-        "action": "fade_in",
-        "duration": 2.5
-    },
-    {
       "action": "audio_play",
       "track": "bgm_town",
       "music": "music/Patricia.mp3",
@@ -14,6 +10,11 @@
       "loop": true
     },
     {"action": "show_ui"},
+    {
+        "action": "fade_in",
+        "duration": 3.5
+    },
+    
     {
       "action": "wait",
       "time": 250
