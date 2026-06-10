@@ -25,6 +25,12 @@ class ActorInstance:
         self.rot_l = False
         self.rot_r = False
 
+        self.fall_start_x = 0.0
+        self.fall_start_y = 0.0
+
+        self.last_move_dx = 0.0
+        self.last_move_dy = 0.0
+
         self.state = "idle"
 
         self.animator = None

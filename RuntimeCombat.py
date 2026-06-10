@@ -9,7 +9,6 @@ from config import CAMERA_PRESETS, GRID_H, GRID_W, SETTINGS
 from motor_rpg.domain.combat import CombatRules, actor_stats_from_object
 from BasicScripts import NORMAL_ATTACK_SCRIPT, GUN_ATTACK_SCRIPT
 from SceneManager import get_runtime_scene_manager
-from RuntimeMusic import restore_map_music
 import random
 
 
@@ -55,6 +54,7 @@ class RuntimeCombat:
         self.turn_end_timer = 0
         self.pending_turn_end = False
         self.combat_end_state = None
+        self.combat_result = None
         
 
     # =========================================================
@@ -4361,6 +4361,8 @@ class RuntimeCombat:
 
             print("VICTORY DETECTED")
 
+            self.combat_result = "win"
+
             o.start_fade_out(
                 self.finish_combat_fade
             )
@@ -4370,6 +4372,8 @@ class RuntimeCombat:
         if not player_alive or main_dead:
 
             print("GAME OVER")
+
+            self.combat_result = "lose"
 
             o.game_over = True
 
@@ -4445,42 +4449,48 @@ class RuntimeCombat:
                 tile.actors.remove(pack)
 
     def finish_combat_fade(self):
+
         print("FINISH COMBAT FADE")
 
         o = self.owner
 
         self.remove_party_members()
 
-        for y in range(GRID_H):
-            for x in range(GRID_W):
-
-                t = o.runtime_world.grid[y][x]
-
-                for pack in t.actors:
-
-                    print(
-                        "TILE ACTOR:",
-                        pack["inst"].actor_name,
-                        x,
-                        y
-                    )
-
-        print(
-            "BATTLE UNITS:",
-            len(self.owner.battle_units)
+        result = getattr(
+            self,
+            "combat_result",
+            None
         )
 
-        for p in self.owner.battle_units:
+        scripts = getattr(
+            o,
+            "combat_result_scripts",
+            {}
+        )
+
+        script = scripts.get(result)
+
+        self.end_runtime_combat()
+
+        if script:
+
             print(
-                p["inst"].actor_name
+                "EXECUTING COMBAT SCRIPT:",
+                script
             )
 
-        #self.end_runtime_combat()
+            manager = get_runtime_scene_manager(self)
+            manager.change_world_scene(o, script)
 
-        if o.game_over:
+            self.combat_result = None
+            o.combat_result_scripts = {}
+
             return
 
-        o.start_fade_in()
+        #if o.game_over:
+         #   return
+
+        #o.start_fade_in()
         
     def end_runtime_combat(self):
 
@@ -4511,16 +4521,9 @@ class RuntimeCombat:
         o.current_music = None
         o.current_combat_music = None
 
-        if not o.game_over and hasattr(o, "audio_manager"):
-
-            o.audio_manager.call_later(
-                1.0,
-                restore_map_music,
-                o,
-                0
-            )
-
         o.battle_mode = False
+
+        o.pending_combat_enemy = False
 
         o.battle_units = []
         o.battle_turn_order = []

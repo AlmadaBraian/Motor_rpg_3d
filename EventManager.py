@@ -6,6 +6,7 @@ from ActorInstance import ActorInstance
 from CameraAnimator import CameraAnimator
 from CameraKeyframe import CameraKeyframe
 from RuntimeCombat import RuntimeCombat
+from RuntimeMusic import restore_map_music
 from RuntimeMusic import play_runtime_audio, stop_runtime_audio
 from SpriteManager import Animator
 from config import *
@@ -105,6 +106,15 @@ def run_world_event_command(self, cmd):
             self.event_wait_timer = cmd.get("time", 1000) / 1000.0
             return
         
+        if action == "restore_map_music":
+        
+            self.audio_manager.call_later(
+                    1.0,
+                    restore_map_music,
+                    self,
+                    0
+                )
+        
         if action in ("vn_add_sprite", "vn_show_sprite", "vn_set_sprite"):
             if hasattr(self, "visual_novel_scene"):
                 if getattr(self, "runtime_world", None) is None:
@@ -123,25 +133,156 @@ def run_world_event_command(self, cmd):
                 self.visual_novel_scene.clear()
             return
 
-        if action in ("vn_start_animation", "vn_animation", "start_animation"):
+        if action in (
+            "vn_start_animation",
+            "vn_animation",
+            "start_animation"
+        ):
+
             if hasattr(self, "visual_novel_scene"):
+
                 if getattr(self, "runtime_world", None) is None:
                     self.runtime_scene_mode = "visual_novel"
+
                 self.visual_novel_scene.active = True
-                self.visual_novel_scene.start_animation(
-                    cmd.get("sprite", cmd.get("sprite_name", cmd.get("name", ""))),
-                    cmd.get("animation", cmd.get("anim_name", cmd.get("animation_name", ""))),
-                    cmd.get("final_x", cmd.get("x", 0)),
-                    cmd.get("final_y", cmd.get("y", 0)),
-                    cmd.get("delta_ms", cmd.get("time_step", 16)),
-                    cmd.get("speed", 300),
-                    cmd.get("duration"),
+
+                sprite_name = cmd.get(
+                    "sprite",
+                    cmd.get(
+                        "sprite_name",
+                        cmd.get("name", "")
+                    )
                 )
-                self.event_wait_vn_animation = bool(cmd.get("wait", False))
+
+                text_name = cmd.get(
+                    "text",
+                    cmd.get(
+                        "text_name",
+                        cmd.get("name", "")
+                    )
+                )
+
+                sprite = self.visual_novel_scene.sprites.get(
+                    sprite_name
+                )
+
+                text = self.visual_novel_scene.texts.get(
+                    text_name
+                )
+
+                target = sprite or text
+
+                # =====================================
+                # MODO MULTIPLE
+                # animations:[...]
+                # =====================================
+
+                if "animations" in cmd:
+
+                    animations = cmd.get(
+                        "animations",
+                        []
+                    )
+
+                    if target:
+                        target.animations.clear()
+
+                    for anim_name in animations:
+
+                        self.visual_novel_scene.start_animation(
+                            sprite_name,
+                            anim_name,
+                            text_name,
+                            cmd.get(
+                                "final_x",
+                                cmd.get("x", 0)
+                            ),
+                            cmd.get(
+                                "final_y",
+                                cmd.get("y", 0)
+                            ),
+                            cmd.get(
+                                "delta_ms",
+                                cmd.get("time_step", 16)
+                            ),
+                            cmd.get("speed", 300),
+                            cmd.get("duration"),
+                        )
+
+                # =====================================
+                # MODO SIMPLE
+                # animation:"ghost"
+                # =====================================
+
+                else:
+
+                    anim_name = cmd.get(
+                        "animation",
+                        cmd.get(
+                            "anim_name",
+                            cmd.get(
+                                "animation_name",
+                                ""
+                            )
+                        )
+                    )
+
+                    if target:
+                        target.animations.clear()
+
+                    self.visual_novel_scene.start_animation(
+                        sprite_name,
+                        anim_name,
+                        text_name,
+                        cmd.get(
+                            "final_x",
+                            cmd.get("x", 0)
+                        ),
+                        cmd.get(
+                            "final_y",
+                            cmd.get("y", 0)
+                        ),
+                        cmd.get(
+                            "delta_ms",
+                            cmd.get("time_step", 16)
+                        ),
+                        cmd.get("speed", 300),
+                        cmd.get("duration"),
+                    )
+
+                self.event_wait_vn_animation = bool(
+                    cmd.get("wait", False)
+                )
+                if cmd.get("wait_input", False):
+                    self.event_wait_input = True
+
+            return
+        
+        if action == "open_menu":
+            options = cmd.get(
+                        "options",
+                        []
+                    )
+            
+            title = cmd.get("title", "")
+            x = cmd.get("x", 100)
+            y = cmd.get("y", 100)
+            w = cmd.get("w", 1)
+            self.runtime.open_runtime_menu(
+                options,
+                title=title,
+                x=x,
+                y=y,
+                w=w
+            )
             return
 
         if action in ("vn_wait_animation", "wait_animation"):
             self.event_wait_vn_animation = True
+            return
+        
+        if action in ("vn_wait_input", "wait_input"):
+            self.wait_input = True
             return
 
         if action == "play_animation":
@@ -149,7 +290,9 @@ def run_world_event_command(self, cmd):
             clip = cmd.get("animation_clip", "")
             actor_name = cmd.get("actor_name", "")
 
-            inst = self.find_actor_by_name(actor_name)
+            pack = self.find_actor_pack_by_name(actor_name)
+
+            inst = pack["inst"]
 
             if not inst:
                 print("ACTOR NO ENCONTRADO:", actor_name)
@@ -573,8 +716,18 @@ def run_world_event_command(self, cmd):
 
             self.pending_combat_enemy = True
 
-            end_world_event(self)
+            self.combat_result_scripts = {
+                "win": cmd.get("execute_script_win"),
+                "lose": cmd.get("execute_script_lose")
+            }
 
+            print(
+                "SET COMBAT SCRIPTS",
+                id(self),
+                self.combat_result_scripts
+            )
+
+            end_world_event(self)
             return
         # ==========================
         # CHANGE SCENE
@@ -1205,23 +1358,6 @@ def runtime_teleport_player(self, tp):
 
         print("PLAYER TELEPORTED:", getattr(self.runtime_world, "map_id", "Map001"), nx, ny)
 
-def execute_tile_event(self, t):
-        t.event_done = True
-
-        if t.event_text:
-            self.runtime_message = t.event_text
-            self.runtime_message_timer = 3.0
-
-        if t.event_script:
-            print("RUN TILE SCRIPT:", t.event_script)
-
-        if t.event_teleport:
-            tx, ty = t.event_teleport
-            pack = self.runtime_world.main_actor
-            pack["gx"] = tx
-            pack["gy"] = ty
-            pack["inst"].offx = 0
-            pack["inst"].offy = 0
 
 def try_interact_npc(self):
 
@@ -1242,7 +1378,7 @@ def try_interact_npc(self):
 
         evt = get_near_event_cell(self)
         if evt:
-            execute_tile_event(self, evt)
+            execute_runtime_tile_event(self, evt)
 
 def runtime_position_blocked(self, nx, nz):
         gx = int(nx)

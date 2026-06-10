@@ -1,0 +1,54 @@
+{
+    "scene": "game_over",
+    "type": "visual_novel",
+    "visual_novel": {
+        "enabled": true,
+        "width": 640,
+        "height": 480,
+        "texts": [
+            {
+                "name": "game_over",
+                "text": "Game Over",
+                "x": 340,
+                "y": 180,
+                "visible": false,
+                "scale": 4,
+                "z": 10
+            }
+        ]
+    },
+    "script": [
+        {
+            "action": "vn_start_animation",
+            "text": "game_over",
+            "animation": "typewriter",
+            "wait": true
+        },
+        {
+            "action": "wait",
+            "time": 500
+        },
+        {
+            "action": "vn_start_animation",
+            "text": "game_over",
+            "animation": "ghost",
+            "wait_input": true
+        },
+        {
+            "action": "vn_start_animation",
+            "text": "game_over",
+            "animations": [
+                "float_up",
+                "ghost"
+            ]
+        },
+        {
+            "action": "open_menu",
+            "title": "Game over",
+            "options": ["Retry", "Main title"],
+            "x": 240,
+            "y": 580,
+            "w": 20
+        }
+    ]
+}

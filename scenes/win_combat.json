@@ -1,0 +1,113 @@
+{
+  "scene": "Win_combat",
+  "type": "visual_novel",
+  "visual_novel": {
+    "enabled": true,
+    "width": 640,
+    "height": 480,
+    "sprites": [
+      {
+        "name": "bg_room",
+        "image": "png/BuenosAiresNoche.png",
+        "x": 0,
+        "y": 0,
+        "w": 640,
+        "h": 480,
+        "z": 0
+      },
+      {
+        "name": "hero",
+        "image": "png/Marisa.png",
+        "x": -96,
+        "y": 60,
+        "w": 270,
+        "h": 480,
+        "visible": false,
+        "z": 10
+      },
+    {
+      "image": "png/EstacionSubte.png",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 328,
+      "h": 185,
+      "name": "EstacionSubte",
+      "alpha": 0,
+      "visible": false,
+      "fondo": 1,
+      "scale": 1
+    },
+    {
+      "image": "png/linea-a-subte.png",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 495,
+      "h": 371,
+      "name": "linea-a-subte",
+      "alpha": 0,
+      "fondo": 1,
+      "scale": 1,
+      "visible": false
+    },
+    {
+      "image": "png/subte.png",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 300,
+      "h": 263,
+      "name": "subte",
+      "visible": false,
+      "alpha": 0,
+      "fondo": 1,
+      "scale": 1
+    }
+    ]
+    
+  },
+  "script": [
+    {
+      "action": "vn_start_animation",
+      "sprite": "bg_room",
+      "animation": "fade_in",
+      "final_x": 0,
+      "final_y": 0,
+      "duration": 1.0,
+      "wait": true
+    },
+    {
+      "action": "vn_start_animation",
+      "sprite": "hero",
+      "animation": "entrar_izquierda",
+      "final_x": 80,
+      "final_y": 60,
+      "speed": 320,
+      "wait": true
+    },
+    {
+      "action": "show_dialog",
+      "speaker": "Narrador",
+      "text": [
+        "Esta escena no carga un mapa 3D.",
+        "El fondo y el retrato son sprites 2D animables."
+      ]
+    },
+    {
+    "action": "fade_out",
+    "duration": 1.5
+    },
+    {
+      "action": "vn_start_animation",
+      "sprite": "hero",
+      "animation": "salir_derecha",
+      "speed": 320,
+      "wait": true
+    },
+    {
+      "action": "change_scene",
+      "scene_new": "scene_inicial.json"
+    }
+  ]
+}

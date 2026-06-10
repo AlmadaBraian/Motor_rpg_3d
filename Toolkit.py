@@ -17,6 +17,7 @@ from ActorCreatorWindows import open_actor_creator_window
 from EventTileEditor import EventTileEditor
 from ItemAsset import ItemAsset
 from ItemCreatorWindows import open_item_editor
+from RuntimeMenu import RuntimeMenu
 from SkillAsset import SkillAsset
 from AssetEditor import AssetEditor
 from ActorInstance import ActorInstance
@@ -198,6 +199,26 @@ class Toolkit:
 
         self.event_wait_camera = False
 
+        self.event_text_visible = False
+        self.event_texts = []
+        self.event_text_scale = 0.0
+        self.event_text_timer = 0.0
+        self.event_text_duration = 0.0
+        self.event_text_x = 0
+        self.event_text_y = 0
+        self.event_text_start_x = 0.0
+        self.event_text_start_y = 0.0
+        self.event_text_color = (1,1,1,1)
+        self.event_text_centered = False
+        self.event_text_animation = ""
+        self.event_text_speed = 0.04
+        self.event_text_distance = 100
+        event_text_strength = 8
+        self.event_text_pulse_speed = 8
+        self.event_text_pulse_amount = 0.15
+        self.event_text_elapsed = 0
+
+
 
         self.button_A_command = "Interactuar"
         self.text_A_button_color = (1, 0.2, 0.2, 1)
@@ -232,6 +253,7 @@ class Toolkit:
         self.combat_actor_moving = False
         self.battle_input_cooldown = 0
         self.waiting_enemy_turn_start = False
+        self.combat_result_scripts = {}
 
         self.battle_cursor_x = 0
         self.battle_cursor_y = 0
@@ -243,6 +265,10 @@ class Toolkit:
         self.battle_deploy_party = []
         self.battle_deploy_finished = False
         self.party = ["A","b","c"]
+
+        self.runtime_menu = RuntimeMenu()
+
+        self.menu_down_pressed = False
 
         self.command_menu = [
         ("Mover", False),
@@ -1237,19 +1263,6 @@ class Toolkit:
 
         return None
 
-    def find_actor_by_name(self, actor_name):
-
-        for row in self.runtime_world.grid:
-            for t in row:
-                for pack in getattr(t, "actors", []):
-
-                    actor = pack["inst"]
-
-                    if actor.actor_name == actor_name:
-                        return actor
-
-        return None
-
 
     def update_runtime_dialog_text(self, dt):
 
@@ -1447,12 +1460,30 @@ class Toolkit:
         if inst.offz <= inst.fall_target_z:
             inst.offz = inst.fall_target_z
             inst.ground_z = inst.fall_target_z
+
+            push = 0.002
+
+            cx = pack["gx"] + 0.5
+            cy = pack["gy"] + 0.5
+
+            dx = cx - inst.fall_start_x
+            dy = cy - inst.fall_start_y
+
+            d = math.hypot(dx, dy)
+
+            if d > 0:
+                dx /= d
+                dy /= d
+
+                inst.offx += dx * push
+                inst.offy += dy * push
             
             if not inst.fall_land_done:
                 inst.fall_land_done = True
                 inst.animator.paused = False
                 inst.animator.timer = 0  # <--- RESETEA AQUÍ TAMBIÉN
                 inst.animator.frame = 1
+            
 
         # 3. ESPERAR A QUE TERMINE LA ANIMACIÓN (Lógica automática)
         if inst.fall_land_done:
@@ -1917,6 +1948,9 @@ class Toolkit:
         inst.offx = nx
         inst.offy = ny
 
+        inst.last_move_dx = dx
+        inst.last_move_dy = dy
+
         self.check_runtime_fall(pack)
 
     def check_runtime_fall(self, pack):
@@ -1952,6 +1986,9 @@ class Toolkit:
             inst.is_falling = True
             inst.fall_target_z = floor_z
             inst.fall_land_done = False
+
+            inst.fall_start_x = world_x
+            inst.fall_start_y = world_y
 
             if inst.animator and "fall" in inst.animator.clips:
                 inst.animator.play("fall")
@@ -3538,6 +3575,10 @@ class Toolkit:
 
                     if sprite_asset.base_clips:
                         inst.animator.play(sprite_asset.base_clips[0].name)
+
+            if t.is_block:
+                inst.ground_z = t.block_top + inst.offz
+                inst.offz = t.block_top + inst.offz
 
             pack = {
                 "inst": inst,

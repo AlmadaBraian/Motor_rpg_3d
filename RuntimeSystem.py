@@ -71,7 +71,7 @@ class RuntimeSystem:
         initial_scene_file = getattr(
             tkref,
             "initial_scene_file",
-            "scenes/scene_inicial.json"
+            "scenes/game_over.json"
         )
 
         scene_manager = get_runtime_scene_manager(tkref)
@@ -430,10 +430,38 @@ class RuntimeSystem:
 
         k = event.keysym.lower()
 
+        # =====================================
+        # RUNTIME MENU
+        # =====================================
+
+        menu = tkref.runtime_menu
+
+        print(
+            "INPUT MENU:",
+            id(menu),
+            menu.index
+        )
+        
+        print("KEY EVENT:", event.widget)
+
+        if menu.visible:
+
+            self.handle_runtime_menu_input(event)
+
+        # =====================================
+        # WAIT INPUT EVENT
+        # =====================================
+
+        
+
         if event.keysym == "space" and tkref.world_event_running and tkref.event_wait_input:
             if tkref.space_pressed:
                 return
             tkref.space_pressed = True
+            if tkref.event_wait_input:
+                tkref.event_wait_input = False
+                return
+            
             self.advance_runtime_dialog()
             return
 
@@ -503,6 +531,11 @@ class RuntimeSystem:
         if event.keysym == "space":
             tkref.space_pressed = False
 
+        k = event.keysym.lower()
+
+        if k in ("w", "s", "up", "down"):
+            tkref.menu_down_pressed = False
+
         if not tkref.runtime_world or not tkref.runtime_world.main_actor:
             return
         
@@ -512,7 +545,6 @@ class RuntimeSystem:
 
         p = tkref.runtime_world.main_actor["inst"]
 
-        k = event.keysym.lower()
 
         movement_released = False
 
@@ -546,6 +578,118 @@ class RuntimeSystem:
         
         if event.keysym == "space":
             tkref.space_pressed = False
+
+    def open_runtime_menu(
+        self,
+        items,
+        title="",
+        x=100,
+        y=100,
+        w=8
+    ):
+        
+        print("OPEN_RUNTIME_MENU CALLED")
+        tkref = self.toolkit
+
+        menu = tkref.runtime_menu
+
+        print("OPEN MENU:", title, items)
+
+        menu.visible = True
+        menu.title = title
+
+        menu.items = items
+        menu.index = 0
+
+        menu.x = x
+        menu.y = y
+
+        menu.w = w
+
+    def handle_runtime_menu_input(self, event):
+
+        menu = self.toolkit.runtime_menu
+
+        print(
+            "INPUT MENU:",
+            id(menu),
+            menu.index,
+            id(self.toolkit)
+        )
+
+        if not menu.visible:
+            return
+
+        k = event.keysym.lower()
+
+        if not hasattr(self.toolkit, "menu_down_pressed"):
+            self.toolkit.menu_down_pressed = False
+
+        if k in ("up","w"):
+            
+            if self.toolkit.menu_down_pressed:
+                return
+
+            self.toolkit.menu_down_pressed = True
+
+            menu.index -= 1
+            menu.index %= len(menu.items)
+
+            return
+
+        elif k in ("down","s"):
+            if self.toolkit.menu_down_pressed:
+                return
+
+            self.toolkit.menu_down_pressed = True
+
+            menu.index += 1
+            menu.index %= len(menu.items)
+
+            return
+        
+        elif k == "space":
+
+            if menu.on_select:
+
+                menu.on_select(
+                    menu.items[menu.index]
+                )
+
+        elif k in ("escape","b"):
+
+            if menu.on_cancel:
+                menu.on_cancel()
+
+        print(
+            "MENU ITEMS:",
+            menu.items
+        )
+
+        print(
+            "MENU INDEX:",
+            menu.index
+        )
+
+        menu.index %= len(menu.items)
+
+    def main_menu_selected(option):
+
+        if option == "Nuevo Juego":
+            print("nuevo juego")
+            #start_game()
+
+        elif option == "Cargar Partida":
+            print("cargar juego")
+            #load_game()
+
+        elif option == "Opciones":
+            print("menu opciones")
+            #open_options()
+
+        elif option == "Salir":
+            print("salir")
+            #root.destroy()
 
     # =====================================================
     # UPDATE

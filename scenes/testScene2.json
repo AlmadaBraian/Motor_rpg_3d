@@ -28,6 +28,10 @@
     ]
   },
   "script": [
+    {
+    "action": "fade_in",
+    "duration": 1.5
+    },
     {"action": "lock_player"},
     {
     "action": "deploy_party"
@@ -40,11 +44,6 @@
       "action": "all_play_idle"
     },
     {
-      "action": "wait",
-      "time": 500
-    },
-     {"action": "audio_play", "track": "combat_music", "music": "music/combate_01.mp3", "volume": 0.7, "loop": true},
-     {
       "action": "wait",
       "time": 500
     },
@@ -61,13 +60,8 @@
       "action": "show_dialog",
       "speaker": "Anibal",
       "text": [
-        "¡Epa!. \n¿Que hacemo?",
-        "Vo, no pode estar acá."
+        "A no... nos cagaron a palos"
       ]
-    },
-    {
-    "action": "fade_out",
-    "duration": 1.5
     },
     {
       "action": "vn_start_animation",
@@ -82,27 +76,7 @@
         "z": 15,
         "duration": 2.0
     },
-    {
-        "action": "fade_in",
-        "duration": 1.5
-    },
     
-     {
-      "action": "play_animation",
-      "actor_name": "A",
-      "animation_clip": "hit_fall_face_up"
-      },
-
-      {
-        "action": "camera_move",
-        "x": 25,
-        "z": 15,
-        "duration": 2.0
-    },
-    {
-      "action": "wait",
-      "time": 500
-    },
     {
       "action": "camera_look_actor",
       "actor": "A",
@@ -111,36 +85,7 @@
       "distance": 5,
       "duration": 1.5
     },
-    {
-    "action": "move_actor",
-    "actor": "A",
-    "direction": "down",
-    "tiles": 1
-  },
-  {
-      "action": "wait",
-      "time": 500
-    },
-  {
-    "action": "move_actor",
-    "actor": "A",
-    "direction": "left",
-    "tiles": 3
-  },
-  {
-      "action": "wait",
-      "time": 500
-    },
-  {
-    "action": "move_actor",
-    "actor": "A",
-    "direction": "down",
-    "tiles": 3
-  },
-  {
-      "action": "wait",
-      "time": 500
-    },
+   
     {
       "action": "play_animation",
       "actor_name": "A",
@@ -159,7 +104,7 @@
       "action": "show_dialog",
       "speaker": "Marisa",
       "text": [
-        "¡No me digas lo que puedo y no puedo hacer!"
+        "Seeeeee"
       ]
     },
     {
@@ -184,11 +129,9 @@
     {
       "action": "wait",
       "time": 2500
-    },
-    {
-      "action": "start_combat",
-      "execute_script_win": "testScene2.json",
-      "execute_script_lose":"visual_novel_example.json"
     }
+    ,
+    {"action": "restore_map_music"},
+    {"action": "end_event"}
   ]
 }

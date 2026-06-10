@@ -1,7 +1,10 @@
+import math
 import os
 from dataclasses import dataclass
+import random
 
 
+from RuntimeText import RuntimeText
 from config import SCREEN_H, SCREEN_W, base_path
 
 
@@ -43,6 +46,7 @@ class VisualNovelSceneState:
     def __init__(self):
         self.active = False
         self.sprites = {}
+        self.texts = {}
         self.screen_width = SCREEN_W
         self.screen_height = SCREEN_H
 
@@ -63,6 +67,44 @@ class VisualNovelSceneState:
 
         for sprite_data in config.get("sprites", scene_data.get("sprites", [])):
             self.add_sprite(sprite_data)
+
+        texts = config.get(
+            "texts",
+            scene_data.get("texts", [])
+        )
+
+        if isinstance(texts, dict):
+            texts = [texts]
+
+        for text_data in texts:
+            self.add_text(text_data)
+
+    def add_text(self, data):
+
+        text = RuntimeText()
+
+        text.name = data.get("name", "")
+
+        text.text = data.get("text", "")
+
+        text.x = float(data.get("x", 0))
+        text.y = float(data.get("y", 0))
+
+        text.visible = bool(
+            data.get("visible", True)
+        )
+
+        text.scale = float(
+            data.get("scale", 1)
+        )
+
+        text.z = int(
+            data.get("z", 0)
+        )
+
+        self.texts[text.name] = text
+
+        return text
 
     def resolve_image_path(self, image_path):
         if not image_path:
@@ -173,79 +215,249 @@ class VisualNovelSceneState:
         self,
         sprite_name,
         anim_name,
+        text_name="",
         final_x=0,
         final_y=0,
         delta_ms=16,
         speed=300,
         duration=None,
     ):
-        sprite = self.sprites.get(sprite_name)
 
-        if sprite is None:
-            print("VN SPRITE NOT FOUND:", sprite_name)
+        sprite = self.sprites.get(sprite_name)
+        text = self.texts.get(text_name)
+
+        target = sprite or text
+
+        if target is None:
+            print(
+                "VN TARGET NOT FOUND:",
+                sprite_name,
+                text_name
+            )
             return False
 
         final_x = float(final_x)
         final_y = float(final_y)
+
         speed = abs(float(speed))
-        duration = self._resolve_duration(duration, delta_ms)
 
-        sprite.animating = False
-        sprite.fading_in = False
-        sprite.fading_out = False
-        sprite.speed_x = 0.0
-        sprite.speed_y = 0.0
+        duration = self._resolve_duration(
+            duration,
+            delta_ms
+        )
 
-        if anim_name in ("caminar_derecha", "walk_right"):
-            self._start_move(sprite, sprite.x + 100, sprite.y, speed)
-        elif anim_name in ("caminar_izquierda", "walk_left"):
-            self._start_move(sprite, sprite.x - 100, sprite.y, speed)
-        elif anim_name in ("entrar_izquierda", "enter_left"):
-            sprite.x = -sprite.width
-            sprite.y = final_y
-            sprite.visible = True
-            sprite.alpha = 1.0
-            self._start_move(sprite, final_x, final_y, speed)
-        elif anim_name in ("entrar_derecha", "enter_right"):
-            sprite.x = self.screen_width
-            sprite.y = final_y
-            sprite.visible = True
-            sprite.alpha = 1.0
-            self._start_move(sprite, final_x, final_y, speed)
-        elif anim_name in ("salir_izquierda", "exit_left"):
-            sprite.hide_on_finish = True
-            self._start_move(sprite, -sprite.width, sprite.y, speed)
-        elif anim_name in ("salir_derecha", "exit_right"):
-            sprite.hide_on_finish = True
-            self._start_move(sprite, self.screen_width, sprite.y, speed)
-        elif anim_name == "traveling_x":
-            sprite.visible = True
-            sprite.alpha = max(sprite.alpha, 1.0)
-            self._start_move(sprite, final_x, final_y, speed, axis="x")
-        elif anim_name == "traveling_y":
-            sprite.visible = True
-            sprite.alpha = max(sprite.alpha, 1.0)
-            self._start_move(sprite, final_x, final_y, speed, axis="y")
-        elif anim_name in ("subir", "up"):
-            self._start_move(sprite, sprite.x, sprite.y - 50, speed, axis="y")
-        elif anim_name in ("bajar", "down"):
-            self._start_move(sprite, sprite.x, sprite.y + 50, speed, axis="y")
-        elif anim_name in ("quedarse", "stay"):
-            sprite.target_x = sprite.x
-            sprite.target_y = sprite.y
-        elif anim_name == "fade_out":
-            sprite.fading_out = True
-            sprite.hide_on_finish = True
-            sprite.alpha_speed = sprite.alpha / max(0.01, duration)
+        # ==================================================
+        # SPRITES
+        # ==================================================
+
+        if sprite is not None:
+
+            sprite.animating = False
+            sprite.fading_in = False
+            sprite.fading_out = False
+            sprite.speed_x = 0.0
+            sprite.speed_y = 0.0
+
+            if anim_name in ("caminar_derecha", "walk_right"):
+                self._start_move(
+                    sprite,
+                    sprite.x + 100,
+                    sprite.y,
+                    speed
+                )
+
+            elif anim_name in ("caminar_izquierda", "walk_left"):
+                self._start_move(
+                    sprite,
+                    sprite.x - 100,
+                    sprite.y,
+                    speed
+                )
+
+            elif anim_name in ("entrar_izquierda", "enter_left"):
+                sprite.x = -sprite.width
+                sprite.y = final_y
+                sprite.visible = True
+                sprite.alpha = 1.0
+
+                self._start_move(
+                    sprite,
+                    final_x,
+                    final_y,
+                    speed
+                )
+
+            elif anim_name in ("entrar_derecha", "enter_right"):
+
+                sprite.x = self.screen_width
+                sprite.y = final_y
+                sprite.visible = True
+                sprite.alpha = 1.0
+
+                self._start_move(
+                    sprite,
+                    final_x,
+                    final_y,
+                    speed
+                )
+
+            elif anim_name in ("salir_izquierda", "exit_left"):
+
+                sprite.hide_on_finish = True
+
+                self._start_move(
+                    sprite,
+                    -sprite.width,
+                    sprite.y,
+                    speed
+                )
+
+            elif anim_name in ("salir_derecha", "exit_right"):
+
+                sprite.hide_on_finish = True
+
+                self._start_move(
+                    sprite,
+                    self.screen_width,
+                    sprite.y,
+                    speed
+                )
+
+            elif anim_name == "traveling_x":
+
+                sprite.visible = True
+                sprite.alpha = max(sprite.alpha, 1.0)
+
+                self._start_move(
+                    sprite,
+                    final_x,
+                    final_y,
+                    speed,
+                    axis="x"
+                )
+
+            elif anim_name == "traveling_y":
+
+                sprite.visible = True
+                sprite.alpha = max(sprite.alpha, 1.0)
+
+                self._start_move(
+                    sprite,
+                    final_x,
+                    final_y,
+                    speed,
+                    axis="y"
+                )
+
+            elif anim_name in ("subir", "up"):
+
+                self._start_move(
+                    sprite,
+                    sprite.x,
+                    sprite.y - 50,
+                    speed,
+                    axis="y"
+                )
+
+            elif anim_name in ("bajar", "down"):
+
+                self._start_move(
+                    sprite,
+                    sprite.x,
+                    sprite.y + 50,
+                    speed,
+                    axis="y"
+                )
+
+            elif anim_name in ("quedarse", "stay"):
+
+                sprite.target_x = sprite.x
+                sprite.target_y = sprite.y
+
+            elif anim_name == "fade_out":
+
+                sprite.fading_out = True
+                sprite.hide_on_finish = True
+
+                sprite.alpha_speed = (
+                    sprite.alpha /
+                    max(0.01, duration)
+                )
+
+            elif anim_name == "fade_in":
+
+                sprite.x = final_x
+                sprite.y = final_y
+
+                sprite.alpha = 0.0
+                sprite.alpha_speed = (
+                    1.0 /
+                    max(0.01, duration)
+                )
+
+                sprite.visible = True
+                sprite.fading_in = True
+
+            else:
+                print("VN SPRITE ANIMATION UNKNOWN:", anim_name)
+                return False
+
+            return True
+
+        # ==================================================
+        # TEXTOS
+        # ==================================================
+
+        text.visible = True
+
+        text.elapsed = 0
+        text.duration = duration
+        progress = min(
+            text.elapsed / duration,
+            1.0
+        )
+
+        # permite múltiples animaciones
+        if anim_name not in text.animations:
+            text.animations.append(anim_name)
+
+        if anim_name == "float_up":
+            text.distance = 100
+
+        elif anim_name == "shake":
+            text.strength = 8
+
+        elif anim_name == "pulse":
+            text.speed = 8
+            text.amount = 0.15
+
+        elif anim_name == "typewriter":
+            text.speed = 0.04
+
         elif anim_name == "fade_in":
-            sprite.x = final_x
-            sprite.y = final_y
-            sprite.alpha = 0.0
-            sprite.alpha_speed = 1.0 / max(0.01, duration)
-            sprite.visible = True
-            sprite.fading_in = True
+            r, g, b, a = text.color
+            text.color = (r, g, b, 0)
+
+        elif anim_name == "fade_out":
+            pass
+
+        elif anim_name == "popup":
+            pass
+
+        elif anim_name == "ghost":
+            pass
+
+        elif anim_name == "glow":
+            pass
+
+        elif anim_name == "damage":
+            pass
+
+        elif anim_name == "none":
+            pass
+
         else:
-            print("VN ANIMATION UNKNOWN:", anim_name)
+            print("VN TEXT ANIMATION UNKNOWN:", anim_name)
             return False
 
         return True
@@ -269,9 +481,18 @@ class VisualNovelSceneState:
             sprite.speed_y = speed
 
     def update(self, dt):
+
         for sprite in self.sprites.values():
+
             self._update_move(sprite, dt)
             self._update_fade(sprite, dt)
+
+        for text in self.texts.values():
+
+            if not text.visible:
+                continue
+
+            text.elapsed += dt
 
     def _update_move(self, sprite, dt):
         if not sprite.animating:

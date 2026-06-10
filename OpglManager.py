@@ -1,3 +1,4 @@
+import random
 import time
 from pyopengltk import OpenGLFrame
 from OpenGL.GL import *
@@ -573,9 +574,19 @@ class GLViewport(OpenGLFrame):
         # =====================================================
         # 4. escenas narrativas 2D sin escenario 3D
         # =====================================================
-        if self.should_draw_visual_novel_scene():
+
+        if (self.should_draw_visual_novel_scene()):
+
             self.draw_visual_novel_scene()
             self.draw_screen_fade()
+
+            self.draw_runtime_menu()
+
+            if self.toolkit_ref.event_text_visible:
+
+                self.toolkit_ref.event_text_timer -= dt
+                self.toolkit_ref.event_text_elapsed += dt
+
             glFlush()
             return
 
@@ -1394,6 +1405,7 @@ class GLViewport(OpenGLFrame):
                     sprite = tool.sprites[inst.asset]
 
                     wx = x + inst.offx + 0.5
+
                     wy = t.floor_height + inst.offz
                     wz = y + inst.offy + 0.5
 
@@ -2581,7 +2593,8 @@ class GLViewport(OpenGLFrame):
                     sprite = tool.sprites[sprname]
 
                     wx = x + inst.offx + 0.5
-                    wy = t.floor_height + inst.offz
+
+                    wy = tile.floor_height + inst.offz
                     wz = y + inst.offy + 0.5
 
                     self.draw_actor_instance(
@@ -2625,6 +2638,7 @@ class GLViewport(OpenGLFrame):
 
                 wx = gx + inst.offx + 0.5
                 wy = tile.floor_height + inst.offz
+                    
                 wz = gy + inst.offy + 0.5
 
                 self.draw_actor_instance(
@@ -2704,8 +2718,10 @@ class GLViewport(OpenGLFrame):
 
                         sprite = tool.sprites[actor_def.sprite_sheets[0]]
 
-                        wx = pack["gx"] + inst.offx + 0.5
+                        wx = pack["gx"] + inst.offx + 0.5  
+
                         wy = grid[pack["gy"]][pack["gx"]].floor_height + inst.offz
+                        
                         wz = pack["gy"] + inst.offy + 0.5
 
                         dist = (wx-cam[0])**2 + (wy-cam[1])**2 + (wz-cam[2])**2
@@ -2954,6 +2970,15 @@ class GLViewport(OpenGLFrame):
 
         o = self.toolkit_ref
 
+        print(
+            "DRAW LIST MENU ON:",
+            self,
+            "EDITOR:",
+            self.toolkit_ref.viewport,
+            "GAME:",
+            self.toolkit_ref.game_view
+        )
+
         longest = max(len(str(x)) for x in items)
 
         box_w = longest * w + 40
@@ -3021,6 +3046,14 @@ class GLViewport(OpenGLFrame):
             if not enabled:
                 color = (0.5,0.5,0.5,1)
 
+            print(
+            "DRAW ENTRY:",
+            i,
+            text,
+            "SELECTED:",
+            i == selected_index
+            )
+
             prefix = "> " if i == selected_index else "  "
 
             o.viewport.draw_ui_text(
@@ -3031,6 +3064,42 @@ class GLViewport(OpenGLFrame):
                 centered=False,
                 scale=1.2
             )
+
+    def draw_runtime_menu(self):
+
+        if not hasattr(self, "toolkit_ref"):
+            return
+
+        tool = self.toolkit_ref
+
+        if not getattr(tool, "play_mode", False):
+            return
+
+        if self is getattr(tool, "viewport", None):
+            return
+
+        menu = self.toolkit_ref.runtime_menu
+
+        if not menu.visible:
+            return
+
+        if menu.title:
+
+            self.toolkit_ref.viewport.draw_ui_text(
+                menu.title,
+                menu.x,
+                menu.y - 60,
+                scale=2,
+                color=(1,1,0,1)
+            )
+
+        self.draw_list_menu(
+            menu.items,
+            menu.index,
+            menu.x,
+            menu.y,
+            w=menu.w
+        )
 
     def draw_command_menu(self):
 
@@ -3260,6 +3329,181 @@ class GLViewport(OpenGLFrame):
         glPopMatrix()
 
         glMatrixMode(GL_MODELVIEW)
+
+    def draw_event_text(self, text):
+
+        if not text.visible:
+            return
+
+        visible_text = text.text
+
+        x = text.x
+        y = text.y
+
+        scale = text.scale
+
+        r, g, b, a = text.color
+
+        duration = max(
+            0.001,
+            text.duration
+        )
+
+        elapsed = text.elapsed
+
+        progress = min(
+            elapsed / duration,
+            1.0
+        )
+
+        # ==========================
+        # aplicar TODAS las animaciones
+        # ==========================
+
+        for anim in text.animations:
+
+            if anim == "none":
+                pass
+
+            elif anim == "fade_in":
+
+                a *= progress
+
+            elif anim == "fade_out":
+
+                a *= (1.0 - progress)
+
+            elif anim == "popup":
+
+                if progress < 0.25:
+
+                    a *= (
+                        progress /
+                        0.25
+                    )
+
+                elif progress > 0.75:
+
+                    a *= (
+                        (1.0 - progress)
+                        /
+                        0.25
+                    )
+
+            elif anim == "float_up":
+
+                y -= (
+                    progress *
+                    getattr(
+                        text,
+                        "distance",
+                        100
+                    )
+                )
+
+                #a *= (1.0 - progress)
+
+            elif anim == "shake":
+
+                s = getattr(
+                    text,
+                    "strength",
+                    8
+                )
+
+                x += random.randint(-s, s)
+                y += random.randint(-s, s)
+
+            elif anim == "pulse":
+
+                scale *= (
+                    1.0
+                    +
+                    math.sin(
+                        elapsed *
+                        getattr(
+                            text,
+                            "speed",
+                            8
+                        )
+                    )
+                    *
+                    getattr(
+                        text,
+                        "amount",
+                        0.15
+                    )
+                )
+
+            elif anim == "glow":
+
+                a *= (
+                    0.7
+                    +
+                    math.sin(
+                        elapsed * 4
+                    ) * 0.3
+                )
+
+            elif anim == "damage":
+
+                y -= progress * 80
+
+                scale *= (
+                    1.0
+                    +
+                    math.sin(
+                        progress *
+                        math.pi
+                    ) * 0.5
+                )
+
+                a *= (
+                    1.0 -
+                    progress
+                )
+
+            elif anim == "ghost":
+
+                x += (
+                    math.sin(
+                        elapsed * 10
+                    ) * 5
+                )
+
+                a *= (
+                    0.5
+                    +
+                    math.sin(
+                        elapsed * 6
+                    ) * 0.5
+                )
+
+            elif anim == "typewriter":
+
+                speed = getattr(
+                    text,
+                    "speed",
+                    0.04
+                )
+
+                chars = int(
+                    elapsed /
+                    speed
+                )
+
+                visible_text = (
+                    text.text[:chars]
+                )
+
+        self.draw_ui_text(
+            visible_text,
+            x,
+            y,
+            color=(r, g, b, a),
+            scale=scale,
+            centered=True
+        )
 
     def draw_text_box(
         self,
@@ -3520,6 +3764,15 @@ class GLViewport(OpenGLFrame):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glEnable(GL_TEXTURE_2D)
+
+        for text in vn_scene.texts.values():
+
+            if not text.visible:
+                continue
+
+            #print(text.elapsed)
+
+            self.draw_event_text(text)
 
         for sprite in vn_scene.sorted_sprites():
             if not sprite.visible or sprite.alpha <= 0.0:

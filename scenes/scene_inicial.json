@@ -9,6 +9,13 @@
       "volume": 0.1,
       "loop": true
     },
+    {
+      "action": "wait",
+      "time": 250
+    },
+    {
+      "action": "all_play_idle"
+    },
     {"action": "show_ui"},
     {
         "action": "fade_in",
