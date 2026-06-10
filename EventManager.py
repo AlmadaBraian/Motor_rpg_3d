@@ -717,8 +717,8 @@ def run_world_event_command(self, cmd):
             self.pending_combat_enemy = True
 
             self.combat_result_scripts = {
-                "win": cmd.get("execute_script_win"),
-                "lose": cmd.get("execute_script_lose")
+                "win": cmd.get("execute_script_win", "win_combat.json"),
+                "lose": cmd.get("execute_script_lose", "game_over.json")
             }
 
             print(

@@ -40,7 +40,12 @@
             "animations": [
                 "float_up",
                 "ghost"
-            ]
+            ],
+            "wait":true
+        },
+        {
+            "action": "wait",
+            "time": 900
         },
         {
             "action": "open_menu",
