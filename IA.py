@@ -286,6 +286,10 @@ def update_enemy_ai(self, dt):
 
                 o.enemy_ai_state = None
 
+                if o.max_actions > 0:
+                    current["inst"].guard_mode = True
+                    self.play_runtime_idle(current["inst"])
+
                 self.end_battle_turn()
 
         

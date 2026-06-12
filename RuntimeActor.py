@@ -343,6 +343,10 @@ class RuntimeActor:
         if not moving and suffix == "_espalda":
             if "idle" in inst.animator.clips:
                 chosen = "idle"
+            if inst.guard_mode:
+                if "idle_guard" in inst.animator.clips:
+                        if inst.guard_mode:
+                            chosen = "idle_guard"
 
         print("CHOSEN =", chosen)
 
@@ -478,27 +482,53 @@ class RuntimeActor:
         # ==========================================
         vf = getattr(inst, "visual_facing", "espalda")
 
-        name_map = {
-            "espalda": "idle",
-            "frente": "idle_frente",
-            "izq": "idle_izq",
-            "dere": "idle_dere",
-            "espalda_izq": "rot_espalda_izq",
-            "perfil_izq": "rot_perfil_izq",
-            "frente_izq": "rot_frente_izq",
-            "frente_dere": "rot_frente_dere",
-            "perfil_dere": "rot_perfil_dere",
-            "espalda_dere": "rot_espalda_dere"
-        }
+        print("GUARD MODE:",inst.guard_mode)
 
-        chosen = name_map.get(vf, "idle")
+        if not inst.guard_mode:
+
+            name_map = {
+                "espalda": "idle",
+                "frente": "idle_frente",
+                "izq": "idle_izq",
+                "dere": "idle_dere",
+                "espalda_izq": "rot_espalda_izq",
+                "perfil_izq": "rot_perfil_izq",
+                "frente_izq": "rot_frente_izq",
+                "frente_dere": "rot_frente_dere",
+                "perfil_dere": "rot_perfil_dere",
+                "espalda_dere": "rot_espalda_dere"
+            }
+            chosen = name_map.get(vf, "idle")
+        else:
+            name_map = {
+                "espalda": "idle_guard",
+                "frente": "idle_guard_frente",
+                "izq": "idle_guard_izq",
+                "dere": "idle_guard_dere",
+                "espalda_izq": "rot_espalda_izq",
+                "perfil_izq": "idle_guard_rot_perfil_izq",
+                "frente_izq": "idle_guard_rot_frente_izq",
+                "frente_dere": "idle_guard_rot_frente_dere",
+                "perfil_dere": "idle_guard_rot_perfil_dere",
+                "espalda_dere": "idle_guard_rot_espalda_dere"
+            }
+
+            chosen = name_map.get(vf, "idle_guard")
 
         if chosen in inst.animator.clips:
             inst.animator.play(chosen)
             return
+        
+        if inst.guard_mode == True:
 
-        if "idle" in inst.animator.clips:
-            inst.animator.play("idle")
+            if "idle_guard" in inst.animator.clips:
+                inst.animator.play("idle_guard")
+                print("IDLE GUARD MODE TRUE")
+
+        else:
+            if "idle" in inst.animator.clips:
+                inst.animator.play("idle")
+            
 
     def runtime_collides(self, px, py, actor_z, radius=0.18):
         g = self.toolkit.runtime_world.grid

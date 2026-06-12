@@ -3367,6 +3367,174 @@
                 ],
                 "fps": 2,
                 "loop": false
+            },
+            {
+                "name": "idle_guard_rot_frente_izq",
+                "frames": [
+                    {
+                        "frame": 49,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 2,
+                "loop": true
+            },
+            {
+                "name": "idle_guard_rot_frente_dere",
+                "frames": [
+                    {
+                        "frame": 51,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 2,
+                "loop": true
+            },
+            {
+                "name": "idle_guard_rot_espalda_izq",
+                "frames": [
+                    {
+                        "frame": 55,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 2,
+                "loop": true
+            },
+            {
+                "name": "idle_guard_rot_espalda_dere",
+                "frames": [
+                    {
+                        "frame": 53,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 2,
+                "loop": true
+            },
+            {
+                "name": "idle_guard_izq",
+                "frames": [
+                    {
+                        "frame": 48,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 6,
+                "loop": true
+            },
+            {
+                "name": "idle_guard_dere",
+                "frames": [
+                    {
+                        "frame": 52,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 6,
+                "loop": true
+            },
+            {
+                "name": "idle_guard_frente",
+                "frames": [
+                    {
+                        "frame": 50,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 6,
+                "loop": false
+            },
+            {
+                "name": "idle_guard",
+                "frames": [
+                    {
+                        "frame": 54,
+                        "crop_x": 0,
+                        "crop_y": 0,
+                        "crop_w": 73,
+                        "crop_h": 65,
+                        "w": 73,
+                        "h": 65,
+                        "ox": 0,
+                        "oy": 0,
+                        "dur": 1,
+                        "flip_x": false,
+                        "rot": 0
+                    }
+                ],
+                "fps": 6,
+                "loop": false
             }
         ]
     },

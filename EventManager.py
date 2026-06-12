@@ -227,8 +227,15 @@ def run_world_event_command(self, cmd):
                         )
                     )
 
-                    if target:
-                        target.animations.clear()
+                    if "animations" in cmd:
+
+                        animations = cmd.get(
+                            "animations",
+                            []
+                        )
+
+                        if target:
+                            target.animations.clear()
 
                     self.visual_novel_scene.start_animation(
                         sprite_name,
@@ -593,7 +600,14 @@ def run_world_event_command(self, cmd):
 
                 inst = pack["inst"]
 
-                clip="idle"
+                if inst.guard_mode:
+                    clip = "idle_guard"
+
+                else:
+
+                    clip="idle"
+
+
 
                 if not inst:
                     print("ACTOR NO ENCONTRADO:", actor_name)

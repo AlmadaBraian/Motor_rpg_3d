@@ -2,8 +2,6 @@
   "scene": "test",
   "visual_novel": {
     "enabled": true,
-    "width": 640,
-    "height": 480,
     "sprites": [
       {
         "name": "Anibal",

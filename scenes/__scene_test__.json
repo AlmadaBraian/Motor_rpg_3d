@@ -1,0 +1,31 @@
+{
+    "scene": "",
+    "script": [
+        {
+            "action": "vn_start_animation",
+            "sprite": "NuevoSprite",
+            "animation": "traveling_y",
+            "x": "50",
+            "y": "60",
+            "speed": "100",
+            "duration": "1.0",
+            "wait": true
+        }
+    ],
+    "type": "visual_novel",
+    "visual_novel": {
+        "enabled": true,
+        "sprites": [
+            {
+                "name": "NuevoSprite",
+                "image": "png\\Marisa.png",
+                "x": -96,
+                "y": 660,
+                "w": 270,
+                "h": 480,
+                "visible": false,
+                "z": 10
+            }
+        ]
+    }
+}

@@ -71,7 +71,7 @@ class RuntimeSystem:
         initial_scene_file = getattr(
             tkref,
             "initial_scene_file",
-            "scenes/game_over.json"
+            "scenes/visual_novel_example.json"
         )
 
         scene_manager = get_runtime_scene_manager(tkref)
@@ -436,59 +436,11 @@ class RuntimeSystem:
 
         menu = tkref.runtime_menu
 
-        print(
-            "INPUT MENU:",
-            id(menu),
-            menu.index
-        )
-        
-        print("KEY EVENT:", event.widget)
-
         if menu.visible:
 
             self.handle_runtime_menu_input(event)
 
-        # =====================================
-        # WAIT INPUT EVENT
-        # =====================================
-
-        
-
-        if event.keysym == "space" and tkref.world_event_running and tkref.event_wait_input:
-            if tkref.space_pressed:
-                return
-            tkref.space_pressed = True
-            if tkref.event_wait_input:
-                tkref.event_wait_input = False
-                return
-            
-            self.advance_runtime_dialog()
-            return
-
-        if not tkref.runtime_world or not tkref.runtime_world.main_actor:
-            return
-        
-        if tkref.battle_mode:
-            tkref.runtime_combat.handle_battle_input(event)
-            return
-
-        p = tkref.runtime_world.main_actor["inst"]
-
-        if not tkref.world_event_running:
-
-            if k == "w":
-                p.move_b = True
-            if k == "s":
-                p.move_f = True
-            if k == "a":
-                p.move_l = True
-            if k == "d":
-                p.move_r = True
-
-            if k == "q":
-                p.rot_l = True
-            if k == "e":
-                p.rot_r = True
+        print("world_event_running",tkref.world_event_running)
 
         if event.keysym == "space":
 
@@ -499,7 +451,12 @@ class RuntimeSystem:
             tkref.space_pressed = True
 
             if tkref.world_event_running and tkref.event_wait_input:
-                self.advance_runtime_dialog()
+                if tkref.dialog_visible:
+                    self.advance_runtime_dialog()
+                else:
+                    #tkref.dialog_visible = False
+                    tkref.event_wait_input = False
+                    #tkref.dialog_index = 0
                 return
             if tkref.world_event_running:
                 tkref.show_ui = False
@@ -524,14 +481,51 @@ class RuntimeSystem:
                 execute_runtime_tile_event(tkref, near_evt)
                 return
 
+        # =====================================
+        # WAIT INPUT EVENT
+        # =====================================
+
+        if not tkref.runtime_world or not tkref.runtime_world.main_actor:
+            return
+        
+        if tkref.battle_mode:
+            tkref.runtime_combat.handle_battle_input(event)
+            return
+        
+        print(
+            "INPUT MENU:",
+            id(menu),
+            menu.index
+        )
+        
+        print("KEY EVENT:", event.widget)
+
+        p = tkref.runtime_world.main_actor["inst"]
+
+        if not tkref.world_event_running:
+
+            if k == "w":
+                p.move_b = True
+            if k == "s":
+                p.move_f = True
+            if k == "a":
+                p.move_l = True
+            if k == "d":
+                p.move_r = True
+
+            if k == "q":
+                p.rot_l = True
+            if k == "e":
+                p.rot_r = True
+
     def game_key_up(self, event):
 
         tkref = self.toolkit
 
+        k = event.keysym.lower()
+
         if event.keysym == "space":
             tkref.space_pressed = False
-
-        k = event.keysym.lower()
 
         if k in ("w", "s", "up", "down"):
             tkref.menu_down_pressed = False
@@ -545,6 +539,7 @@ class RuntimeSystem:
 
         p = tkref.runtime_world.main_actor["inst"]
 
+        
 
         movement_released = False
 
@@ -610,13 +605,6 @@ class RuntimeSystem:
 
         menu = self.toolkit.runtime_menu
 
-        print(
-            "INPUT MENU:",
-            id(menu),
-            menu.index,
-            id(self.toolkit)
-        )
-
         if not menu.visible:
             return
 
@@ -661,15 +649,6 @@ class RuntimeSystem:
             if menu.on_cancel:
                 menu.on_cancel()
 
-        print(
-            "MENU ITEMS:",
-            menu.items
-        )
-
-        print(
-            "MENU INDEX:",
-            menu.index
-        )
 
         menu.index %= len(menu.items)
 

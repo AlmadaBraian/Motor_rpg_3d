@@ -2,8 +2,6 @@
   "scene": "test",
   "visual_novel": {
     "enabled": true,
-    "width": 640,
-    "height": 480,
     "sprites": [
       {
         "name": "Anibal",
@@ -188,7 +186,7 @@
     {
       "action": "start_combat",
       "execute_script_win": "testScene2.json",
-      "execute_script_lose":"visual_novel_example.json"
+      "execute_script_lose":"game_over.json"
     }
   ]
 }

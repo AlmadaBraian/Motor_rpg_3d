@@ -1684,6 +1684,8 @@ class RuntimeCombat:
 
                     inst.guard_mode = True
 
+                    self.play_runtime_idle(inst)
+
                     self.end_battle_turn()
                     
 
@@ -2928,6 +2930,9 @@ class RuntimeCombat:
         closest_pack = IA.find_closest_enemy(self, current)
 
         if not closest_pack:
+            if o.max_actions > 0:
+                current["inst"].guard_mode = True
+                self.play_runtime_idle(current["inst"])
             self.end_battle_turn()
             return
 
@@ -2938,6 +2943,9 @@ class RuntimeCombat:
         )
 
         if not best_tile:
+            if o.max_actions > 0:
+                current["inst"].guard_mode = True
+                self.play_runtime_idle(current["inst"])
             self.end_battle_turn()
             return
 
@@ -5038,17 +5046,32 @@ class RuntimeCombat:
                 "espalda"
             )
 
-            idlemap = {
-                "frente": "idle_frente",
-                "espalda": "idle_espalda",
-                "dere": "idle_perfil_dere",
-                "izq": "idle_perfil_izq"
-            }
+            if not inst.guard_mode:
 
-            idle_anim = idlemap.get(
-                face,
-                "idle_espalda"
-            )
+                idlemap = {
+                    "frente": "idle_frente",
+                    "espalda": "idle_espalda",
+                    "dere": "idle_perfil_dere",
+                    "izq": "idle_perfil_izq"
+                }
+
+                idle_anim = idlemap.get(
+                    face,
+                    "idle_espalda"
+                )
+
+            else:
+                idlemap = {
+                    "frente": "idle_guard_frente",
+                    "espalda": "idle_guard_espalda",
+                    "dere": "idle_guard_perfil_dere",
+                    "izq": "idle_guard_perfil_izq"
+                }
+
+                idle_anim = idlemap.get(
+                    face,
+                    "idle_guard_espalda"
+                )
 
             if (
                 inst.animator and

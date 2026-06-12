@@ -3,8 +3,6 @@
     "type": "visual_novel",
     "visual_novel": {
         "enabled": true,
-        "width": 640,
-        "height": 480,
         "texts": [
             {
                 "name": "game_over",
@@ -19,6 +17,10 @@
     },
     "script": [
         {
+    "action": "fade_in",
+    "duration": 0.5
+    },
+        {
             "action": "vn_start_animation",
             "text": "game_over",
             "animation": "typewriter",
@@ -26,7 +28,7 @@
         },
         {
             "action": "wait",
-            "time": 500
+            "time": 800
         },
         {
             "action": "vn_start_animation",

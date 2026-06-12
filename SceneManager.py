@@ -105,6 +105,29 @@ class RuntimeSceneManager:
             return copy.deepcopy(script)
 
         return []
+    
+    def get_scene_names(self):
+
+        scene_dir = os.path.join(
+            os.path.dirname(__file__),
+            "scenes"
+        )
+
+        if not os.path.isdir(scene_dir):
+            return []
+
+        result = []
+
+        for file in os.listdir(scene_dir):
+
+            if file.lower().endswith(".json"):
+                result.append(
+                    f"scenes/{file}"
+                )
+
+        result.sort()
+
+        return result
 
     def normalize_script_source(self, source):
         if not source:

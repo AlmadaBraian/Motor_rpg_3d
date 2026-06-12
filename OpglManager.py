@@ -2970,15 +2970,6 @@ class GLViewport(OpenGLFrame):
 
         o = self.toolkit_ref
 
-        print(
-            "DRAW LIST MENU ON:",
-            self,
-            "EDITOR:",
-            self.toolkit_ref.viewport,
-            "GAME:",
-            self.toolkit_ref.game_view
-        )
-
         longest = max(len(str(x)) for x in items)
 
         box_w = longest * w + 40
@@ -3045,14 +3036,6 @@ class GLViewport(OpenGLFrame):
 
             if not enabled:
                 color = (0.5,0.5,0.5,1)
-
-            print(
-            "DRAW ENTRY:",
-            i,
-            text,
-            "SELECTED:",
-            i == selected_index
-            )
 
             prefix = "> " if i == selected_index else "  "
 

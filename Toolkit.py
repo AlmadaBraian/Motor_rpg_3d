@@ -37,6 +37,7 @@ from SpriteAsset import SpriteAsset
 from SpriteManager import *
 from LowPolyAsset import LowPolyAsset
 from SpriteAnimatorEditor import SpriteAnimatorEditor
+from SceneCreator import SceneCreator
 from WallSegmentEditor import WallSegmentEditor
 from config import *
 
@@ -343,26 +344,96 @@ class Toolkit:
         prop_frame_3 = tk.Frame(top_map_panel)
         prop_frame_3.pack(side='left', padx=60, anchor='n')
 
-        map_frame = tk.LabelFrame(top_map_panel, text="Mapas del Proyecto")
+        self.editor_view_mode = tk.StringVar(value="maps")
+
+        map_frame = tk.LabelFrame(
+            top_map_panel,
+            text="Proyecto"
+        )
         map_frame.pack(side='left', padx=20, anchor='n')
 
-        tk.Label(map_frame, text="Mapa activo").pack(anchor='w')
+        ttk.Combobox(
+            map_frame,
+            textvariable=self.editor_view_mode,
+            state="readonly",
+            values=["maps", "scenes"]
+        ).pack(fill="x")
+
+        self.editor_view_mode.trace_add(
+            "write",
+            lambda *args: self.refresh_project_selector()
+        )
+
+        self.project_item_label = tk.Label(
+            map_frame,
+            text="Mapa activo"
+        )
+
+        self.project_item_label.pack(anchor="w")
         self.map_combo = ttk.Combobox(map_frame, textvariable=self.current_map_var, state='readonly', width=18)
         self.map_combo.pack(fill='x')
-        self.map_combo.bind("<<ComboboxSelected>>", self.on_map_combo_selected)
+        self.map_combo.bind("<<ComboboxSelected>>", self.on_project_combo_selected)
+
 
         nav_frame = tk.Frame(map_frame)
         nav_frame.pack(fill='x', pady=(4, 0))
-        tk.Button(nav_frame, text="◀", width=3, command=self.previous_map).pack(side='left')
-        tk.Button(nav_frame, text="Nuevo", command=self.create_map).pack(side='left', fill='x', expand=True)
-        tk.Button(nav_frame, text="▶", width=3, command=self.next_map).pack(side='left')
+        self.prev_btn = tk.Button(
+            nav_frame,
+            text="◀",
+            width=3,
+            command=self.previous_item
+        )
 
-        tk.Button(map_frame, text="Renombrar mapa", command=self.rename_current_map).pack(fill='x', pady=(4, 0))
-        tk.Button(map_frame, text="Duplicar mapa", command=self.duplicate_current_map).pack(fill='x')
-        tk.Button(map_frame, text="Eliminar mapa", command=self.delete_current_map).pack(fill='x')
+        self.prev_btn.pack(side="left")
+
+        self.new_btn = tk.Button(
+            nav_frame,
+            text="Nuevo",
+            command=self.create_item
+        )
+
+        self.new_btn.pack(
+            side="left",
+            fill="x",
+            expand=True
+        )
+
+        self.next_btn = tk.Button(
+            nav_frame,
+            text="▶",
+            width=3,
+            command=self.next_item
+        )
+
+        self.next_btn.pack(side="left")
+
+        self.rename_btn = tk.Button(
+            map_frame,
+            text="Renombrar mapa",
+            command=self.rename_item
+        )
+
+        self.rename_btn.pack(fill="x", pady=(4,0))
+
+        self.duplicate_btn = tk.Button(
+            map_frame,
+            text="Duplicar mapa",
+            command=self.duplicate_item
+        )
+
+        self.duplicate_btn.pack(fill="x")
+
+        self.delete_btn = tk.Button(
+            map_frame,
+            text="Eliminar mapa",
+            command=self.delete_item
+        )
+
+        self.delete_btn.pack(fill="x")
+
         self.map_status_label = tk.Label(map_frame, text="", anchor='w')
         self.map_status_label.pack(fill='x', pady=(4, 0))
-        self.refresh_map_selector()
+        self.refresh_project_selector()
 
         # =========================================
         # CAMERA PRESETS CONTAINER
@@ -611,6 +682,17 @@ class Toolkit:
         self.build_texture_browser()
         self.draw_grid()
         self.load_sprite_library()
+
+    def on_scene_selected(self, event=None):
+
+        scene_file = self.scene_var.get()
+
+        self.initial_scene_file = scene_file
+
+        print(
+            "INITIAL SCENE:",
+            scene_file
+        )
 
     def open_actor_creator_window (self):
         
@@ -1543,6 +1625,9 @@ class Toolkit:
         # =========================================
         prefix = "walk" if moving else "rot"
 
+        if inst.guard_mode:
+            prefix = "idle_guard_rot"
+
         # =========================================
         # SUFIJO DIRECCIONAL
         # =========================================
@@ -1576,6 +1661,11 @@ class Toolkit:
         if not moving and suffix == "_espalda":
             if "idle" in inst.animator.clips:
                 chosen = "idle"
+
+            if inst.guard_mode:
+
+                if "idle_guard" in inst.animator.clips:
+                    chosen = "idle_guard"
 
         #print("CHOSEN =", chosen)
 
@@ -1621,9 +1711,16 @@ class Toolkit:
                     inst.animator.play("walk_espalda")
                     return
             else:
-                if "idle" in inst.animator.clips:
-                    inst.animator.play("idle")
-                    return
+                if not inst.guard_mode:
+                    if "idle" in inst.animator.clips:
+                        inst.animator.play("idle")
+                        return
+                    
+                else:
+                    if "idle_guard" in inst.animator.clips:
+                        inst.animator.play("idle_guard")
+                        return
+
                 
                 
     def update_actor_walk_by_input(self, inst, dx, dy):
@@ -1715,25 +1812,51 @@ class Toolkit:
 
         vf = getattr(inst, "visual_facing", "espalda")
 
-        name_map = {
-            "espalda": "idle",
-            "frente": "idle_frente",
-            "izq": "idle_izq",
-            "dere": "idle_dere",
-            "espalda_izq": "rot_espalda_izq",
-            "perfil_izq": "rot_perfil_izq",
-            "frente_izq": "rot_frente_izq",
-            "frente_dere": "rot_frente_dere",
-            "perfil_dere": "rot_perfil_dere",
-            "espalda_dere": "rot_espalda_dere"
-        }
+        print("GUARD MODE:", inst.guard_mode)
 
-        candidates = [
-            name_map.get(vf, "idle"),
-            "idle",
-            "idle_espalda",
-            "idle_frente"
-        ]
+        if inst.guard_mode:
+
+            name_map = {
+                "espalda": "idle_guard",
+                "frente": "idle_guard_frente",
+                "izq": "idle_guard_izq",
+                "dere": "idle_guard_dere",
+                "espalda_izq": "idle_guard_rot_espalda_izq",
+                "perfil_izq": "idle_guard_rot_perfil_izq",
+                "frente_izq": "idle_guard_rot_frente_izq",
+                "frente_dere": "idle_guard_rot_frente_dere",
+                "perfil_dere": "idle_guard_rot_perfil_dere",
+                "espalda_dere": "idle_guard_rot_espalda_dere"
+            }
+
+            candidates = [
+                name_map.get(vf, "idle_guard"),
+                "idle_guard",
+                "idle_guard_espalda",
+                "idle_guard_frente"
+            ]
+
+        else:
+
+                name_map = {
+                    "espalda": "idle",
+                    "frente": "idle_frente",
+                    "izq": "idle_izq",
+                    "dere": "idle_dere",
+                    "espalda_izq": "rot_espalda_izq",
+                    "perfil_izq": "rot_perfil_izq",
+                    "frente_izq": "rot_frente_izq",
+                    "frente_dere": "rot_frente_dere",
+                    "perfil_dere": "rot_perfil_dere",
+                    "espalda_dere": "rot_espalda_dere"
+                }
+
+                candidates = [
+                    name_map.get(vf, "idle"),
+                    "idle",
+                    "idle_espalda",
+                    "idle_frente"
+                ]
 
         for chosen in candidates:
             if chosen in inst.animator.clips:
@@ -2448,6 +2571,10 @@ class Toolkit:
             return
 
         SpriteAnimatorEditor(self, self.sprites[name])
+
+    def open_scene_creator(self):
+
+        SceneCreator(self)
 
     def move_actor_between_tiles(self, pack, new_gx, new_gy):
 
@@ -3804,6 +3931,366 @@ class Toolkit:
     def get_map_names(self):
         self.ensure_project_maps()
         return list(self.maps.keys())
+    
+    def create_item(self):
+
+        if self.editor_view_mode.get() == "maps":
+            self.create_map()
+        else:
+            self.open_scene_creator()
+
+    def rename_item(self):
+
+        if self.editor_view_mode.get() == "maps":
+            self.rename_current_map()
+        else:
+            self.rename_current_scene()
+
+    def duplicate_item(self):
+
+        if self.editor_view_mode.get() == "maps":
+            self.duplicate_current_map()
+        else:
+            self.duplicate_current_scene()
+
+    def delete_item(self):
+
+        if self.editor_view_mode.get() == "maps":
+            self.delete_current_map()
+        else:
+            self.delete_current_scene()
+
+    def previous_item(self):
+
+        if self.editor_view_mode.get() == "maps":
+            self.previous_map()
+        else:
+            self.previous_scene()
+
+    def next_item(self):
+
+        if self.editor_view_mode.get() == "maps":
+            self.next_map()
+        else:
+            self.next_scene()
+    
+    def refresh_project_selector(self):
+
+        mode = self.editor_view_mode.get()
+
+        if mode == "maps":
+
+            self.rename_btn.config(
+                text="Renombrar mapa"
+            )
+
+            self.duplicate_btn.config(
+                text="Duplicar mapa"
+            )
+
+            self.delete_btn.config(
+                text="Eliminar mapa"
+            )
+
+            self.new_btn.config(
+                text="Nuevo mapa"
+            )
+
+            self.project_item_label.config(
+                text="Mapa activo"
+            )
+
+            names = self.get_map_names()
+
+            self.map_combo["values"] = names
+
+            self.current_map_var.set(
+                self.current_map_id
+            )
+
+            self.map_status_label.config(
+                text=f"{len(names)} mapas"
+            )
+
+        else:
+
+            self.project_item_label.config(
+                text="Escena inicial"
+            )
+
+            self.rename_btn.config(
+                text="Renombrar escena"
+            )
+
+            self.duplicate_btn.config(
+                text="Duplicar escena"
+            )
+
+            self.delete_btn.config(
+                text="Eliminar escena"
+            )
+
+            self.new_btn.config(
+                text="Nueva escena"
+            )
+
+            manager = get_runtime_scene_manager(self)
+
+            scenes = manager.get_scene_names()
+
+            self.map_combo["values"] = scenes
+
+            self.current_map_var.set(
+                getattr(
+                    self,
+                    "initial_scene_file",
+                    ""
+                )
+            )
+
+            self.map_status_label.config(
+                text=f"{len(scenes)} escenas"
+            )
+
+    def switch_scene(self, scene_file):
+
+        scenes = self.get_scene_names()
+
+        if scene_file not in scenes:
+            return
+
+        self.initial_scene_file = scene_file
+
+        self.current_map_var.set(scene_file)
+
+        manager = get_runtime_scene_manager(self)
+
+        scene_data, _ = manager.load_scene_data(scene_file)
+
+        map_id = manager.get_scene_start_map(scene_data)
+
+        if map_id and map_id in self.maps:
+            self.switch_map(map_id)
+
+        self.refresh_project_selector()
+
+    def previous_scene(self):
+
+        scenes = self.get_scene_names()
+
+        if not scenes:
+            return
+
+        current = getattr(
+            self,
+            "initial_scene_file",
+            scenes[0]
+        )
+
+        if current not in scenes:
+            current = scenes[0]
+
+        index = scenes.index(current)
+
+        self.switch_scene(
+            scenes[(index - 1) % len(scenes)]
+        )
+
+    def next_scene(self):
+
+        scenes = self.get_scene_names()
+
+        if not scenes:
+            return
+
+        current = getattr(
+            self,
+            "initial_scene_file",
+            scenes[0]
+        )
+
+        if current not in scenes:
+            current = scenes[0]
+
+        index = scenes.index(current)
+
+        self.switch_scene(
+            scenes[(index + 1) % len(scenes)]
+        )
+
+    def delete_current_scene(self):
+
+        current = getattr(
+            self,
+            "initial_scene_file",
+            ""
+        )
+
+        if not current:
+            return
+
+        scenes = self.get_scene_names()
+
+        if len(scenes) <= 1:
+            messagebox.showwarning(
+                "Escenas",
+                "Debe existir al menos una escena."
+            )
+            return
+
+        if not messagebox.askyesno(
+            "Eliminar escena",
+            f"¿Eliminar '{current}'?"
+        ):
+            return
+
+        manager = get_runtime_scene_manager(self)
+
+        path = manager.resolve_scene_path(
+            current
+        )
+
+        os.remove(path)
+
+        scenes = self.get_scene_names()
+
+        if scenes:
+            self.initial_scene_file = scenes[0]
+        else:
+            self.initial_scene_file = ""
+
+        self.refresh_project_selector()
+
+    def rename_current_scene(self):
+
+        current = getattr(
+            self,
+            "initial_scene_file",
+            ""
+        )
+
+        if not current:
+            return
+
+        manager = get_runtime_scene_manager(self)
+
+        old_path = manager.resolve_scene_path(
+            current
+        )
+
+        old_name = os.path.basename(
+            current
+        )
+
+        new_name = simpledialog.askstring(
+            "Renombrar escena",
+            "Nuevo nombre:",
+            initialvalue=old_name,
+            parent=self.root
+        )
+
+        if not new_name:
+            return
+
+        if not new_name.lower().endswith(".json"):
+            new_name += ".json"
+
+        new_file = os.path.join(
+            "scenes",
+            new_name
+        )
+
+        new_path = manager.resolve_scene_path(
+            new_file
+        )
+
+        if os.path.exists(new_path):
+            messagebox.showerror(
+                "Escenas",
+                "Ya existe una escena con ese nombre."
+            )
+            return
+
+        os.rename(
+            old_path,
+            new_path
+        )
+
+        self.initial_scene_file = new_file
+
+        self.refresh_project_selector()
+
+    def duplicate_current_scene(self):
+
+        current = getattr(
+            self,
+            "initial_scene_file",
+            ""
+        )
+
+        if not current:
+            return
+
+        manager = get_runtime_scene_manager(self)
+
+        data, source_path = manager.load_scene_data(
+            current
+        )
+
+        if data is None:
+            return
+
+        default_name = (
+            os.path.splitext(
+                os.path.basename(current)
+            )[0]
+            + "_copy"
+        )
+
+        name = simpledialog.askstring(
+            "Duplicar escena",
+            "Nombre de la copia:",
+            initialvalue=default_name,
+            parent=self.root
+        )
+
+        if not name:
+            return
+
+        if not name.lower().endswith(".json"):
+            name += ".json"
+
+        new_file = os.path.join(
+            "scenes",
+            name
+        )
+
+        new_path = manager.resolve_scene_path(
+            new_file
+        )
+
+        if os.path.exists(new_path):
+            messagebox.showerror(
+                "Escenas",
+                "Ya existe una escena con ese nombre."
+            )
+            return
+
+        with open(
+            new_path,
+            "w",
+            encoding="utf-8"
+        ) as f:
+            json.dump(
+                data,
+                f,
+                indent=4,
+                ensure_ascii=False
+            )
+
+        self.initial_scene_file = new_file
+
+        self.refresh_project_selector()
 
     def refresh_map_selector(self):
         if not hasattr(self, "map_combo"):
@@ -3847,8 +4334,28 @@ class Toolkit:
         self.refresh_map_selector()
         self.draw_grid()
 
-    def on_map_combo_selected(self, event=None):
-        self.switch_map(self.current_map_var.get())
+    def on_project_combo_selected(self, event=None):
+
+        mode = self.editor_view_mode.get()
+
+        value = self.current_map_var.get()
+
+        if mode == "maps":
+
+            self.switch_map(value)
+
+        else:
+
+            self.initial_scene_file = value
+
+    def select_initial_scene(self, scene_file):
+
+            self.initial_scene_file = scene_file
+
+            print(
+                "ESCENA INICIAL:",
+                scene_file
+            )
 
     def make_unique_map_name(self, base="Map"):
         self.ensure_project_maps()
@@ -4224,6 +4731,7 @@ class Toolkit:
         self.maps = loaded_maps
         self.current_map_id = requested_map if requested_map in self.maps else next(iter(self.maps))
         self.grid = self.maps[self.current_map_id]
+            
 
     def save_project(self):
         path = filedialog.asksaveasfilename(
@@ -4260,6 +4768,12 @@ class Toolkit:
 
         # Retrocompatibilidad: mantiene el mapa activo en la clave antigua.
         data["grid"] = data["maps"][self.current_map_id]["grid"]
+
+        data["initial_scene_file"] = getattr(
+            self,
+            "initial_scene_file",
+            "scenes/visual_novel_example.json"
+        )
 
         # =========================================
         # SAVE ASSETS (VOXEL/MESH)
@@ -4832,6 +5346,11 @@ class Toolkit:
         # LOAD MAPS / GRID
         # =========================================
         self.load_project_maps(data)
+
+        self.initial_scene_file = data.get(
+            "initial_scene_file",
+            "scenes/visual_novel_example.json"
+        )
 
         self.selected_instance = None
         self.selected_sprite = None

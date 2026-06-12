@@ -27,15 +27,4 @@ class RuntimeMenu:
     @index.setter
     def index(self, value):
 
-        import traceback
-
-        print(
-            "MENU INDEX CHANGED:",
-            self._index,
-            "->",
-            value
-        )
-
-        traceback.print_stack(limit=6)
-
         self._index = value
