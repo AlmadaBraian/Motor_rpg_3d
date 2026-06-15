@@ -14,14 +14,22 @@ class RollProvider(Protocol):
 @dataclass(frozen=True, slots=True)
 class ActorStats:
     name: str = ""
+
     speed: int = 5
+
     accuracy: int = 0
     evasion: int = 0
+
     attack_bonus: int = 0
     armor_class: int = 10
+
     damage_min: int = 4
     damage_max: int = 10
+
     defense: int = 0
+
+    critical_chance: float = 5.0
+
     body_type: str = "normal"
 
 
@@ -29,7 +37,6 @@ class ActorStats:
 class CombatResult:
     hit: bool
     critical_hit: bool
-    critical_miss: bool
     result: str
     damage: int
     roll: int
@@ -50,11 +57,12 @@ class CombatRules:
         self.rng = rng or Random()
 
     def resolve_attack(
-        self,
-        attacker: ActorStats,
-        target: ActorStats,
-        *,
-        target_guarding: bool = False,
+    self,
+    attacker: ActorStats,
+    target: ActorStats,
+    attacker_runtime=None,
+    *,
+    target_guarding=False,
     ) -> CombatResult:
         body_scale = self.config.body_type_armor_scale.get(target.body_type, 1.0)
         armor_class = target.armor_class * body_scale
@@ -71,33 +79,63 @@ class CombatRules:
         roll = self.rng.randint(1, self.config.d20_sides)
         attack_total = roll + attack_bonus + attacker.accuracy
 
-        critical_hit = roll == self.config.natural_critical_hit
-        critical_miss = roll == self.config.natural_critical_miss
+        #critical_hit = roll == self.config.natural_critical_hit
+        #critical_miss = roll == self.config.natural_critical_miss
 
-        if critical_hit:
-            hit = True
-            result = "critical"
-        elif critical_miss:
-            hit = False
-            result = "critical_miss"
-        else:
-            hit = attack_total >= armor_class + target.evasion
-            result = "hit" if hit else "miss"
+        
+        hit_chance = (
+            85
+            + attacker.accuracy
+            - target.evasion
+        )
+
+        hit_chance = max(10, min(95, hit_chance))
+
+        hit = self.rng.randint(1, 100) <= hit_chance
+        
+        result = "hit" if hit else "miss"
 
         damage = 0
-        if hit:
+        critical_hit = False
+
+        if hit and attacker_runtime:
+            critical_hit, attacker_runtime.crit_meter = (
+                self.roll_pseudo_random_critical(
+                    attacker_runtime.crit_meter,
+                    attacker.critical_chance
+                )
+            )
             damage = self._roll_damage(attacker, target, critical_hit=critical_hit, target_guarding=target_guarding)
+
+            if hit:
+                result = "critical" if critical_hit else "hit"
+            else:
+                result = "miss"
 
         return CombatResult(
             hit=hit,
             critical_hit=critical_hit,
-            critical_miss=critical_miss,
             result=result,
             damage=damage,
             roll=roll,
             attack_total=attack_total,
             armor_class=armor_class,
         )
+    
+    def roll_pseudo_random_critical(
+        self,
+        crit_meter: float,
+        crit_chance: float,
+    ):
+        crit_meter += crit_chance
+
+        critical = False
+
+        if crit_meter >= 100:
+            critical = True
+            crit_meter -= 100
+
+        return critical, crit_meter
 
     def _roll_damage(
         self,
@@ -135,5 +173,6 @@ def actor_stats_from_object(name: str, source: object) -> ActorStats:
         damage_min=int(getattr(source, "damage_min", 4)),
         damage_max=int(getattr(source, "damage_max", 10)),
         defense=int(getattr(source, "defense", 0)),
+        critical_chance=float(getattr(source, "critical_chance", 5.0)),
         body_type=str(getattr(source, "body_type", "normal")),
     )

@@ -43,6 +43,8 @@ class ActorInstance:
 
         self.guard_mode = False
 
+        self.crit_meter = 0.0
+
         self.selected_item_index = 0
         self.selected_special_index = 0
 

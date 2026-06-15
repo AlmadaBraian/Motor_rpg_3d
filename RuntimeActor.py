@@ -625,6 +625,9 @@ class RuntimeActor:
         return False
 
     def try_move_runtime_actor(self, pack, dx, dy):
+
+        if self.toolkit.player_input_locked:
+            return
         inst = pack["inst"]
 
         old_gx = pack["gx"]

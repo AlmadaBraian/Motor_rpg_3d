@@ -8,7 +8,7 @@ from tkinter import messagebox
 from tkinter import simpledialog
 from tkinter import filedialog
 
-from SceneCommands import SCENE_COMMANDS, VN_ANIMATIONS
+from SceneCommands import SCENE_COMMANDS, VN_SPRITE_ANIMATIONS, VN_TEXT_ANIMATIONS
 from SceneManager import get_runtime_scene_manager
 
 
@@ -26,6 +26,8 @@ class SceneCreator(tk.Toplevel):
         self.scene_data = {}
 
         self.vn_sprites = []
+
+        self.vn_texts = []
 
         self.build_ui()
 
@@ -173,6 +175,18 @@ class SceneCreator(tk.Toplevel):
             self.on_vn_sprite_selected
         )
 
+        self.text_list = tk.Listbox(left)
+
+        self.text_list.pack(
+            fill="both",
+            expand=True
+        )
+
+        self.text_list.bind(
+            "<<ListboxSelect>>",
+            self.on_vn_text_selected
+        )
+
         self.command_list = tk.Listbox(
             left
         )
@@ -226,6 +240,12 @@ class SceneCreator(tk.Toplevel):
             sprite_buttons,
             text="Agregar Sprite",
             command=self.add_vn_sprite
+        ).pack(side="left")
+
+        tk.Button(
+            sprite_buttons,
+            text="Agregar Texto",
+            command=self.add_vn_text
         ).pack(side="left")
 
 
@@ -289,6 +309,30 @@ class SceneCreator(tk.Toplevel):
         ).pack(
             side="right"
         )
+
+    def add_vn_text(self):
+
+        text = {
+
+            "name": "NuevoTexto",
+
+            "text": "Texto",
+
+            "x": 0,
+            "y": 0,
+
+            "visible": False,
+
+            "scale": 1,
+
+            "z": 10
+        }
+
+        self.vn_texts.append(text)
+
+        self.refresh_vn_text_list()
+
+        self.refresh_json()
 
     def add_vn_sprite(self):
 
@@ -536,6 +580,198 @@ class SceneCreator(tk.Toplevel):
             "write",
             update
         )
+
+    def on_vn_text_selected(self, event=None):
+
+            sel = self.text_list.curselection()
+
+            if not sel:
+                return
+
+            index = sel[0]
+
+            text = self.vn_texts[index]
+
+            self.clear_property_editor()
+
+            # ==========================
+            # NAME
+            # ==========================
+
+            tk.Label(
+                self.property_frame,
+                text="Nombre"
+            ).pack(anchor="w")
+
+            name_var = tk.StringVar(
+                value=text.get("name", "")
+            )
+
+            tk.Entry(
+                self.property_frame,
+                textvariable=name_var
+            ).pack(fill="x")
+
+            # ==========================
+            # X
+            # ==========================
+
+            tk.Label(
+                self.property_frame,
+                text="X"
+            ).pack(anchor="w")
+
+            x_var = tk.IntVar(
+                value=text.get("x", 0)
+            )
+
+            tk.Entry(
+                self.property_frame,
+                textvariable=x_var
+            ).pack(fill="x")
+
+            # ==========================
+            # Y
+            # ==========================
+
+            tk.Label(
+                self.property_frame,
+                text="Y"
+            ).pack(anchor="w")
+
+            y_var = tk.IntVar(
+                value=text.get("y", 0)
+            )
+
+            tk.Entry(
+                self.property_frame,
+                textvariable=y_var
+            ).pack(fill="x")
+
+            # ==========================
+            # WIDTH
+            # ==========================
+
+            tk.Label(
+                self.property_frame,
+                text="scale"
+            ).pack(anchor="w")
+
+            scale_var = tk.IntVar(
+                value=text.get("scale", 2)
+            )
+
+            tk.Entry(
+                self.property_frame,
+                textvariable=scale_var
+            ).pack(fill="x")
+
+            # ==========================
+            # Z
+            # ==========================
+
+            tk.Label(
+                self.property_frame,
+                text="Z"
+            ).pack(anchor="w")
+
+            z_var = tk.IntVar(
+                value=text.get("z", 10)
+            )
+
+            tk.Entry(
+                self.property_frame,
+                textvariable=z_var
+            ).pack(fill="x")
+
+            # ==========================
+            # TEXTO
+            # ==========================
+
+            tk.Label(
+                self.property_frame,
+                text="Texto"
+            ).pack(anchor="w")
+
+            text_var = tk.StringVar(
+                value=text.get("text", "")
+            )
+
+            tk.Entry(
+                self.property_frame,
+                textvariable=text_var
+            ).pack(fill="x")
+
+            # ==========================
+            # VISIBLE
+            # ==========================
+
+            visible_var = tk.BooleanVar(
+                value=text.get("visible", False)
+            )
+
+            tk.Checkbutton(
+                self.property_frame,
+                text="Visible",
+                variable=visible_var
+            ).pack(anchor="w")
+
+            # ==========================
+            # UPDATE
+            # ==========================
+
+            def update(*args):
+
+                text["name"] = name_var.get()
+
+                text["x"] = x_var.get()
+                text["y"] = y_var.get()
+
+                text["scale"] = scale_var.get()
+
+                text["z"] = z_var.get()
+
+                text["text"] = text_var.get()
+
+                text["visible"] = visible_var.get()
+
+                self.refresh_vn_text_list()
+                self.refresh_json()
+
+            name_var.trace_add(
+                "write",
+                update
+            )
+
+            x_var.trace_add(
+                "write",
+                update
+            )
+
+            y_var.trace_add(
+                "write",
+                update
+            )
+
+            scale_var.trace_add(
+                "write",
+                update
+            )
+
+            z_var.trace_add(
+                "write",
+                update
+            )
+
+            text_var.trace_add(
+                "write",
+                update
+            )
+
+            visible_var.trace_add(
+                "write",
+                update
+            )
         
     
     def refresh_vn_sprite_list(self):
@@ -551,6 +787,21 @@ class SceneCreator(tk.Toplevel):
                 "end",
                 spr.get("name", "")
             )
+
+    def refresh_vn_text_list(self):
+
+            self.text_list.delete(
+                0,
+                "end"
+            )
+
+            for txt in self.vn_texts:
+
+                self.text_list.insert(
+                    "end",
+                    txt.get("name", "")
+                )
+    
     
     def get_png_files(self):
 
@@ -733,30 +984,61 @@ class SceneCreator(tk.Toplevel):
 
         tk.Label(
             self.property_frame,
-            text="Sprite"
+            text="Animar"
         ).pack(anchor="w")
 
-        #sprite_files = []
+        anim_type_var = tk.StringVar()
+
+        if cmd.get("text"):
+
+            anim_type_var.set("text")
+
+        else:
+
+            anim_type_var.set("sprite")
+
+        values = ["sprite", "text"]
+
+        anim_type_combo = ttk.Combobox(
+            self.property_frame,
+            textvariable=anim_type_var,
+            values=values,
+            state="readonly"
+        )
+
+        anim_type_combo.pack(fill="x")
+
+        target_label = tk.Label(
+            self.property_frame,
+            text="Sprite"
+        )
+
+        target_label.pack(anchor="w")
 
         sprite_names = []
+
+        text_names = []
 
         for spr in self.vn_sprites:
             sprite_names.append(
                 spr.get("name", "")
             )
 
-        sprite_var = tk.StringVar(
-            value=cmd.get("sprite", "")
-        )
+        for txt in self.vn_texts:
+            text_names.append(
+                txt.get("name", "")
+            )
 
-        sprite_combo = ttk.Combobox(
+        target_var = tk.StringVar()
+
+        target_combo = ttk.Combobox(
             self.property_frame,
-            textvariable=sprite_var,
-            values=sprite_names,
+            textvariable=target_var,
             state="readonly"
         )
 
-        sprite_combo.pack(fill="x")
+        target_combo.pack(fill="x")
+
 
         tk.Label(
             self.property_frame,
@@ -770,9 +1052,17 @@ class SceneCreator(tk.Toplevel):
             )
         )
 
-        animation_names = list(
-            VN_ANIMATIONS.keys()
-        )
+        if anim_type_var.get() == "sprite":
+
+            animation_names = list(
+                VN_SPRITE_ANIMATIONS.keys()
+            )
+
+        else:
+
+            animation_names = list(
+                VN_TEXT_ANIMATIONS.keys()
+            )
 
         animation_combo = ttk.Combobox(
             self.property_frame,
@@ -859,7 +1149,7 @@ class SceneCreator(tk.Toplevel):
 
         duration_entry = tk.Entry(
             self.property_frame,
-            textvariable=X_var
+            textvariable=duration_var
         )
 
         duration_entry.pack(fill="x")
@@ -876,9 +1166,105 @@ class SceneCreator(tk.Toplevel):
             variable=wait_var
         ).pack(anchor="w")
 
+        def refresh_target_combo(*args):
+
+            anim_type = anim_type_var.get()
+
+            if anim_type == "sprite":
+
+                target_label.config(
+                    text="Sprite"
+                )
+
+                values = [
+                    s.get("name", "")
+                    for s in self.vn_sprites
+                ]
+
+                target_combo.configure(
+                    values=values
+                )
+
+                cmd.pop(
+                    "text",
+                    None
+                )
+
+                target_var.set(
+                    cmd.get(
+                        "sprite",
+                        ""
+                    )
+                )
+
+            else:
+
+                target_label.config(
+                    text="Texto"
+                )
+
+                values = [
+                    t.get("name", "")
+                    for t in self.vn_texts
+                ]
+
+                target_combo.configure(
+                    values=values
+                )
+
+                cmd.pop(
+                    "sprite",
+                    None
+                )
+
+                target_var.set(
+                    cmd.get(
+                        "text",
+                        ""
+                    )
+                )
+
+            refresh_animation_combo()
+
+        def refresh_animation_combo(*args):
+
+            if anim_type_var.get() == "sprite":
+
+                animation_combo.configure(
+                    values=list(
+                        VN_SPRITE_ANIMATIONS.keys()
+                    )
+                )
+
+            else:
+
+                animation_combo.configure(
+                    values=list(
+                        VN_TEXT_ANIMATIONS.keys()
+                    )
+                )
+
+        refresh_target_combo()
+
         def update(*args):
 
-            cmd["sprite"] = sprite_var.get()
+            if anim_type_var.get() == "sprite":
+
+                cmd["sprite"] = target_var.get()
+
+                cmd.pop(
+                    "text",
+                    None
+                )
+
+            else:
+
+                cmd["text"] = target_var.get()
+
+                cmd.pop(
+                    "sprite",
+                    None
+                )
 
             cmd["animation"] = animation_var.get()
 
@@ -894,7 +1280,7 @@ class SceneCreator(tk.Toplevel):
 
             self.refresh_json()
 
-        sprite_var.trace_add(
+        target_var.trace_add(
             "write",
             update
         )
@@ -928,6 +1314,13 @@ class SceneCreator(tk.Toplevel):
             "write",
             update
         )
+
+        anim_type_var.trace_add(
+            "write",
+            refresh_target_combo
+        )
+
+       
 
     def show_change_scene_editor(
         self,
@@ -1372,20 +1765,28 @@ class SceneCreator(tk.Toplevel):
                 )
             )
 
-    def sync_vn_sprites(self):
 
-        if "visual_novel" not in self.scene_data:
+    def sync_vn_sprites_texts(self):
 
-            self.scene_data["visual_novel"] = {
-                "enabled": True,
-                "sprites": []
-            }
+            if "visual_novel" not in self.scene_data:
 
-        self.scene_data["visual_novel"]["sprites"] = (
-            copy.deepcopy(
-                self.vn_sprites
+                self.scene_data["visual_novel"] = {
+                    "enabled": True,
+                    "sprites": [],
+                    "texts":[]
+                }
+
+            self.scene_data["visual_novel"]["sprites"] = (
+                copy.deepcopy(
+                    self.vn_sprites
+                )
             )
-        )
+
+            self.scene_data["visual_novel"]["texts"] = (
+                copy.deepcopy(
+                    self.vn_texts
+                )
+            )
 
     def refresh_json(self):
 
@@ -1411,7 +1812,7 @@ class SceneCreator(tk.Toplevel):
 
             self.scene_data["type"] = "visual_novel"
 
-            self.sync_vn_sprites()
+            self.sync_vn_sprites_texts()
 
             self.scene_data.pop(
                 "start_map",
@@ -1481,7 +1882,7 @@ class SceneCreator(tk.Toplevel):
             exist_ok=True
         )
 
-        self.sync_vn_sprites()
+        self.sync_vn_sprites_texts()
 
         with open(
             path,
@@ -1541,7 +1942,7 @@ class SceneCreator(tk.Toplevel):
                 {}
             )
 
-            self.sync_vn_sprites()
+            self.sync_vn_sprites_texts()
 
         else:
 

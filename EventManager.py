@@ -1282,6 +1282,8 @@ def check_runtime_step_events(self):
             ed.get("done")
         )
 
+        self.player_input_locked = True
+
         execute_runtime_tile_event(self,t)
 
 def execute_runtime_tile_event(self, t):

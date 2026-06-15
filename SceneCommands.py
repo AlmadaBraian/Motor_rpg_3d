@@ -255,101 +255,32 @@ SCENE_COMMANDS = {
 }
 
 
-VN_ANIMATIONS = {
+VN_SPRITE_ANIMATIONS = {
+    "walk_right": {},
+    "walk_left": {},
+    "enter_left": {},
+    "enter_right": {},
+    "exit_left": {},
+    "exit_right": {},
+    "traveling_x": {},
+    "traveling_y": {},
+    "up": {},
+    "down": {},
+    "stay": {},
+    "fade_in": {},
+    "fade_out": {}
+}
 
-    # ==========================
-    # SPRITES
-    # ==========================
-
-    "walk_right": {
-        "label": "Caminar Derecha"
-    },
-
-    "walk_left": {
-        "label": "Caminar Izquierda"
-    },
-
-    "enter_left": {
-        "label": "Entrar Izquierda"
-    },
-
-    "enter_right": {
-        "label": "Entrar Derecha"
-    },
-
-    "exit_left": {
-        "label": "Salir Izquierda"
-    },
-
-    "exit_right": {
-        "label": "Salir Derecha"
-    },
-
-    "traveling_x": {
-        "label": "Traveling X"
-    },
-
-    "traveling_y": {
-        "label": "Traveling Y"
-    },
-
-    "up": {
-        "label": "Subir"
-    },
-
-    "down": {
-        "label": "Bajar"
-    },
-
-    "stay": {
-        "label": "Quedarse"
-    },
-
-    "fade_in": {
-        "label": "Fade In"
-    },
-
-    "fade_out": {
-        "label": "Fade Out"
-    },
-
-    # ==========================
-    # TEXTOS
-    # ==========================
-
-    "float_up": {
-        "label": "Float Up"
-    },
-
-    "shake": {
-        "label": "Shake"
-    },
-
-    "pulse": {
-        "label": "Pulse"
-    },
-
-    "typewriter": {
-        "label": "Typewriter"
-    },
-
-    "popup": {
-        "label": "Popup"
-    },
-
-    "ghost": {
-        "label": "Ghost"
-    },
-
-    "glow": {
-        "label": "Glow"
-    },
-
-    "damage": {
-        "label": "Damage"
-    },
-
-    "none": {
-        "label": "None"
-    }
+VN_TEXT_ANIMATIONS = {
+    "float_up": {},
+    "shake": {},
+    "pulse": {},
+    "typewriter": {},
+    "fade_in": {},
+    "fade_out": {},
+    "popup": {},
+    "ghost": {},
+    "glow": {},
+    "damage": {},
+    "none": {}
 }

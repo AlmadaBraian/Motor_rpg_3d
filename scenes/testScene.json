@@ -183,6 +183,7 @@
       "action": "wait",
       "time": 2500
     },
+    {"action": "show_ui"},
     {
       "action": "start_combat",
       "execute_script_win": "testScene2.json",

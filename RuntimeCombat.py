@@ -413,6 +413,10 @@ class RuntimeCombat:
 
         grid = o.runtime_world.grid
 
+        allow_mantle = self.actor_can_mantle(
+                o.battle_selected_unit
+            )
+
         
 
         q = deque()
@@ -455,7 +459,8 @@ class RuntimeCombat:
                     x,
                     y,
                     nx,
-                    ny
+                    ny,
+                    allow_mantle=allow_mantle
                 ):
                     continue
 
@@ -1728,6 +1733,26 @@ class RuntimeCombat:
 
                     if not o.combat_path:
                         return
+                    
+                    need_mantle = False
+
+                    px = sx
+                    py = sy
+
+                    for nx, ny in o.combat_path:
+
+                        cur_h = self.combat_tile_height(px, py)
+                        next_h = self.combat_tile_height(nx, ny)
+
+                        if next_h - cur_h > 0.4:
+                            need_mantle = True
+                            break
+
+                        px = nx
+                        py = ny
+
+                    if need_mantle:
+                        self.battle_camera_mode = 1
 
                     o.combat_move_queue = o.combat_path.copy()
 
@@ -1810,48 +1835,6 @@ class RuntimeCombat:
         ]
 
         return menu
-
-    def consume_combat_action(
-        self,
-        user_pack
-    ):
-
-        o = self.owner
-
-        o.max_actions -= 1
-
-        print(
-            "ACTIONS LEFT:",
-            o.max_actions
-        )
-
-        o.battle_target_tiles = []
-
-        o.selected_combat_action = None
-
-        o.current_action_type = "attack"
-
-        # =====================================
-        # FIN TURN
-        # =====================================
-
-        if o.max_actions <= 0:
-
-            o.battle_selected_unit = None
-
-            o.battle_state = "idle"
-
-            self.end_battle_turn()
-
-            return
-
-        # =====================================
-        # NEXT ACTION
-        # =====================================
-
-        o.battle_selected_unit = user_pack
-
-        inst = user_pack["inst"]
 
         
     def consume_item_inventory(
@@ -1971,6 +1954,8 @@ class RuntimeCombat:
 
         script = NORMAL_ATTACK_SCRIPT
 
+        ammo = True
+
         if weapon_name:
 
             weapon = o.weapons.get(
@@ -1984,11 +1969,11 @@ class RuntimeCombat:
                     weapon.ammo_item,
                     weapon.ammo_per_shot
                 ):
-
+                    ammo = False
                     print("OUT OF AMMO")
-                    return
+                    #return
 
-            if weapon and weapon.script:
+            if weapon and weapon.script and ammo:
 
                 script = weapon.script
 
@@ -2138,14 +2123,7 @@ class RuntimeCombat:
         tgt_def = o.actors.get(target.actor_name)
 
         if not combat_result["hit"]:
-
-            if combat_result["critical_miss"]:
-
-                self.attack_result_type = "critical_miss"
-                print("CRITICAL MISS!")
-                
-            else:
-                print("MISS")
+            print("MISS")
 
             # no aplicar daño
             return False
@@ -2206,8 +2184,6 @@ class RuntimeCombat:
         attacker = attacker_pack["inst"]
         target = target_pack["inst"]
 
-        result=""
-
         atk_def = o.actors.get(attacker.actor_name)
         tgt_def = o.actors.get(target.actor_name)
 
@@ -2218,13 +2194,13 @@ class RuntimeCombat:
         resolved = rules.resolve_attack(
             actor_stats_from_object(attacker.actor_name, atk_def),
             actor_stats_from_object(target.actor_name, tgt_def),
+            attacker_runtime=attacker,
             target_guarding=getattr(target, "guard_mode", False),
         )
 
         return {
             "hit": resolved.hit,
             "critical_hit": resolved.critical_hit,
-            "critical_miss": resolved.critical_miss,
             "result": resolved.result,
             "damage": resolved.damage,
             "roll": resolved.roll,
@@ -2736,6 +2712,9 @@ class RuntimeCombat:
 
         o = self.owner
 
+        if o.game_over:
+            return
+
         print("begin_battle_turn max_actions", o.max_actions)
 
         o.max_actions = 2
@@ -2895,6 +2874,9 @@ class RuntimeCombat:
 
         o = self.owner
 
+        if o.game_over:
+            return
+
         if not getattr(o, "waiting_enemy_turn_start", False):
             return
 
@@ -2910,6 +2892,9 @@ class RuntimeCombat:
     def run_enemy_turn(self):
 
         o = self.owner
+
+        if o.game_over:
+            return
 
         self.battle_camera_mode = 0
 
@@ -3033,7 +3018,6 @@ class RuntimeCombat:
                 (-1, 0),
                 (1, 0)
             ]
-
             for dx, dy in dirs:
 
                 nx = x + dx
@@ -3057,10 +3041,25 @@ class RuntimeCombat:
                 ):
                     continue
 
+                h1 = self.combat_tile_height(x, y)
+                h2 = self.combat_tile_height(nx, ny)
+
+                diff = h2 - h1
+
+                # subida que requiere mantle
+                if allow_mantle and diff > 0.4:
+
+                    visited.add((nx, ny))
+
+                    if d + 1 <= action_range:
+                        tiles.append((nx, ny))
+
+                    # NO expandir desde esta tile
+                    continue
+
                 queue.append(
                     (nx, ny, d + 1)
                 )
-
         return tiles
 
 
@@ -3433,9 +3432,27 @@ class RuntimeCombat:
             )
 
             if weapon:
-
+                
                 action_range = weapon.range
                 shape = weapon.target_shape
+                
+                if weapon and weapon.use_bullets:
+
+                    if not self.has_ammo(
+                        inst.actor_name,
+                        weapon.ammo_item,
+                        weapon.ammo_per_shot
+                    ):
+                        ammo = False
+                        print("OUT OF AMMO")
+                        action_range = getattr(
+                            actor_def,
+                            "attack_range",
+                            1
+                        )
+
+                        shape = "diamond"
+                        
 
             else:
 
@@ -3690,6 +3707,8 @@ class RuntimeCombat:
 
         move_range = getattr(actor_def, "move_range", 4)
 
+        allow_mantle = self.actor_can_mantle(pack)
+
         startx = pack["gx"]
         starty = pack["gy"]
 
@@ -3729,7 +3748,8 @@ class RuntimeCombat:
                     x,
                     y,
                     nx,
-                    ny
+                    ny,
+                    allow_mantle=allow_mantle
                 ):
                     continue
 
@@ -3831,9 +3851,6 @@ class RuntimeCombat:
         if not o.battle_mode:
             return
         
-        if o.runtime_camera_locked:
-            return
-        
         if o.runtime_cam_orbit is None:
             o.runtime_cam_orbit = 0
 
@@ -3844,6 +3861,12 @@ class RuntimeCombat:
 
         if self.turn_camera_lock > 0:
             self.turn_camera_lock -= dt
+
+        if o.runtime_camera_locked:
+
+            cam.yaw = o.runtime_cam_orbit
+
+            return
 
         # =========================================
         # ROTACION CAMARA
@@ -3878,7 +3901,9 @@ class RuntimeCombat:
 
         target_x = cam.x
         target_z = cam.z
-        target_y = cam.y
+        target_y = 0.0
+
+        cam.y=0
 
         # =========================================
         # ATTACK CAMERA
@@ -3886,7 +3911,7 @@ class RuntimeCombat:
 
         if self.runtime_attack_camera:
 
-            pass
+            target_y = 0.0
 
         # =========================================
         # FOLLOW MOVING UNIT
@@ -3972,6 +3997,17 @@ class RuntimeCombat:
             target_y - cam.y
         ) * min(1.0, dt * speed)
 
+        ground_y = target_y
+
+        print(
+            "ATTACK CAMERA",
+            target_x,
+            target_z,
+            target_y,
+            "CAMY",
+            cam.y
+        )
+
 
         # =========================================
         # CAMERA PRESETS
@@ -3982,7 +4018,7 @@ class RuntimeCombat:
             # tactical
             preset = CAMERA_PRESETS["battle_tactical"]
 
-            cam.y = preset["y"]
+            cam.y = preset["y"] + ground_y
 
             target_pitch = preset["pitch"]
             target_dist  = preset["distance"]
@@ -3994,7 +4030,7 @@ class RuntimeCombat:
             # close camera
             preset = CAMERA_PRESETS["battle_close"]
 
-            cam.y = preset["y"]
+            cam.y = preset["y"] + ground_y
 
             target_pitch = preset["pitch"]
             target_dist  = preset["distance"]
@@ -4181,6 +4217,22 @@ class RuntimeCombat:
 
         dx = tx - ax
         dy = ty - ay
+
+        print(
+            "ATTACKER H",
+            self.combat_tile_height(
+                attacker_pack["gx"],
+                attacker_pack["gy"]
+            )
+        )
+
+        print(
+            "TARGET H",
+            self.combat_tile_height(
+                target_pack["gx"],
+                target_pack["gy"]
+            )
+        )
 
         # =====================================
         # YAWS DE PERFIL
@@ -4432,6 +4484,8 @@ class RuntimeCombat:
 
         for pack in o.battle_units:
 
+            pack["inst"].guard_mode = False
+
             if pack == leader:
                 continue
 
@@ -4619,30 +4673,6 @@ class RuntimeCombat:
             not self.runtime_attack_camera
         )
 
-    def finalize_combat_action(self):
-
-        o = self.owner
-
-        o.max_actions -= 1
-
-        o.battle_target_tiles = []
-        o.selected_combat_action = None
-        o.current_action_type = "attack"
-
-        if o.max_actions <= 0:
-
-            o.battle_selected_unit = None
-            o.battle_state = "idle"
-
-            self.end_battle_turn()
-
-        else:
-
-            o.command_menu = self.build_unit_command_menu(o.battle_selected_unit)
-
-            o.menu_index = 0
-            o.battle_state = "command_menu"
-
 
     def show_popup(
     self,
@@ -4669,6 +4699,17 @@ class RuntimeCombat:
                 offset_x=offset_x
             )
 
+        elif counter:
+            self.spawn_combat_popup(
+            target_pack,
+            target_pack["inst"].actor_name
+            + " COUNTER!",
+            color=(1,0.2,0.2,1),
+            lifetime=0.5,
+            offset_y=10,
+            offset_x=offset_x
+        )
+
         elif not result["hit"]:
 
             self.spawn_combat_popup(
@@ -4688,20 +4729,7 @@ class RuntimeCombat:
                 lifetime=0.5,
                 offset_y=10,
                 offset_x=offset_x
-            )
-
-        if counter:
-            self.spawn_combat_popup(
-            target_pack,
-            target_pack["inst"].actor_name
-            + " COUNTER!",
-            color=(1,0.2,0.2,1),
-            lifetime=0.5,
-            offset_y=10,
-            offset_x=offset_x
-        )
-
-                            
+            )                    
 
     def combat_tile_height(self, gx, gy):
 
@@ -4896,7 +4924,32 @@ class RuntimeCombat:
 
             inst.animator.update(dt)
 
+    def actor_can_mantle(self, pack):
+
+        inst = pack["inst"]
+
+        actor_def = self.owner.actors.get(
+            inst.actor_name
+        )
+
+        if not actor_def:
+            return False
+
+        for skill_name in getattr(actor_def, "skills", []):
+
+            skill = self.owner.skills.get(skill_name)
+
+            if not skill:
+                continue
+
+            if skill.name == "Trepar":
+                return True
+
+        return False
+
     def update_combat_actor_move(self, dt):
+        
+        from RuntimeActor import RuntimeActor
 
         o = self.owner
 
@@ -4908,6 +4961,10 @@ class RuntimeCombat:
 
         pack = o.combat_moving_unit
 
+        if not hasattr(self, "runtime_actor"):
+
+                self.runtime_actor = RuntimeActor(o)
+
         if not pack:
             o.combat_actor_moving = False
             return
@@ -4917,7 +4974,7 @@ class RuntimeCombat:
 
         if getattr(inst, "is_mantling", False):
             if pack["inst"].is_mantling:
-                o.update_actor_mantle(pack, dt)
+                self.runtime_actor.update_actor_mantle(pack, dt)
             return
         
         # =====================================
@@ -4967,6 +5024,7 @@ class RuntimeCombat:
                 user_pack = self.mantle_skill_user
 
                 #o.button_X_command = "Guardia"
+                self.battle_camera_mode = 0
 
                 self.focus_battle_camera_on_current(user_pack)
 
@@ -5096,9 +5154,13 @@ class RuntimeCombat:
 
         diff = next_h - cur_h
 
-        if diff > 0.4:
+        if (
+            diff > 0.4
+            and
+            self.actor_can_mantle(pack)
+        ):
 
-            started = o.try_start_mantle(
+            started = self.runtime_actor.try_start_mantle(
                 pack,
                 tx - pack["gx"],
                 ty - pack["gy"]

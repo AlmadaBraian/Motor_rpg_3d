@@ -440,8 +440,6 @@ class RuntimeSystem:
 
             self.handle_runtime_menu_input(event)
 
-        print("world_event_running",tkref.world_event_running)
-
         if event.keysym == "space":
 
             # evitar autorepeat
@@ -497,8 +495,6 @@ class RuntimeSystem:
             id(menu),
             menu.index
         )
-        
-        print("KEY EVENT:", event.widget)
 
         p = tkref.runtime_world.main_actor["inst"]
 

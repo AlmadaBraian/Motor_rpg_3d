@@ -1311,12 +1311,42 @@ def end_runtime_skill(runtime_skill):
     combat = runtime_skill.combat
     o = combat.owner
 
+    if o.game_over:
+        return
+
     runtime_skill.running = False
     runtime_skill.finished = True
 
     combat.finalize_pending_dead_unit(
         runtime_skill.target_pack
     )
+
+    parent = runtime_skill.data.get(
+        "parent_runtime_skill"
+    )
+
+    if parent:
+
+        parent.flags["counter_finished"] = True
+
+        combat.active_runtime_skill = parent
+
+        runtime_skill.running = False
+        runtime_skill.finished = True
+
+        print(
+            "ACTIVE SKILL",
+            runtime_skill.user_pack["inst"].actor_name
+        )
+
+        print(
+            "RESTORE PARENT",
+            parent.user_pack["inst"].actor_name
+        )
+
+        print("COUNTER END")
+
+        return
 
     # =====================================
     # CONSUME ACTION
@@ -1374,21 +1404,9 @@ def end_runtime_skill(runtime_skill):
 
 
 
-    parent = runtime_skill.data.get(
-    "parent_runtime_skill"
-    )
+    
 
-    if parent:
-
-        parent.flags[
-            "counter_finished"
-        ] = True
-
-        combat.active_runtime_skill = parent
-
-    else:
-
-        combat.active_runtime_skill = None
+    combat.active_runtime_skill = None
 
     #combat.active_runtime_skill = None
 

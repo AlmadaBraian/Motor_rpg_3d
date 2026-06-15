@@ -160,6 +160,8 @@ class Toolkit:
 
         self.game_over = False
 
+        self.player_input_locked = False
+
         # =====================================
         # DRAG PAINT
         # =====================================
@@ -1998,6 +2000,8 @@ class Toolkit:
         return False
 
     def try_move_runtime_actor(self, pack, dx, dy):
+        if self.player_input_locked:
+            return
         inst = pack["inst"]
 
         old_gx = pack["gx"]
@@ -4918,6 +4922,10 @@ class Toolkit:
                 "resistance" : getattr(a,"resistance",5),
                 "speed" : getattr(a,"speed",5),
 
+                "evasion" : getattr(a,"evasion",0),
+
+                "accuracy" : getattr(a,"accuracy",0),
+
                 "move_range" : getattr(a,"move_range",4),
 
                 "attack_range" : getattr(a,"attack_range",1),
@@ -5277,6 +5285,10 @@ class Toolkit:
             actor.magic = ad.get("defense", 5)
             actor.resistance = ad.get("resistance", 5)
             actor.speed = ad.get("speed", 5)
+
+            actor.evasion = ad.get("evasion", 0)
+
+            actor.accuracy = ad.get("accuracy", 0)
 
             actor.move_range = ad.get("move_range", 4)
             actor.attack_range = ad.get("attack_range", 1)
@@ -5692,7 +5704,7 @@ class Toolkit:
         header.append("int rows;")
         header.append("int is_main;")
         header.append("int interactive;")
-        header.append("int hp,mp,atk,defense,speed;")
+        header.append("int hp,mp,atk,defense,speed,evasion,accuracy;")
         header.append("} DCACTOR;")
         header.append('typedef struct { int gx,gy; char trigger[32]; char scene[128]; } DCEVENT;')
         header.append("")
@@ -6003,7 +6015,7 @@ class Toolkit:
         act.append('int rows;')
         act.append('int is_main;')
         act.append('int interactive;')
-        act.append('int hp,mp,atk,defense,speed;')
+        act.append('int hp,mp,atk,defense,speed,evasion,accuracy;')
         act.append('} DCACTOR;')
         act.append("DCACTOR scene_actors[] = {")
 
@@ -6036,7 +6048,7 @@ class Toolkit:
                     act.append(
                         f'{{{wx},{wy},{wz},"{actor.name}","{actor.kind}","{os.path.basename(sprite.image_path)}","{actor.event_file}",'
                         f'{sprite.sheet_cols},{sprite.sheet_rows},{1 if actor.is_main else 0},{1 if actor.interactive else 0},'
-                        f'{actor.hp},{actor.mp},{actor.atk},{actor.defense},{actor.speed}}},'
+                        f'{actor.hp},{actor.mp},{actor.atk},{actor.defense},{actor.speed},{actor.evasion},{actor.accuracy}}},'
                     )
 
         act.append("};")

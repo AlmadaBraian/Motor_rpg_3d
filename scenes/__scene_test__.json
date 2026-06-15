@@ -3,27 +3,27 @@
     "script": [
         {
             "action": "vn_start_animation",
-            "sprite": "NuevoSprite",
-            "animation": "traveling_y",
-            "x": "50",
-            "y": "60",
-            "speed": "100",
+            "animation": "typewriter",
+            "x": "-250",
+            "y": "250",
+            "speed": "300",
             "duration": "1.0",
-            "wait": true
+            "wait": true,
+            "text": "prueba"
         }
     ],
     "type": "visual_novel",
     "visual_novel": {
         "enabled": true,
-        "sprites": [
+        "sprites": [],
+        "texts": [
             {
-                "name": "NuevoSprite",
-                "image": "png\\Marisa.png",
-                "x": -96,
-                "y": 660,
-                "w": 270,
-                "h": 480,
+                "name": "prueba",
+                "text": "esta locura",
+                "x": 250,
+                "y": 250,
                 "visible": false,
+                "scale": 1,
                 "z": 10
             }
         ]
