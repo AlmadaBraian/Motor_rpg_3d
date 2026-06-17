@@ -8764,8 +8764,8 @@
                         "facing": "espalda",
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
-                        "frame": 0,
-                        "timer": 0.0680866349538174,
+                        "frame": 4,
+                        "timer": 0.056165927886963674,
                         "is_npc": false,
                         "npc_name": "E",
                         "interact_radius": 1.2,
@@ -10486,8 +10486,8 @@
                         "facing": "espalda",
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
-                        "frame": 3,
-                        "timer": 0.0680866349538174,
+                        "frame": 1,
+                        "timer": 0.056165927886963674,
                         "is_npc": false,
                         "npc_name": "Demonio",
                         "interact_radius": 1.2,
@@ -12266,8 +12266,8 @@
                         "facing": "espalda",
                         "visual_facing": "espalda",
                         "current_anim": "walk_frente",
-                        "frame": 0,
-                        "timer": 0.0680866349538174,
+                        "frame": 4,
+                        "timer": 0.056165927886963674,
                         "is_npc": false,
                         "npc_name": "Frenazi",
                         "interact_radius": 1.2,
@@ -20245,45 +20245,7 @@
                 "block_uv_mode": 0.0,
                 "objects": [],
                 "sprites": [],
-                "actors": [
-                    {
-                        "actor_name": "A",
-                        "offx": 0.0,
-                        "offy": 0.0,
-                        "offz": 0.0,
-                        "rot": 180,
-                        "state": "idle",
-                        "facing": "espalda",
-                        "visual_facing": "espalda",
-                        "current_anim": "walk_frente",
-                        "frame": 5,
-                        "timer": 0.0680866349538174,
-                        "is_npc": false,
-                        "npc_name": "A",
-                        "interact_radius": 1.2,
-                        "interact_text": "...",
-                        "interact_once": false,
-                        "interacted": false,
-                        "trigger_combat": false,
-                        "trigger_event": "",
-                        "vspeed": 0.0,
-                        "ground_z": 0.0,
-                        "on_ground": true,
-                        "is_jumping": false,
-                        "jump_vspeed": 4.8,
-                        "jump_gravity": 9.0,
-                        "jump_target_z": 0.0,
-                        "jump_land_done": false,
-                        "mantle_dest_gx": 0,
-                        "mantle_dest_gy": 0,
-                        "battle_team": "player",
-                        "battle_moved": false,
-                        "battle_acted": false,
-                        "battle_dead": false,
-                        "is_battle_moving": false,
-                        "battle_move_timer": 0.0
-                    }
-                ],
+                "actors": [],
                 "event_data": {
                     "enabled": false,
                     "trigger": "step",
@@ -23071,7 +23033,45 @@
                 "block_uv_mode": 0.0,
                 "objects": [],
                 "sprites": [],
-                "actors": [],
+                "actors": [
+                    {
+                        "actor_name": "Anibal",
+                        "offx": 0.0,
+                        "offy": 0.0,
+                        "offz": 0.0,
+                        "rot": 180,
+                        "state": "idle",
+                        "facing": "espalda",
+                        "visual_facing": "espalda",
+                        "current_anim": "walk_frente",
+                        "frame": 1,
+                        "timer": 0.056165927886963674,
+                        "is_npc": false,
+                        "npc_name": "Anibal",
+                        "interact_radius": 1.2,
+                        "interact_text": "...",
+                        "interact_once": false,
+                        "interacted": false,
+                        "trigger_combat": false,
+                        "trigger_event": "",
+                        "vspeed": 0.0,
+                        "ground_z": 0.0,
+                        "on_ground": true,
+                        "is_jumping": false,
+                        "jump_vspeed": 4.8,
+                        "jump_gravity": 9.0,
+                        "jump_target_z": 0.0,
+                        "jump_land_done": false,
+                        "mantle_dest_gx": 0,
+                        "mantle_dest_gy": 0,
+                        "battle_team": "player",
+                        "battle_moved": false,
+                        "battle_acted": false,
+                        "battle_dead": false,
+                        "is_battle_moving": false,
+                        "battle_move_timer": 0.0
+                    }
+                ],
                 "event_data": {
                     "enabled": false,
                     "trigger": "step",
@@ -42645,133 +42645,6 @@
             "exp_reward": 0,
             "gold_reward": 0
         },
-        "A": {
-            "name": "A",
-            "sprite_sheets": [
-                "base sheet 9 frames v2 73x65.png"
-            ],
-            "kind": "main",
-            "event_file": "",
-            "is_main": true,
-            "interactive": true,
-            "level": 1,
-            "hp": 10,
-            "max_hp": 10,
-            "sp": 35,
-            "max_sp": 35,
-            "atk": 10,
-            "defense": 5,
-            "magic": 5,
-            "resistance": 5,
-            "speed": 5,
-            "evasion": 2,
-            "accuracy": 2,
-            "move_range": 4,
-            "attack_range": 1,
-            "initiative": 10,
-            "attack_bonus": 2,
-            "armor_class": 10,
-            "damage_max": 6,
-            "body_type": "robusto",
-            "team": "main",
-            "ai_mode": "idle",
-            "inventory": [
-                "Chizitos"
-            ],
-            "weapon": "",
-            "armor": "",
-            "accessory": "",
-            "skills": [
-                "Correr"
-            ],
-            "exp_reward": 0,
-            "gold_reward": 0
-        },
-        "b": {
-            "name": "b",
-            "sprite_sheets": [
-                "base sheet 9 frames v2 73x65.png"
-            ],
-            "kind": "party",
-            "event_file": "",
-            "is_main": false,
-            "interactive": true,
-            "level": 1,
-            "hp": 10,
-            "max_hp": 10,
-            "sp": 25,
-            "max_sp": 25,
-            "atk": 10,
-            "defense": 5,
-            "magic": 5,
-            "resistance": 5,
-            "speed": 5,
-            "evasion": 2,
-            "accuracy": 1,
-            "move_range": 4,
-            "attack_range": 1,
-            "initiative": 10,
-            "attack_bonus": 2,
-            "armor_class": 10,
-            "damage_max": 6,
-            "body_type": "normal",
-            "team": "party",
-            "ai_mode": "idle",
-            "inventory": [
-                "9mm Ammo",
-                "9mm Ammo",
-                "9mm Ammo",
-                "9mm Ammo",
-                "9mm Ammo"
-            ],
-            "weapon": "Beretta 9mm",
-            "armor": "",
-            "accessory": "",
-            "skills": [],
-            "exp_reward": 0,
-            "gold_reward": 0
-        },
-        "c": {
-            "name": "c",
-            "sprite_sheets": [
-                "base sheet 9 frames v2 73x65.png"
-            ],
-            "kind": "party",
-            "event_file": "",
-            "is_main": false,
-            "interactive": true,
-            "level": 1,
-            "hp": 10,
-            "max_hp": 10,
-            "sp": 25,
-            "max_sp": 25,
-            "atk": 10,
-            "defense": 5,
-            "magic": 5,
-            "resistance": 5,
-            "speed": 5,
-            "evasion": 3,
-            "accuracy": 2,
-            "move_range": 4,
-            "attack_range": 1,
-            "initiative": 10,
-            "attack_bonus": 2,
-            "armor_class": 10,
-            "damage_max": 6,
-            "body_type": "normal",
-            "team": "party",
-            "ai_mode": "idle",
-            "inventory": [],
-            "weapon": "",
-            "armor": "",
-            "accessory": "",
-            "skills": [
-                "Pedorron",
-                "Trepar"
-            ],
-            "exp_reward": 0,
-            "gold_reward": 0
-        },
         "E": {
             "name": "E",
             "sprite_sheets": [
@@ -42806,7 +42679,9 @@
             "weapon": "",
             "armor": "",
             "accessory": "",
-            "skills": [],
+            "skills": [
+                "Trepar"
+            ],
             "exp_reward": 0,
             "gold_reward": 0
         },
@@ -42878,11 +42753,145 @@
             "body_type": "normal",
             "team": "enemy",
             "ai_mode": "idle",
+            "inventory": [
+                "9mm Ammo",
+                "9mm Ammo",
+                "9mm Ammo",
+                "9mm Ammo",
+                "9mm Ammo"
+            ],
+            "weapon": "Beretta 9mm",
+            "armor": "",
+            "accessory": "",
+            "skills": [],
+            "exp_reward": 0,
+            "gold_reward": 0
+        },
+        "Anibal": {
+            "name": "Anibal",
+            "sprite_sheets": [
+                "base sheet 9 frames v2 73x65.png"
+            ],
+            "kind": "main",
+            "event_file": "",
+            "is_main": true,
+            "interactive": true,
+            "level": 1,
+            "hp": 10,
+            "max_hp": 10,
+            "sp": 35,
+            "max_sp": 35,
+            "atk": 10,
+            "defense": 5,
+            "magic": 5,
+            "resistance": 5,
+            "speed": 5,
+            "evasion": 2,
+            "accuracy": 2,
+            "move_range": 4,
+            "attack_range": 1,
+            "initiative": 10,
+            "attack_bonus": 2,
+            "armor_class": 10,
+            "damage_max": 6,
+            "body_type": "robusto",
+            "team": "main",
+            "ai_mode": "idle",
+            "inventory": [
+                "Chizitos"
+            ],
+            "weapon": "",
+            "armor": "",
+            "accessory": "",
+            "skills": [
+                "Correr"
+            ],
+            "exp_reward": 0,
+            "gold_reward": 0
+        },
+        "Brandom": {
+            "name": "Brandom",
+            "sprite_sheets": [
+                "base sheet 9 frames v2 73x65.png"
+            ],
+            "kind": "party",
+            "event_file": "",
+            "is_main": false,
+            "interactive": true,
+            "level": 1,
+            "hp": 10,
+            "max_hp": 10,
+            "sp": 25,
+            "max_sp": 25,
+            "atk": 10,
+            "defense": 5,
+            "magic": 5,
+            "resistance": 5,
+            "speed": 5,
+            "evasion": 2,
+            "accuracy": 1,
+            "move_range": 4,
+            "attack_range": 1,
+            "initiative": 10,
+            "attack_bonus": 2,
+            "armor_class": 10,
+            "damage_max": 6,
+            "body_type": "normal",
+            "team": "party",
+            "ai_mode": "idle",
+            "inventory": [
+                "9mm Ammo",
+                "9mm Ammo",
+                "9mm Ammo",
+                "9mm Ammo",
+                "9mm Ammo",
+                "9mm Ammo"
+            ],
+            "weapon": "Beretta 9mm",
+            "armor": "",
+            "accessory": "",
+            "skills": [],
+            "exp_reward": 0,
+            "gold_reward": 0
+        },
+        "Carlos": {
+            "name": "Carlos",
+            "sprite_sheets": [
+                "base sheet 9 frames v2 73x65.png"
+            ],
+            "kind": "party",
+            "event_file": "",
+            "is_main": false,
+            "interactive": true,
+            "level": 1,
+            "hp": 10,
+            "max_hp": 10,
+            "sp": 25,
+            "max_sp": 25,
+            "atk": 10,
+            "defense": 5,
+            "magic": 5,
+            "resistance": 5,
+            "speed": 5,
+            "evasion": 3,
+            "accuracy": 2,
+            "move_range": 4,
+            "attack_range": 1,
+            "initiative": 10,
+            "attack_bonus": 2,
+            "armor_class": 10,
+            "damage_max": 6,
+            "body_type": "normal",
+            "team": "party",
+            "ai_mode": "idle",
             "inventory": [],
             "weapon": "",
             "armor": "",
             "accessory": "",
-            "skills": [],
+            "skills": [
+                "Pedorron",
+                "Trepar"
+            ],
             "exp_reward": 0,
             "gold_reward": 0
         }
@@ -42940,7 +42949,8 @@
                 {
                     "action": "end_skill"
                 }
-            ]
+            ],
+            "passive": false
         },
         "Pedorron": {
             "name": "Pedorron",
@@ -42991,7 +43001,8 @@
                 {
                     "action": "end_skill"
                 }
-            ]
+            ],
+            "passive": false
         },
         "Infeccion": {
             "name": "Infeccion",
@@ -43006,7 +43017,8 @@
             "animation_clip_dere": "",
             "animation_clip_izq": "",
             "status_effect": "Infectado",
-            "script": []
+            "script": [],
+            "passive": false
         },
         "Primeros Auxilios": {
             "name": "Primeros Auxilios",
@@ -43021,7 +43033,8 @@
             "animation_clip_dere": "",
             "animation_clip_izq": "",
             "status_effect": "",
-            "script": []
+            "script": [],
+            "passive": false
         },
         "Trepar": {
             "name": "Trepar",
@@ -43041,7 +43054,8 @@
                     "action": "call_func",
                     "func": "execute_mantle_skill"
                 }
-            ]
+            ],
+            "passive": true
         }
     },
     "items": {
@@ -43249,7 +43263,7 @@
             "animation_clip_dere": "shoot_pistol_dere",
             "animation_clip_izq": "shoot_pistol_izq",
             "status_effect": "",
-            "script": "[\n{\n        \"action\": \"attack_camera\"\n    },\n    {\n        \"action\": \"wait\",\n        \"time\": 600\n    },\n    {\n      \"action\": \"camera_look_actor\",\n      \"actor\": \"user\",\n      \"duration\": 0.5\n    },\n\n    {\n        \"action\": \"wait\",\n        \"time\": 600\n    },\n    \n    {\n        \"action\": \"play_animation\",\n        \"animation_clip_dere\": \"prepare_pistol_dere\",\n        \"animation_clip_izq\": \"prepare_pistol_izq\" \n\n    },\n\n    {\n        \"action\": \"wait_animation\",\n        \"target\": \"user\"\n    },\n    {\n        \"action\": \"play_shoot_animation\"\n\n    },\n\n    {\n        \"action\": \"wait_animation\",\n        \"target\": \"user\"\n    },\n\n    {\n      \"action\": \"camera_look_actor\",\n      \"actor\": \"target\",\n      \"duration\": 0.5\n    },\n\n    {\n        \"action\": \"play_hit_animation\"\n    },\n    {\n        \"action\": \"play_idle_animation\"\n    },\n    {\n        \"action\": \"wait_animation\",\n        \"target\": \"target\"\n    },\n\n    {\n        \"action\": \"attack_camera\"\n    },\n\n    {\n        \"action\": \"damage\"\n    },\n\n    {\n        \"action\": \"wait\",\n        \"time\": 300\n    },\n\n    {\n        \"action\": \"end_skill\"\n    }\n]"
+            "script": "[\n{\n        \"action\": \"attack_camera\"\n    },\n    {\n        \"action\": \"wait\",\n        \"time\": 600\n    },\n    {\n      \"action\": \"camera_look_actor\",\n      \"actor\": \"user\",\n      \"duration\": 0.5\n    },\n\n    {\n        \"action\": \"wait\",\n        \"time\": 600\n    },\n    \n    {\n        \"action\": \"play_animation\",\n        \"animation_clip_dere\": \"prepare_pistol_dere\",\n        \"animation_clip_izq\": \"prepare_pistol_izq\" \n\n    },\n\n    {\n        \"action\": \"wait_animation\",\n        \"target\": \"user\"\n    },\n {\n        \"action\": \"play_shoot_animation\"\n\n    },\n\n    {\n        \"action\": \"wait_animation\",\n        \"target\": \"user\"\n    },\n\n    {\n      \"action\": \"camera_look_actor\",\n      \"actor\": \"target\",\n      \"duration\": 0.2\n    },\n\n     {\n        \"action\": \"wait\",\n        \"time\": 800\n    },\n    {\n        \"action\": \"play_hit_animation\"\n    },\n    {\n        \"action\": \"play_idle_animation\"\n    },\n    {\n        \"action\": \"wait_animation\",\n        \"target\": \"target\"\n    },\n\n    {\n        \"action\": \"attack_camera\"\n    },\n\n    {\n        \"action\": \"damage\"\n    },\n\n    {\n        \"action\": \"wait\",\n        \"time\": 300\n    },\n\n    {\n        \"action\": \"end_skill\"\n    }\n]"
         }
     },
     "audio": {
@@ -52025,8 +52039,8 @@
                                 "facing": "espalda",
                                 "visual_facing": "espalda",
                                 "current_anim": "walk_frente",
-                                "frame": 0,
-                                "timer": 0.0680866349538174,
+                                "frame": 4,
+                                "timer": 0.056165927886963674,
                                 "is_npc": false,
                                 "npc_name": "E",
                                 "interact_radius": 1.2,
@@ -53747,8 +53761,8 @@
                                 "facing": "espalda",
                                 "visual_facing": "espalda",
                                 "current_anim": "walk_frente",
-                                "frame": 3,
-                                "timer": 0.0680866349538174,
+                                "frame": 1,
+                                "timer": 0.056165927886963674,
                                 "is_npc": false,
                                 "npc_name": "Demonio",
                                 "interact_radius": 1.2,
@@ -55527,8 +55541,8 @@
                                 "facing": "espalda",
                                 "visual_facing": "espalda",
                                 "current_anim": "walk_frente",
-                                "frame": 0,
-                                "timer": 0.0680866349538174,
+                                "frame": 4,
+                                "timer": 0.056165927886963674,
                                 "is_npc": false,
                                 "npc_name": "Frenazi",
                                 "interact_radius": 1.2,
@@ -63506,45 +63520,7 @@
                         "block_uv_mode": 0.0,
                         "objects": [],
                         "sprites": [],
-                        "actors": [
-                            {
-                                "actor_name": "A",
-                                "offx": 0.0,
-                                "offy": 0.0,
-                                "offz": 0.0,
-                                "rot": 180,
-                                "state": "idle",
-                                "facing": "espalda",
-                                "visual_facing": "espalda",
-                                "current_anim": "walk_frente",
-                                "frame": 5,
-                                "timer": 0.0680866349538174,
-                                "is_npc": false,
-                                "npc_name": "A",
-                                "interact_radius": 1.2,
-                                "interact_text": "...",
-                                "interact_once": false,
-                                "interacted": false,
-                                "trigger_combat": false,
-                                "trigger_event": "",
-                                "vspeed": 0.0,
-                                "ground_z": 0.0,
-                                "on_ground": true,
-                                "is_jumping": false,
-                                "jump_vspeed": 4.8,
-                                "jump_gravity": 9.0,
-                                "jump_target_z": 0.0,
-                                "jump_land_done": false,
-                                "mantle_dest_gx": 0,
-                                "mantle_dest_gy": 0,
-                                "battle_team": "player",
-                                "battle_moved": false,
-                                "battle_acted": false,
-                                "battle_dead": false,
-                                "is_battle_moving": false,
-                                "battle_move_timer": 0.0
-                            }
-                        ],
+                        "actors": [],
                         "event_data": {
                             "enabled": false,
                             "trigger": "step",
@@ -66332,7 +66308,45 @@
                         "block_uv_mode": 0.0,
                         "objects": [],
                         "sprites": [],
-                        "actors": [],
+                        "actors": [
+                            {
+                                "actor_name": "Anibal",
+                                "offx": 0.0,
+                                "offy": 0.0,
+                                "offz": 0.0,
+                                "rot": 180,
+                                "state": "idle",
+                                "facing": "espalda",
+                                "visual_facing": "espalda",
+                                "current_anim": "walk_frente",
+                                "frame": 1,
+                                "timer": 0.056165927886963674,
+                                "is_npc": false,
+                                "npc_name": "Anibal",
+                                "interact_radius": 1.2,
+                                "interact_text": "...",
+                                "interact_once": false,
+                                "interacted": false,
+                                "trigger_combat": false,
+                                "trigger_event": "",
+                                "vspeed": 0.0,
+                                "ground_z": 0.0,
+                                "on_ground": true,
+                                "is_jumping": false,
+                                "jump_vspeed": 4.8,
+                                "jump_gravity": 9.0,
+                                "jump_target_z": 0.0,
+                                "jump_land_done": false,
+                                "mantle_dest_gx": 0,
+                                "mantle_dest_gy": 0,
+                                "battle_team": "player",
+                                "battle_moved": false,
+                                "battle_acted": false,
+                                "battle_dead": false,
+                                "is_battle_moving": false,
+                                "battle_move_timer": 0.0
+                            }
+                        ],
                         "event_data": {
                             "enabled": false,
                             "trigger": "step",
@@ -110334,8 +110348,8 @@
         "world": {
             "y": 0.8,
             "yaw": 0.0,
-            "pitch": 35.0,
-            "distance": 10.0
+            "pitch": 25.0,
+            "distance": 6.0
         },
         "battle_tactical": {
             "y": 0,
@@ -110347,6 +110361,12 @@
             "y": 1,
             "pitch": 20,
             "distance": 6
+        },
+        "world_close_close": {
+            "y": 1.5,
+            "yaw": 4.4,
+            "pitch": 3.0,
+            "distance": 2.0
         }
     }
 }

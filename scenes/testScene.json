@@ -87,7 +87,7 @@
     
      {
       "action": "play_animation",
-      "actor_name": "A",
+      "actor_name": "Anibal",
       "animation_clip": "hit_fall_face_up"
       },
 
@@ -103,7 +103,7 @@
     },
     {
       "action": "camera_look_actor",
-      "actor": "A",
+      "actor": "Anibal",
       "yaw": 90,
       "pitch": 30,
       "distance": 5,
@@ -111,7 +111,7 @@
     },
     {
     "action": "move_actor",
-    "actor": "A",
+    "actor": "Anibal",
     "direction": "down",
     "tiles": 1
   },
@@ -121,7 +121,7 @@
     },
   {
     "action": "move_actor",
-    "actor": "A",
+    "actor": "Anibal",
     "direction": "left",
     "tiles": 3
   },
@@ -131,7 +131,7 @@
     },
   {
     "action": "move_actor",
-    "actor": "A",
+    "actor": "Anibal",
     "direction": "down",
     "tiles": 3
   },
@@ -141,7 +141,7 @@
     },
     {
       "action": "play_animation",
-      "actor_name": "A",
+      "actor_name": "Anibal",
       "animation_clip": "idle"
       },
       {

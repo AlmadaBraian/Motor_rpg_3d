@@ -26,7 +26,8 @@ class AssetEditor(tk.Toplevel):
                 "animation_sprite",
                 "animation_effect",
                 "animation_clip_dere",
-                "animation_clip_izq"
+                "animation_clip_izq",
+                "passive"
             ]
         },
 
@@ -339,6 +340,22 @@ class AssetEditor(tk.Toplevel):
         ).pack(side="left")
 
         self.rows["consumable"] = row
+
+        # ======================================
+        # PASSIVE
+        # ======================================
+
+        row = tk.Frame(self.stats)
+
+        self.passive_var = tk.BooleanVar()
+
+        tk.Checkbutton(
+            row,
+            text="Passive",
+            variable=self.passive_var
+        ).pack(side="left")
+
+        self.rows["passive"] = row
 
         # ======================================
         # EFFECT
@@ -786,6 +803,10 @@ class AssetEditor(tk.Toplevel):
             getattr(asset, "consumable", True)
         )
 
+        self.passive_var.set(
+            getattr(asset, "passive", False)
+        )
+
         self.anim_sprite_combo.set(
             getattr(asset, "animation_sprite", "")
         )
@@ -882,6 +903,9 @@ class AssetEditor(tk.Toplevel):
 
         if hasattr(asset, "consumable"):
             asset.consumable = self.consumable_var.get()
+
+        if hasattr(asset, "passive"):
+            asset.passive = self.passive_var.get()
 
         if hasattr(asset, "use_bullets"):
             asset.use_bullets = self.use_bullets_var.get()

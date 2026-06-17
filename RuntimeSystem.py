@@ -41,6 +41,8 @@ class RuntimeSystem:
 
         tkref.runtime_cam_orbit = 0
 
+        tkref.screen_fade_alpha = 1
+
         tkref.runtime_last_event_tile = None
         tkref.runtime_event_cooldown = 0
         tkref._last_step_audio_tile = None
@@ -151,8 +153,16 @@ class RuntimeSystem:
         # VIEWPORT
         # ==========================================
 
+        world_cam = tkref.camera_presets["world"]
+
+        tkref.runtime_cam_target_pitch = world_cam["pitch"]
+        tkref.runtime_cam_target_distance = world_cam["distance"]
+        tkref.runtime_cam_target_height = world_cam["y"]
+        tkref.runtime_cam_orbit = world_cam["yaw"]
+
         tkref.game_view = GLViewport(
             tkref.game_win,
+            toolkit=tkref,
             width=SCREEN_W,
             height=SCREEN_H
         )
@@ -490,11 +500,6 @@ class RuntimeSystem:
             tkref.runtime_combat.handle_battle_input(event)
             return
         
-        print(
-            "INPUT MENU:",
-            id(menu),
-            menu.index
-        )
 
         p = tkref.runtime_world.main_actor["inst"]
 
@@ -716,6 +721,14 @@ class RuntimeSystem:
             tkref.preview_camera_preset()
             tkref.camera_preview_dirty = False
 
+
+        print(
+            "RUNTIME CAMERA",
+            cam.yaw,
+            cam.pitch,
+            cam.distance
+        )
+
         if tkref.dialog_visible:
 
             page = tkref.dialog_pages[tkref.dialog_index]
@@ -814,7 +827,7 @@ class RuntimeSystem:
 
         tkref.button_A_command = "Interactuar"
         tkref.button_X_command = ""
-        tkref.button_Y_command = "Items"
+        tkref.button_Y_command = ""
         tkref.button_B_command = "Cancelar"
 
         # =====================================

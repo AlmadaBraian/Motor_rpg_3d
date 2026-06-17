@@ -7,13 +7,15 @@ class Camera:
         self.reset()
 
     def reset(self):
-        apply_camera_preset(self, "editor")
+        for preset_name in CAMERA_PRESETS:
 
-def apply_camera_preset(cam, preset_name):
-        p = CAMERA_PRESETS[preset_name]
+            apply_camera_preset(self, CAMERA_PRESETS, preset_name)
 
-        for k, v in p.items():
-            setattr(cam, k, v)
+def apply_camera_preset(cam, presets, preset_name):
+    p = presets[preset_name]
+
+    for k, v in p.items():
+        setattr(cam, k, v)
 
 def build_world_camera_snapshot(tool):
     return {

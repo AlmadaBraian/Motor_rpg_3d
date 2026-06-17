@@ -233,11 +233,15 @@ def update_enemy_ai(self, dt):
 
         o.current_action_type = "attack"
 
-        self.start_runtime_skill(
-                NORMAL_ATTACK_SCRIPT,
-                o.battle_attacker_unit,
-                target
-            )
+        #self.start_runtime_skill(
+         #       NORMAL_ATTACK_SCRIPT,
+          #      o.battle_attacker_unit,
+           #     target
+            #)
+        self.execute_combat_action(
+            o.battle_attacker_unit,
+            target
+        )
 
         o.enemy_ai_state = "wait_attack_finish"
 

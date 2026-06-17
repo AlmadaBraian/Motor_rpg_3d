@@ -225,7 +225,7 @@ class Toolkit:
 
         self.button_A_command = "Interactuar"
         self.text_A_button_color = (1, 0.2, 0.2, 1)
-        self.button_Y_command = "Items"
+        self.button_Y_command = ""
         self.text_Y_button_color = (0.2, 1, 0.2, 1)
         self.button_B_command = "Cancelar"
         self.text_B_button_color = (0.2, 0.2, 1, 1)
@@ -267,9 +267,11 @@ class Toolkit:
         self.battle_deploy_index = 0
         self.battle_deploy_party = []
         self.battle_deploy_finished = False
-        self.party = ["A","b","c"]
+        self.party = ["Anibal","Brandom","Carlos"]
 
         self.runtime_menu = RuntimeMenu()
+
+        self.battle_hover_unit = None
 
         self.menu_down_pressed = False
 
@@ -286,12 +288,16 @@ class Toolkit:
         self.item_menu = []
 
         self.item_menu_data = []
+
+        self.party_menu = []
         
         self.menu_index = 0
 
         self.skill_menu_index = 0
 
         self.item_menu_index = 0
+
+        self.party_menu_index = 0
 
         self.battle_selected_unit = None
         self.battle_attacker_unit = None
@@ -509,7 +515,7 @@ class Toolkit:
             self.camera_preset_frame,
             from_=-5,
             to=10,
-            resolution=1,
+            resolution=0.5,
             orient="horizontal",
             variable=self.cam_preset_height,
             command=lambda v: self.update_camera_preset_values()
@@ -655,7 +661,7 @@ class Toolkit:
         self.grid_canvas.bind("<B1-Motion>", self.update_grid_drag)
         self.grid_canvas.bind("<ButtonRelease-1>", self.end_grid_drag)
 
-        self.viewport=GLViewport(self.root,width=900,height=700)
+        self.viewport = GLViewport(self.root,toolkit=self,width=900,height=700)
         self.viewport.pack(side='left',fill='both',expand=True)
         self.viewport.toolkit_ref=self
         self.camera = self.viewport.camera
@@ -1545,27 +1551,28 @@ class Toolkit:
             inst.offz = inst.fall_target_z
             inst.ground_z = inst.fall_target_z
 
-            push = 0.002
-
-            cx = pack["gx"] + 0.5
-            cy = pack["gy"] + 0.5
-
-            dx = cx - inst.fall_start_x
-            dy = cy - inst.fall_start_y
-
-            d = math.hypot(dx, dy)
-
-            if d > 0:
-                dx /= d
-                dy /= d
-
-                inst.offx += dx * push
-                inst.offy += dy * push
-            
             if not inst.fall_land_done:
+
+                push = 0.002
+
+                cx = pack["gx"] + 0.5
+                cy = pack["gy"] + 0.5
+
+                dx = cx - inst.fall_start_x
+                dy = cy - inst.fall_start_y
+
+                d = math.hypot(dx, dy)
+
+                if d > 0:
+                    dx /= d
+                    dy /= d
+
+                    inst.offx += dx * push
+                    inst.offy += dy * push
+
                 inst.fall_land_done = True
                 inst.animator.paused = False
-                inst.animator.timer = 0  # <--- RESETEA AQUÍ TAMBIÉN
+                inst.animator.timer = 0
                 inst.animator.frame = 1
             
 
@@ -1577,6 +1584,8 @@ class Toolkit:
                 inst.is_falling = False
                 inst.on_ground = True
                 inst.animator.play("idle")
+                inst.offx = 0
+                inst.offy = 0
         
     def mantle_camera_yaw_from_dir(self, dx, dy):
         if abs(dx) > abs(dy):
@@ -1813,8 +1822,6 @@ class Toolkit:
             return
 
         vf = getattr(inst, "visual_facing", "espalda")
-
-        print("GUARD MODE:", inst.guard_mode)
 
         if inst.guard_mode:
 
@@ -2675,6 +2682,12 @@ class Toolkit:
 
         apply_camera_preset(
             self.viewport.camera,
+            preset_name
+        )
+
+        apply_camera_preset(
+            self.viewport.camera,
+            self.camera_presets,
             preset_name
         )
 
@@ -4846,7 +4859,8 @@ class Toolkit:
                 "animation_clip_dere": skill.animation_clip_dere,
                 "animation_clip_izq": skill.animation_clip_izq,
                 "status_effect": skill.status_effect,
-                "script": skill.script
+                "script": skill.script,
+                "passive": skill.passive
 
             }
 
@@ -5233,6 +5247,7 @@ class Toolkit:
             skill.animation_clip_izq = ad.get("animation_clip_izq", "")
             skill.status_effect = ad.get("status_effect", "")
             skill.script = ad.get("script", [])
+            skill.passive = ad.get("passive", False)
 
             self.skills[name] = skill
 

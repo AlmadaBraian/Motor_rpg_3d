@@ -408,6 +408,7 @@ def run_combat_command(
             )
 
             runtime_skill.data["combat_result"] = result
+            
 
             if result:
 
@@ -428,6 +429,16 @@ def run_combat_command(
 
             elif not result["hit"]:
                 result_type = "miss"
+
+        if not runtime_skill.data.get(
+            "is_counter",
+            False
+        ):
+
+            combat.show_popup(
+                target_pack,
+                result
+                )
 
         # =====================================
         # CLIP
@@ -686,11 +697,6 @@ def run_combat_command(
             )
 
             runtime_skill.data["damage_applied"] = True
-
-        combat.show_popup(
-        target_pack,
-        result
-        )
 
         runtime_skill.index += 1
         return

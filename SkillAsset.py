@@ -24,3 +24,5 @@ class SkillAsset:
         self.animation_clip_izq = ""
 
         self.target_shape = "diamond"
+
+        self.passive = False

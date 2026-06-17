@@ -67,8 +67,10 @@ def rotate_3d(x, y, z, rx, ry, rz):
 
 class GLViewport(OpenGLFrame):
 
-    def __init__(self, master, **kw):
+    def __init__(self, master, toolkit, **kw):
         super().__init__(master, **kw)
+
+        self.toolkit_ref = toolkit
 
         #self.editor = editor
 
@@ -93,7 +95,12 @@ class GLViewport(OpenGLFrame):
         self.active_camera_mode = "editor"
 
         # setup inicial game camera
-        apply_camera_preset(self.game_camera, "world")
+        #apply_camera_preset(self.game_camera, "world")
+        apply_camera_preset(
+            self.game_camera,
+            self.toolkit_ref.camera_presets,
+            "world"
+        )
 
 
         self.preview_paused = False
@@ -278,6 +285,67 @@ class GLViewport(OpenGLFrame):
 
         return sx, sy
     
+
+    def draw_actor_hud(self, actor, sx, sy):
+
+        actor_def = self.toolkit_ref.actors.get(
+            actor.actor_name
+        )
+
+        if not actor_def:
+            return
+
+        hp = getattr(actor, "hp", actor_def.hp)
+        max_hp = getattr(actor, "max_hp", actor_def.max_hp)
+
+        sp = getattr(actor, "sp", actor_def.sp)
+        max_sp = getattr(actor, "max_sp", actor_def.max_sp)
+
+        # texto
+        self.draw_ui_text(
+            actor.actor_name,
+            sx + 60,
+            sy - 65,
+            scale=0.9,
+            centered=True
+        )
+
+        self.draw_ui_text(
+            f"{hp}/{max_hp}",
+            sx + 140,
+            sy - 40,
+            scale=0.5
+        )
+
+        self.draw_ui_text(
+            f"{sp}/{max_sp}",
+            sx + 140,
+            sy - 20,
+            scale=0.5
+        )
+
+        # barras
+        self.begin_ui()
+
+        self.draw_hp_bar(
+            sx + 20,
+            sy - 35,
+            120,
+            10,
+            hp,
+            max_hp
+        )
+
+        self.draw_special_bar(
+            sx + 20,
+            sy - 15,
+            120,
+            8,
+            sp,
+            max_sp
+        )
+
+        self.end_ui()
 
     def pick_object_under_mouse(self, mx, my):
         if not hasattr(self, 'toolkit_ref'):
@@ -664,8 +732,29 @@ class GLViewport(OpenGLFrame):
             self.draw_world(self.toolkit_ref)
             
             if self.toolkit_ref.battle_mode:
-                self.toolkit_ref.runtime_combat.draw_combat_popups()
+                self.draw_combat_popups()
                 self.draw_command_menu()
+                self.draw_party_menu()
+                hover_unit = None
+
+                tile = self.toolkit_ref.runtime_world.grid[
+                    self.toolkit_ref.battle_cursor_y
+                ][
+                    self.toolkit_ref.battle_cursor_x
+                ]
+
+                for pack in tile.actors:
+
+                    if pack["inst"].battle_dead:
+                        continue
+
+                    hover_unit = pack
+                    break
+
+                self.toolkit_ref.battle_hover_unit = hover_unit
+
+                #if self.toolkit_ref.battle_state == "select_target":
+                self.draw_hover_hud()
 
             self.begin_ui()
             self.end_ui()
@@ -2677,6 +2766,8 @@ class GLViewport(OpenGLFrame):
 
             self.draw_overlays_combat()
 
+        self.draw_event_markers(self.toolkit_ref)
+
         # ============================
         # SPRITES + ACTORS
         # ============================
@@ -2972,8 +3063,8 @@ class GLViewport(OpenGLFrame):
 
         longest = max(len(str(x)) for x in items)
 
-        box_w = longest * w + 40
-        box_h = len(items) * 55 + 20
+        box_w = longest * w
+        box_h = len(items) * 40 + 20
 
         bx = screen_x
         by = screen_y
@@ -2982,7 +3073,7 @@ class GLViewport(OpenGLFrame):
         # fondo
         # =========================
 
-        o.viewport.begin_ui()
+        self.begin_ui()
 
         glDisable(GL_TEXTURE_2D)
 
@@ -3018,7 +3109,7 @@ class GLViewport(OpenGLFrame):
 
         glEnd()
 
-        o.viewport.end_ui()
+        self.end_ui()
 
         # =========================
         # texto
@@ -3039,13 +3130,13 @@ class GLViewport(OpenGLFrame):
 
             prefix = "> " if i == selected_index else "  "
 
-            o.viewport.draw_ui_text(
+            self.draw_ui_text(
                 prefix + text,
                 bx + 15,
                 by + 15 + (i * 40),
                 color=color,
                 centered=False,
-                scale=1.2
+                scale=0.7
             )
 
     def draw_runtime_menu(self):
@@ -3065,14 +3156,16 @@ class GLViewport(OpenGLFrame):
 
         if not menu.visible:
             return
+        
+        #self.draw_actor_hud()
 
         if menu.title:
 
-            self.toolkit_ref.viewport.draw_ui_text(
+            self.draw_ui_text(
                 menu.title,
                 menu.x,
                 menu.y - 60,
-                scale=2,
+                scale=1,
                 color=(1,1,0,1)
             )
 
@@ -3082,6 +3175,111 @@ class GLViewport(OpenGLFrame):
             menu.x,
             menu.y,
             w=menu.w
+        )
+
+    def draw_hover_hud(self):
+
+        o = self.toolkit_ref
+
+        menu = o.runtime_menu
+        
+        if menu.visible:
+            return
+
+        pack = getattr(
+            o,
+            "battle_hover_unit",
+            None
+        )
+
+        if not pack:
+            return
+
+        screen = o.viewport.world_to_screen(
+            pack["gx"] + 0.5,
+            pack["inst"].ground_z + 2.5,
+            pack["gy"] + 0.5
+        )
+
+        if not screen:
+            return
+
+        sx, sy = screen
+
+        self.draw_actor_hud(
+            pack["inst"],
+            sx,
+            sy
+        )
+
+    def draw_combat_popups(self):
+
+        o = self.toolkit_ref
+
+        for p in o.runtime_combat.combat_text_popups:
+
+            pack = p["pack"]
+
+            inst = pack["inst"]
+
+            scale = p["scale"]
+
+            # =========================
+            # CENTRO REAL DEL ACTOR
+            # =========================
+
+            wx = pack["gx"] + 0.5 + inst.offx
+            wz = pack["gy"] + 0.5 + inst.offy
+
+            wy = inst.ground_z + 2.0
+
+            screen = o.viewport.world_to_screen(wx, wy, wz)
+
+            if not screen:
+                continue
+
+            sx, sy = screen
+
+            #alpha = p["time"] / p["max_time"]
+
+            color = (
+                p["color"][0],
+                p["color"][1],
+                p["color"][2],
+                1
+            )
+
+            text = {
+                "name": p["text"],
+                "text": p["text"],
+                "x": sx,
+                "y": sy + p["offset_y"],
+                "visible": True,
+                "scale": scale,
+                "color": color,
+                "animations": ["damage"],
+                "duration": p["max_time"],
+                "elapsed": p["max_time"] - p["time"],
+                "z": 10
+            }
+
+            print(str(text))
+
+            self.draw_event_text(text)
+
+    def draw_party_menu(self):
+
+        o = self.toolkit_ref
+
+        if o.battle_state != "party_menu":
+            return
+
+        self.draw_list_menu(
+            o.party_menu,
+            o.party_menu_index,
+            20,   # x
+            20,   # y
+            w=20
         )
 
     def draw_command_menu(self):
@@ -3109,33 +3307,18 @@ class GLViewport(OpenGLFrame):
 
         actor_name = pack["inst"].actor_name
 
-        if pack["inst"].battle_team == "enemy":
+        #self.draw_actor_hud(pack["inst"],sx,sy)
 
-            o.viewport.draw_ui_text(
-                actor_name,
-                sx,
-                sy + 150,
-                color=(1,1,0,1),
-                centered=False,
-                scale=1.5
-            )
+
+        if pack["inst"].battle_team == "enemy":
             return
-        
-        o.viewport.draw_ui_text(
-                actor_name,
-                sx + 90,
-                sy - 70,
-                color=(1,1,0,1),
-                centered=False,
-                scale=1.5
-            )
 
         self.draw_list_menu(
             o.command_menu,
             o.menu_index,
-            sx + 90,
+            sx + 20,
             sy,
-            w=8
+            w=7
         )
 
         if o.battle_state == "skill_menu":
@@ -3143,7 +3326,7 @@ class GLViewport(OpenGLFrame):
             self.draw_list_menu(
                 o.skill_menu,
                 o.skill_menu_index,
-                sx + 220,
+                sx + 100,
                 sy + 20,
                 w=20
             )
@@ -3153,10 +3336,12 @@ class GLViewport(OpenGLFrame):
             self.draw_list_menu(
                 o.item_menu,
                 o.item_menu_index,
-                sx + 220,
+                sx + 80,
                 sy + 20,
                 w=20
             )
+
+        
 
 
 
@@ -3315,24 +3500,58 @@ class GLViewport(OpenGLFrame):
 
     def draw_event_text(self, text):
 
-        if not text.visible:
-            return
+        if isinstance(text, dict):
 
-        visible_text = text.text
+            visible = text.get("visible", True)
+            if not visible:
+                return
 
-        x = text.x
-        y = text.y
+            visible_text = text["text"]
 
-        scale = text.scale
+            x = text["x"]
+            y = text["y"]
 
-        r, g, b, a = text.color
+            scale = text.get("scale", 1.0)
 
-        duration = max(
-            0.001,
-            text.duration
-        )
+            duration = max(
+                0.001,
+                text.get("duration", 1.0)
+            )
 
-        elapsed = text.elapsed
+            elapsed = text.get("elapsed", 1.0)
+
+            r, g, b, a = text.get(
+                "color",
+                (1, 1, 1, 1)
+            )
+
+            animations = text.get(
+                "animations",
+                []
+            )
+
+        else:
+
+            if not text.visible:
+                return
+
+            visible_text = text.text
+
+            x = text.x
+            y = text.y
+
+            scale = text.scale
+
+            r, g, b, a = text.color
+
+            animations = text.animations
+
+            duration = max(
+                0.001,
+                text.duration
+            )
+
+            elapsed = text.elapsed
 
         progress = min(
             elapsed / duration,
@@ -3343,7 +3562,7 @@ class GLViewport(OpenGLFrame):
         # aplicar TODAS las animaciones
         # ==========================
 
-        for anim in text.animations:
+        for anim in animations:
 
             if anim == "none":
                 pass
@@ -3518,6 +3737,93 @@ class GLViewport(OpenGLFrame):
             x,
             y,
             color=text_color
+        )
+
+    def draw_ui_rect(self, x, y, w, h, color):
+        
+        glDisable(GL_TEXTURE_2D)
+
+        glColor4f(*color)
+
+        glBegin(GL_QUADS)
+
+        glVertex2f(x, y)
+        glVertex2f(x + w, y)
+        glVertex2f(x + w, y + h)
+        glVertex2f(x, y + h)
+
+        glEnd()
+
+        glColor4f(1,1,1,1)
+
+        glEnable(GL_TEXTURE_2D)
+
+    def draw_hp_bar(
+        self,
+        x,
+        y,
+        w,
+        h,
+        hp,
+        max_hp
+    ):
+        pct = max(
+            0,
+            min(
+                1,
+                hp / max_hp
+            )
+        )
+
+        #print("HP:", hp, max_hp, pct)
+
+        self.draw_ui_rect(
+            x,
+            y,
+            w,
+            h,
+            (0.1,0.1,0.1,0.8)
+        )
+
+        self.draw_ui_rect(
+            x + 2,
+            y + 2,
+            (w - 4) * pct,
+            h - 4,
+            (0.9,0.2,0.2,1)
+        )
+
+    def draw_special_bar(
+        self,
+        x,
+        y,
+        w,
+        h,
+        charge,
+        max_charge
+    ):
+        pct = max(
+            0,
+            min(
+                1,
+                charge / max_charge
+            )
+        )
+
+        self.draw_ui_rect(
+            x,
+            y,
+            w,
+            h,
+            (0.1,0.1,0.1,0.8)
+        )
+
+        self.draw_ui_rect(
+            x + 2,
+            y + 2,
+            (w - 4) * pct,
+            h - 4,
+            (0.2,0.5,1.0,1)
         )
 
     def draw_ui_sprite(self, sprite, inst, x, y, w, h):
@@ -3844,7 +4150,7 @@ class GLViewport(OpenGLFrame):
 
             self.draw_ui_text(tool.button_B_command,sw - 25,sh - 105,color=tool.text_B_button_color, shadow=False, centered=True, scale=0.68)
             self.draw_ui_text(tool.button_X_command,sw - 140,sh - 105,color=tool.text_X_button_color, shadow=False, centered=True, scale=0.7)
-            #self.draw_ui_text(tool.button_Y_command,sw - 65,sh - 135,color=tool.text_Y_button_color, shadow=False, centered=True, scale=0.7)
+            self.draw_ui_text(tool.button_Y_command,sw - 65,sh - 135,color=tool.text_Y_button_color, shadow=False, centered=True, scale=0.7)
             self.draw_ui_texture("sprites/botones_ui.png",sw - 90,sh - 70,150,130, centered=True)
             self.end_ui()
 
@@ -3880,7 +4186,6 @@ class GLViewport(OpenGLFrame):
         glDepthMask(GL_FALSE)
 
         self.render_alpha_pass(tool)
-        self.draw_event_markers(tool)
 
         glDepthMask(GL_TRUE)
         glDisable(GL_ALPHA_TEST)

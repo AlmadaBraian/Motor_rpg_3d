@@ -482,8 +482,6 @@ class RuntimeActor:
         # ==========================================
         vf = getattr(inst, "visual_facing", "espalda")
 
-        print("GUARD MODE:",inst.guard_mode)
-
         if not inst.guard_mode:
 
             name_map = {
@@ -842,11 +840,31 @@ class RuntimeActor:
         # PHASE 5 - SNAP FINAL (SIN DESLIZAMIENTOS)
         # ==========================================
         if inst.mantle_phase == 5:
+            old_gx = pack["gx"]
+            old_gy = pack["gy"]
+
+            oldtile = self.toolkit.runtime_world.grid[
+                old_gy
+            ][
+                old_gx
+            ]
+
+            if pack in oldtile.actors:
+                oldtile.actors.remove(pack)
             # Actualizamos la posición lógica del actor a la celda final
             inst.mantle_base_gx = int(inst.mantle_end_x)
             inst.mantle_base_gy = int(inst.mantle_end_y)
             pack["gx"] = inst.mantle_base_gx
             pack["gy"] = inst.mantle_base_gy
+
+            newtile = self.toolkit.runtime_world.grid[
+                pack["gy"]
+            ][
+                pack["gx"]
+            ]
+
+            if pack not in newtile.actors:
+                newtile.actors.append(pack)
             
             # Ponemos los offsets en 0 inmediatamente para evitar el deslizamiento de la Phase 6
             inst.offx = 0
@@ -869,6 +887,9 @@ class RuntimeActor:
 
             self.toolkit.runtime_camera_locked = False
             self.toolkit.runtime_camera_catchup = True
+
+            inst._claw_started = False
+            del inst._claw_started
 
             if "idle" in inst.animator.clips:
                 inst.animator.play("idle")
@@ -905,8 +926,20 @@ class RuntimeActor:
 
         if not getattr(t, "is_block", False):
             return False
+        
+        current_h = inst.ground_z
 
-        climb_h = t.block_top - inst.offz
+        climb_h = t.block_top - current_h
+
+        print(
+            "CURRENT H",
+            current_h,
+            "TARGET TOP",
+            t.block_top,
+            "CLIMB",
+            climb_h
+        )
+
 
         if climb_h <= 1.2:
             inst.mantle_low = True

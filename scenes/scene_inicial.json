@@ -2,17 +2,7 @@
   "scene": "scene_inicial",
   "start_map": "Map001",
   "script": [
-    {
-      "action": "audio_play",
-      "track": "bgm_town",
-      "music": "music/Patricia.mp3",
-      "volume": 0.1,
-      "loop": true
-    },
-    {
-      "action": "wait",
-      "time": 250
-    },
+    
     {
       "action": "all_play_idle"
     },
@@ -25,6 +15,13 @@
     {
       "action": "wait",
       "time": 250
+    },
+    {
+      "action": "audio_play",
+      "track": "bgm_town",
+      "music": "music/Patricia.mp3",
+      "volume": 0.1,
+      "loop": true
     },
     {
       "action": "end_event"
