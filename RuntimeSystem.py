@@ -10,10 +10,12 @@ from EventManager import (
     execute_runtime_tile_event,
     get_near_event_cell,
     get_near_interactive_actor,
+    run_world_event_command,
     runtime_position_blocked,
     start_world_event
 )
 
+from RuntimeMenu import RuntimeMenu
 from RuntimeWorld import RuntimeWorld
 from SceneManager import get_runtime_scene_manager
 
@@ -434,6 +436,20 @@ class RuntimeSystem:
         tkref.event_wait_input = False
         tkref.dialog_index = 0
 
+    def runtime_menu_selected(self, option):
+
+        tkref = self.toolkit
+
+        tkref.runtime_menu.visible = False
+        tkref.event_wait_input = False
+
+        event_cmd = option.get("event")
+
+        if not event_cmd:
+            return
+
+        tkref.pending_menu_event = event_cmd
+
     def game_key_down(self, event):
 
         tkref = self.toolkit
@@ -576,20 +592,17 @@ class RuntimeSystem:
             tkref.space_pressed = False
 
     def open_runtime_menu(
-        self,
-        items,
-        title="",
-        x=100,
-        y=100,
-        w=8
+    self,
+    items,
+    title="",
+    x=100,
+    y=100,
+    w=8
     ):
-        
-        print("OPEN_RUNTIME_MENU CALLED")
+
         tkref = self.toolkit
 
         menu = tkref.runtime_menu
-
-        print("OPEN MENU:", title, items)
 
         menu.visible = True
         menu.title = title
@@ -599,8 +612,9 @@ class RuntimeSystem:
 
         menu.x = x
         menu.y = y
-
         menu.w = w
+
+        menu.on_select = self.runtime_menu_selected
 
     def handle_runtime_menu_input(self, event):
 
@@ -761,6 +775,8 @@ class RuntimeSystem:
         tkref.show_ui = False
 
         tkref.game_over = False
+
+        tkref.runtime_menu = RuntimeMenu()
 
         tkref.runtime_world = None
         if hasattr(tkref, "visual_novel_scene"):

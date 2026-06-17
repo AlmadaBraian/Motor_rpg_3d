@@ -34,6 +34,14 @@ def update_world_event(self, dt):
         
         if self.event_wait_move:
             return
+        
+        if getattr(self, "pending_menu_event", None):
+
+            event = self.pending_menu_event
+            self.pending_menu_event = None
+
+            run_world_event_command(self, event)
+            return
 
         self.space_icon_blink += dt
 
@@ -87,6 +95,11 @@ def end_world_event(self):
         self.event_wait_timer = 0
         self.event_wait_move = None
         self.event_wait_vn_animation = False
+
+        vn_scene = self.visual_novel_scene
+
+        for text in vn_scene.texts.values():
+            text.visible = False
 
         if self.pending_combat_enemy:
             enemy = self.pending_combat_enemy
@@ -227,15 +240,9 @@ def run_world_event_command(self, cmd):
                         )
                     )
 
-                    if "animations" in cmd:
 
-                        animations = cmd.get(
-                            "animations",
-                            []
-                        )
-
-                        if target:
-                            target.animations.clear()
+                    if target:
+                        target.animations.clear()
 
                     self.visual_novel_scene.start_animation(
                         sprite_name,
@@ -282,6 +289,8 @@ def run_world_event_command(self, cmd):
                 y=y,
                 w=w
             )
+
+            self.event_wait_input = True
             return
 
         if action in ("vn_wait_animation", "wait_animation"):
@@ -754,8 +763,9 @@ def run_world_event_command(self, cmd):
             )
 
             if not scene_file:
-                print("NEXT SCENE WITHOUT TARGET")
                 return
+
+            end_world_event(self)
 
             manager = get_runtime_scene_manager(self)
             manager.change_world_scene(self, scene_file)

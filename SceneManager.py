@@ -204,6 +204,13 @@ class RuntimeSceneManager:
 
         if not script and not data:
             return False
+        
+        print("CHANGE SCENE:", scene_file)
+
+        scene_data, scene_path = self.load_scene_data(scene_file)
+
+        print("SCENE DATA:", scene_data is not None)
+        print("SCENE PATH:", scene_path)
 
         self.apply_runtime_scene_mode(owner, data)
 
@@ -247,6 +254,12 @@ class RuntimeSceneManager:
         return True
 
     def change_world_scene(self, owner, scene_file):
+        print("CHANGE SCENE:", scene_file)
+
+        scene_data, scene_path = self.load_scene_data(scene_file)
+
+        print("SCENE DATA:", scene_data is not None)
+        print("SCENE PATH:", scene_path)
         return self.start_world_event(owner, scene_file)
 
     # =====================================================

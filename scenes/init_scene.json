@@ -1,0 +1,19 @@
+{
+    "scene": "init_scene",
+    "script": [
+        {
+            "action": "fade_out",
+            "duration": 1.0
+        },
+        {
+            "action": "change_scene",
+            "scene": "scenes/scene_inicial.json"
+        }
+    ],
+    "type": "visual_novel",
+    "visual_novel": {
+        "enabled": true,
+        "sprites": [],
+        "texts": []
+    }
+}

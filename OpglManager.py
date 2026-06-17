@@ -3169,8 +3169,14 @@ class GLViewport(OpenGLFrame):
                 color=(1,1,0,1)
             )
 
+        menu_items = []
+
+        for text in menu.items:
+            
+            menu_items.append(text["text"])
+
         self.draw_list_menu(
-            menu.items,
+            menu_items,
             menu.index,
             menu.x,
             menu.y,

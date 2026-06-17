@@ -162,6 +162,8 @@ class Toolkit:
 
         self.player_input_locked = False
 
+        self.pending_menu_event = None
+
         # =====================================
         # DRAG PAINT
         # =====================================
@@ -701,6 +703,8 @@ class Toolkit:
             "INITIAL SCENE:",
             scene_file
         )
+
+    
 
     def open_actor_creator_window (self):
         

@@ -1,0 +1,48 @@
+{
+    "scene": "main_menu",
+    "script": [
+        {
+            "action": "open_menu",
+            "title": "Main Menu",
+            "options": [
+                {
+                    "text": "New game",
+                    "event": {
+                        "action": "change_scene",
+                        "scene": "init_scene.json"
+                    }
+                },
+                {
+                    "text": "Save",
+                    "event": {
+                        "action": "change_scene",
+                        "scene": "save_menu.json"
+                    }
+                },
+                {
+                    "text": "Load",
+                    "event": {
+                        "action": "change_scene",
+                        "scene": "load_menu.json"
+                    }
+                },
+                {
+                    "text": "Options",
+                    "event": {
+                        "action": "change_scene",
+                        "scene": "options_menu.json"
+                    }
+                }
+            ],
+            "x": 100,
+            "y": 100,
+            "w": 15
+        }
+    ],
+    "type": "visual_novel",
+    "visual_novel": {
+        "enabled": true,
+        "sprites": [],
+        "texts": []
+    }
+}

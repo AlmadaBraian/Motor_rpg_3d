@@ -1,0 +1,19 @@
+{
+    "scene": "to_main_menu",
+    "script": [
+        {
+            "action": "fade_out",
+            "duration": 1.0
+        },
+        {
+            "action": "change_scene",
+            "scene": "scenes/main_menu.json"
+        }
+    ],
+    "type": "visual_novel",
+    "visual_novel": {
+        "enabled": true,
+        "sprites": [],
+        "texts": []
+    }
+}

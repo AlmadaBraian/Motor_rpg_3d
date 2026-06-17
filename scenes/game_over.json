@@ -17,9 +17,9 @@
     },
     "script": [
         {
-    "action": "fade_in",
-    "duration": 0.5
-    },
+            "action": "fade_in",
+            "duration": 0.5
+        },
         {
             "action": "vn_start_animation",
             "text": "game_over",
@@ -43,7 +43,7 @@
                 "float_up",
                 "ghost"
             ],
-            "wait":true
+            "wait": true
         },
         {
             "action": "wait",
@@ -52,10 +52,30 @@
         {
             "action": "open_menu",
             "title": "Game over",
-            "options": ["Retry", "Main title"],
+            "options": [
+                {
+                    "text": "Retry",
+                    "event": {
+                        "action": "change_scene",
+                        "scene": "init_scene.json"
+                    }
+                },
+                {
+                    "text": "Main title",
+                    "event": {
+                        "action": "change_scene",
+                        "scene": "to_main_menu.json"
+                    }
+                }
+            ],
             "x": 240,
-            "y": 580,
-            "w": 20
+            "y": 280,
+            "w": 15,
+            "wait_input": true
+        },
+        {
+            "action": "fade_out",
+            "duration": 3.5
         }
     ]
 }
