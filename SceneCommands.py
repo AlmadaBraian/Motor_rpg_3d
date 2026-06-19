@@ -79,8 +79,8 @@ SCENE_COMMANDS = {
     "vn_start_animation": {
         "sprite": "",
         "animation": "",
-        "x": 0,
-        "y": 0,
+        "final_x": 0,
+        "final_y": 0,
         "speed": 300,
         "duration": 1.0,
         "wait": False
@@ -89,8 +89,8 @@ SCENE_COMMANDS = {
     "vn_animation": {
         "sprite": "",
         "animation": "",
-        "x": 0,
-        "y": 0,
+        "final_x": 0,
+        "final_y": 0,
         "speed": 300,
         "duration": 1.0,
         "wait": False
@@ -99,8 +99,8 @@ SCENE_COMMANDS = {
     "start_animation": {
         "sprite": "",
         "animation": "",
-        "x": 0,
-        "y": 0,
+        "final_x": 0,
+        "final_y": 0,
         "speed": 300,
         "duration": 1.0,
         "wait": False
@@ -211,6 +211,12 @@ SCENE_COMMANDS = {
         "actor": "",
         "direction": "down",
         "tiles": 1
+    },
+
+    "move_actor_to":{
+    "actor":"",
+    "x":0,
+    "y":0
     },
 
     "play_animation": {

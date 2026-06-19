@@ -255,7 +255,7 @@
       "action": "vn_animation",
       "sprite": "linea-a-subte",
       "animation": "fade_out",
-      "duration": 0.5,
+      "duration": 1.5,
       "wait": true
     },
 

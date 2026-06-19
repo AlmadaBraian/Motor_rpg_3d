@@ -1,5 +1,5 @@
 {
-    "scene": "testScene",
+    "scene": "test",
     "visual_novel": {
         "enabled": true,
         "sprites": [
@@ -132,7 +132,7 @@
         {
             "action": "move_actor_to",
             "actor": "Carlos",
-            "x": 4,
+            "x": 5,
             "y": 9
         },
         {

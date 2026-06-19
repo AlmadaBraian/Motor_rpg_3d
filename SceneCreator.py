@@ -86,13 +86,26 @@ class SceneCreator(tk.Toplevel):
             textvariable=self.scene_type_var,
             values=[
                 "world",
-                "visual_novel"
+                "vn_features"
             ],
             state="readonly"
         ).grid(
             row=1,
             column=1,
             sticky="ew"
+        )
+
+        self.vn_standalone_var = tk.BooleanVar(value=False)
+
+        tk.Checkbutton(
+            top,
+            text="Visual Novel independiente",
+            variable=self.vn_standalone_var,
+            command=self.refresh_json
+        ).grid(
+            row=3,
+            column=1,
+            sticky="w"
         )
 
         # ======================
@@ -860,6 +873,14 @@ class SceneCreator(tk.Toplevel):
 
         self.load_scene(path)
 
+        self.after(
+            10,
+            lambda: (
+                self.lift(),
+                self.focus_force()
+            )
+        )
+
     def edit_selected_command(self, event=None):
         pass
 
@@ -888,6 +909,14 @@ class SceneCreator(tk.Toplevel):
         index = sel[0]
 
         cmd = self.scene_data["script"][index]
+
+        if cmd["action"] == "move_actor_to":
+
+            self.show_move_actor_to_editor(
+                cmd
+            )
+
+            return
 
         if cmd["action"] == "show_dialog":
 
@@ -978,6 +1007,7 @@ class SceneCreator(tk.Toplevel):
 
         self.refresh_json()
 
+    
     def show_vn_animation_editor(self, cmd):
 
         self.clear_property_editor()
@@ -1081,9 +1111,8 @@ class SceneCreator(tk.Toplevel):
 
         X_var = tk.StringVar(
             value=
-                cmd.get(
-                    "x"
-                )
+                cmd.get("final_x", cmd.get("x", 0))
+                
         )
 
         X_entry = tk.Entry(
@@ -1101,9 +1130,8 @@ class SceneCreator(tk.Toplevel):
 
         Y_var = tk.StringVar(
             value=
-                cmd.get(
-                    "y"
-                )
+                cmd.get("final_y", cmd.get("y", 0))
+                
         )
 
         Y_entry = tk.Entry(
@@ -1122,7 +1150,7 @@ class SceneCreator(tk.Toplevel):
         speed_var = tk.StringVar(
             value=
                 cmd.get(
-                    "speed"
+                    "speed", 0
                 )
         )
 
@@ -1143,7 +1171,7 @@ class SceneCreator(tk.Toplevel):
         duration_var = tk.StringVar(
             value=
                 cmd.get(
-                    "duration"
+                    "duration", 0
                 )
         )
 
@@ -1166,15 +1194,73 @@ class SceneCreator(tk.Toplevel):
             variable=wait_var
         ).pack(anchor="w")
 
+        wait_input_var = tk.BooleanVar(
+            value=cmd.get("wait", False)
+        )
+
+        tk.Checkbutton(
+            self.property_frame,
+            text="Esperar Input",
+            variable=wait_input_var
+        ).pack(anchor="w")
+
+        
+
+        def update_visible_fields(*args):
+
+            is_sprite = (
+                anim_type_var.get() == "sprite"
+            )
+
+            is_text_shake = (
+                anim_type_var.get() == "text"
+                and animation_var.get() == "shake"
+            )
+
+            # ====================
+            # X / Y
+            # ====================
+
+            if is_sprite:
+
+                X_label.pack()
+                X_entry.pack(fill="x")
+
+                Y_label.pack()
+                Y_entry.pack(fill="x")
+
+            else:
+
+                X_label.pack_forget()
+                X_entry.pack_forget()
+
+                Y_label.pack_forget()
+                Y_entry.pack_forget()
+
+            # ====================
+            # SPEED / DURATION
+            # ====================
+
+            if is_sprite or is_text_shake:
+
+                speed_label.pack()
+                speed_entry.pack(fill="x")
+
+                duration_label.pack()
+                duration_entry.pack(fill="x")
+
+            else:
+
+                speed_label.pack_forget()
+                speed_entry.pack_forget()
+
+                duration_label.pack_forget()
+                duration_entry.pack_forget()
+
+
         def refresh_target_combo(*args):
 
-            anim_type = anim_type_var.get()
-
-            if anim_type == "sprite":
-
-                target_label.config(
-                    text="Sprite"
-                )
+            if anim_type_var.get() == "sprite":
 
                 values = [
                     s.get("name", "")
@@ -1185,23 +1271,12 @@ class SceneCreator(tk.Toplevel):
                     values=values
                 )
 
-                cmd.pop(
-                    "text",
-                    None
-                )
-
-                target_var.set(
-                    cmd.get(
-                        "sprite",
-                        ""
+                if target_var.get() not in values:
+                    target_var.set(
+                        values[0] if values else ""
                     )
-                )
 
             else:
-
-                target_label.config(
-                    text="Texto"
-                )
 
                 values = [
                     t.get("name", "")
@@ -1212,17 +1287,10 @@ class SceneCreator(tk.Toplevel):
                     values=values
                 )
 
-                cmd.pop(
-                    "sprite",
-                    None
-                )
-
-                target_var.set(
-                    cmd.get(
-                        "text",
-                        ""
+                if target_var.get() not in values:
+                    target_var.set(
+                        values[0] if values else ""
                     )
-                )
 
             refresh_animation_combo()
 
@@ -1230,19 +1298,26 @@ class SceneCreator(tk.Toplevel):
 
             if anim_type_var.get() == "sprite":
 
-                animation_combo.configure(
-                    values=list(
-                        VN_SPRITE_ANIMATIONS.keys()
-                    )
+                values = list(
+                    VN_SPRITE_ANIMATIONS.keys()
                 )
 
             else:
 
-                animation_combo.configure(
-                    values=list(
-                        VN_TEXT_ANIMATIONS.keys()
-                    )
+                values = list(
+                    VN_TEXT_ANIMATIONS.keys()
                 )
+
+            animation_combo.configure(
+                values=values
+            )
+
+            if animation_var.get() not in values:
+
+                if values:
+                    animation_var.set(values[0])
+                else:
+                    animation_var.set("")
 
         refresh_target_combo()
 
@@ -1252,31 +1327,37 @@ class SceneCreator(tk.Toplevel):
 
                 cmd["sprite"] = target_var.get()
 
-                cmd.pop(
-                    "text",
-                    None
-                )
+                cmd.pop("text", None)
+
+                cmd["final_x"] = X_var.get()
+                cmd["final_y"] = Y_var.get()
+
+                cmd["speed"] = speed_var.get()
+                cmd["duration"] = duration_var.get()
 
             else:
 
                 cmd["text"] = target_var.get()
 
-                cmd.pop(
-                    "sprite",
-                    None
-                )
+                cmd.pop("sprite", None)
+
+                # Limpiar propiedades exclusivas de sprite
+                cmd.pop("final_x", None)
+                cmd.pop("final_y", None)
+
+                if animation_var.get() == "shake":
+
+                    cmd["speed"] = speed_var.get()
+                    cmd["duration"] = duration_var.get()
+
+                else:
+
+                    cmd.pop("speed", None)
+                    cmd.pop("duration", None)
 
             cmd["animation"] = animation_var.get()
-
             cmd["wait"] = wait_var.get()
-
-            cmd["x"] = X_var.get()
-
-            cmd["y"] = Y_var.get()
-
-            cmd["speed"] = speed_var.get()
-
-            cmd["duration"] = duration_var.get()
+            cmd["wait_input"] = wait_var.get()
 
             self.refresh_json()
 
@@ -1291,6 +1372,11 @@ class SceneCreator(tk.Toplevel):
         )
 
         wait_var.trace_add(
+            "write",
+            update
+        )
+
+        wait_input_var.trace_add(
             "write",
             update
         )
@@ -1319,6 +1405,28 @@ class SceneCreator(tk.Toplevel):
             "write",
             refresh_target_combo
         )
+
+        anim_type_var.trace_add(
+            "write",
+            update_visible_fields
+        )
+
+        anim_type_var.trace_add(
+            "write",
+            update
+        )
+
+        animation_var.trace_add(
+            "write",
+            update_visible_fields
+        )
+
+        animation_var.trace_add(
+            "write",
+            update
+        )
+
+        update_visible_fields()
 
        
 
@@ -1491,6 +1599,95 @@ class SceneCreator(tk.Toplevel):
         )
 
         update()
+
+    def show_move_actor_to_editor(
+    self,
+    cmd
+    ):
+        self.clear_property_editor()
+
+        actor_var = tk.StringVar(
+            value=cmd.get(
+                "actor",
+                ""
+            )
+        )
+
+        actor_combo = ttk.Combobox(
+            self.property_frame,
+            textvariable=actor_var,
+            values=list(
+                self.toolkit.actors.keys()
+            ),
+            state="readonly"
+        )
+
+        actor_combo.pack(fill="x")
+
+        x_var = tk.IntVar(
+            value=cmd.get("x", 0)
+        )
+
+        y_var = tk.IntVar(
+            value=cmd.get("y", 0)
+        )
+
+        tk.Entry(
+            self.property_frame,
+            textvariable=x_var
+        ).pack(fill="x")
+
+        tk.Entry(
+            self.property_frame,
+            textvariable=y_var
+        ).pack(fill="x")
+
+        def pick_tile():
+
+            self.withdraw()
+
+            def on_pick(gx, gy):
+
+                x_var.set(gx)
+                y_var.set(gy)
+
+                self.deiconify()
+                self.lift()
+
+            self.toolkit.begin_pick_tile(
+                on_pick
+            )
+        
+        tk.Button(
+            self.property_frame,
+            text="Pick Destination Tile",
+            command=pick_tile
+        ).pack(fill="x")
+
+        def update(*args):
+
+            cmd["actor"] = actor_var.get()
+
+            cmd["x"] = x_var.get()
+            cmd["y"] = y_var.get()
+
+            self.refresh_json()
+
+        actor_var.trace_add(
+            "write",
+            update
+        )
+
+        x_var.trace_add(
+            "write",
+            update
+        )
+
+        y_var.trace_add(
+            "write",
+            update
+        )
+        
 
     def show_dialog_editor(
     self,
@@ -1804,15 +2001,26 @@ class SceneCreator(tk.Toplevel):
 
         if (
             self.scene_type_var.get()
-            == "visual_novel"
+            == "vn_features"
         ):
             
             self.map_label.grid_remove()
             self.map_combo.grid_remove()
 
-            self.scene_data["type"] = "visual_novel"
-
             self.sync_vn_sprites_texts()
+
+            if self.vn_standalone_var.get():
+
+                self.scene_data["type"] = (
+                    "visual_novel"
+                )
+
+            else:
+
+                self.scene_data.pop(
+                    "type",
+                    None
+                )
 
             self.scene_data.pop(
                 "start_map",
@@ -1912,6 +2120,24 @@ class SceneCreator(tk.Toplevel):
 
         self.destroy()
 
+    def load_vn_sprites_texts(self):
+
+        vn = self.scene_data.get(
+            "visual_novel",
+            {}
+        )
+
+        self.vn_sprites = copy.deepcopy(
+            vn.get("sprites", [])
+        )
+
+        self.vn_texts = copy.deepcopy(
+            vn.get("texts", [])
+        )
+
+        self.refresh_vn_sprite_list()
+        self.refresh_vn_text_list()
+
     def load_scene(self, path):
 
         self.loading_scene = True
@@ -1931,18 +2157,16 @@ class SceneCreator(tk.Toplevel):
             )
         )
 
-        if self.scene_data.get("type") == "visual_novel":
+        if (
+            self.scene_data.get("type") == "visual_novel"
+            or "visual_novel" in self.scene_data
+        ):
 
             self.scene_type_var.set(
-                "visual_novel"
+                "vn_features"
             )
 
-            vn = self.scene_data.get(
-                "visual_novel",
-                {}
-            )
-
-            self.sync_vn_sprites_texts()
+            self.load_vn_sprites_texts()
 
         else:
 
@@ -1955,6 +2179,12 @@ class SceneCreator(tk.Toplevel):
                 "start_map",
                 "Map001"
             )
+        )
+
+        self.vn_standalone_var.set(
+            self.scene_data.get(
+                "type"
+            ) == "visual_novel"
         )
 
         self.loading_scene = False

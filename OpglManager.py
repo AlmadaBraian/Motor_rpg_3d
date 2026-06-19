@@ -984,8 +984,19 @@ class GLViewport(OpenGLFrame):
 
         if not tool.runtime_world.main_actor:
             return
+        
+        if tool.actor_to_follow:
 
-        pack = tool.runtime_world.main_actor
+            pack = tool.actor_to_follow
+
+        else:
+
+            pack = tool.runtime_world.main_actor
+
+
+            if not pack:
+                return
+            
         inst = pack["inst"]
 
         px = pack["gx"] + inst.offx + 0.5
@@ -3152,6 +3163,10 @@ class GLViewport(OpenGLFrame):
         if self is getattr(tool, "viewport", None):
             return
 
+        if self.toolkit_ref.show_runtime_options_menu:
+            self.draw_options_menu()
+            return
+
         menu = self.toolkit_ref.runtime_menu
 
         if not menu.visible:
@@ -3182,6 +3197,68 @@ class GLViewport(OpenGLFrame):
             menu.y,
             w=menu.w
         )
+
+    def draw_options_menu(self):
+
+        menu = self.toolkit_ref.runtime_menu
+
+        y = menu.y
+
+        for i, item in enumerate(menu.items):
+
+            selected = i == menu.index
+
+            color = (
+                (1, 1, 0, 1)
+                if selected
+                else
+                (1, 1, 1, 1)
+            )
+
+            self.draw_ui_text(
+                item["text"],
+                menu.x,
+                y,
+                scale = 1,
+                color=color
+            )
+
+            if item.get("type") == "slider":
+
+                self.draw_slider(
+                    menu.x + 200,
+                    y + 10,
+                    150,
+                    12,
+                    item["value"],
+                    item.get("max", 100)
+                )
+
+                self.draw_ui_text(
+                    f'{item["value"]}%',
+                    menu.x + 370,
+                    y + 5,
+                    scale=0.8
+                )
+
+            y += 30
+
+
+    def draw_slider(
+        self,
+        x,
+        y,
+        w,
+        h,
+        value,
+        max_value=100,
+        color=(0.2, 0.8, 0.2, 1)
+    ):
+        self.begin_ui()
+
+        self.draw_progress_bar(x,y,w,h,value,max_value,color)
+
+        self.end_ui()
 
     def draw_hover_hud(self):
 
@@ -3764,20 +3841,21 @@ class GLViewport(OpenGLFrame):
 
         glEnable(GL_TEXTURE_2D)
 
-    def draw_hp_bar(
-        self,
-        x,
-        y,
-        w,
-        h,
-        hp,
-        max_hp
+    def draw_progress_bar(
+    self,
+    x,
+    y,
+    w,
+    h,
+    value,
+    max_value,
+    color
     ):
         pct = max(
             0,
             min(
                 1,
-                hp / max_hp
+                value / max_value
             )
         )
 
@@ -3796,8 +3874,20 @@ class GLViewport(OpenGLFrame):
             y + 2,
             (w - 4) * pct,
             h - 4,
-            (0.9,0.2,0.2,1)
+            color
         )
+
+    def draw_hp_bar(
+        self,
+        x,
+        y,
+        w,
+        h,
+        hp,
+        max_hp
+    ):
+        self.draw_progress_bar(x,y,w,h,hp,max_hp, (0.9,0.2,0.2,1))
+
 
     def draw_special_bar(
         self,
@@ -3808,29 +3898,9 @@ class GLViewport(OpenGLFrame):
         charge,
         max_charge
     ):
-        pct = max(
-            0,
-            min(
-                1,
-                charge / max_charge
-            )
-        )
-
-        self.draw_ui_rect(
-            x,
-            y,
-            w,
-            h,
-            (0.1,0.1,0.1,0.8)
-        )
-
-        self.draw_ui_rect(
-            x + 2,
-            y + 2,
-            (w - 4) * pct,
-            h - 4,
-            (0.2,0.5,1.0,1)
-        )
+        
+        self.draw_progress_bar(x,y,w,h,charge,max_charge, (0.2,0.5,1.0,1))
+        
 
     def draw_ui_sprite(self, sprite, inst, x, y, w, h):
 

@@ -141,6 +141,7 @@ class VisualNovelSceneState:
             return None
 
         name = data.get("name", data.get("id", ""))
+        fondo = data.get("fondo", data.get("id", False))
         image = data.get("image", data.get("path", data.get("texture", "")))
 
         if not name or not image:
@@ -148,8 +149,14 @@ class VisualNovelSceneState:
             return None
 
         image_w, image_h = self.read_image_size(image)
-        width = float(data.get("w", data.get("width", image_w or SCREEN_W)))
-        height = float(data.get("h", data.get("height", image_h or SCREEN_H)))
+
+        if not fondo:
+            width = float(data.get("w", data.get("width", image_w or SCREEN_W)))
+            height = float(data.get("h", data.get("height", image_h or SCREEN_H)))
+
+        else:
+            width = SCREEN_W
+            height = SCREEN_H
 
         sprite = VisualNovelSprite(
             name=name,

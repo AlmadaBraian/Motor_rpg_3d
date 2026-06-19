@@ -32,6 +32,9 @@ class AudioManager:
         self._pygame = None
         self.tracks = {}
         self.master_volume = 1.0
+        self.sound_cache = {}
+        self.current_music_track = None
+        self.current_music_volume = 1.0
         self.category_volumes = {
             "music": 1.0,
             "dialog": 1.0,
@@ -137,18 +140,31 @@ class AudioManager:
         return outpath
 
     def _load_sound(self, path):
+
+        if path in self.sound_cache:
+            return self.sound_cache[path]
+
         try:
-            return self._pygame.mixer.Sound(path), path
+            result = (
+                self._pygame.mixer.Sound(path),
+                path
+            )
+
         except Exception as exc:
+
             decoded = self._decode_to_pcm_wav(path)
 
             if not decoded:
                 raise exc
 
-            try:
-                return self._pygame.mixer.Sound(decoded), decoded
-            except Exception:
-                raise exc
+            result = (
+                self._pygame.mixer.Sound(decoded),
+                decoded
+            )
+
+        self.sound_cache[path] = result
+
+        return result
 
     def _get_category_volume(self, category):
         return self.category_volumes.get(category, 1.0)
@@ -186,6 +202,40 @@ class AudioManager:
         if not os.path.exists(path):
             print("AUDIO FILE NOT FOUND:", path)
             return None
+        
+        if category == "music":
+
+            try:
+
+                mixer_music = self._pygame.mixer.music
+
+                mixer_music.load(path)
+
+                mixer_music.set_volume(
+                    volume *
+                    self.master_volume *
+                    self._get_category_volume("music")
+                )
+
+                mixer_music.play(
+                    -1 if loop else 0,
+                    fade_ms=int(fade_ms)
+                )
+
+                self.current_music_track = track_id
+                self.current_music_volume = volume
+
+                return True
+
+            except Exception as exc:
+
+                print(
+                    "MUSIC PLAY ERROR:",
+                    path,
+                    exc
+                )
+
+                return None
 
         if replace and track_id in self.tracks:
             self.stop(track_id)
@@ -236,6 +286,9 @@ class AudioManager:
             return
 
         if track_id:
+            if track_id == self.current_music_track:
+                self._pygame.mixer.music.pause()
+                return
             track = self.tracks.get(track_id)
             if track and track.channel:
                 track.channel.pause()
@@ -248,6 +301,9 @@ class AudioManager:
             return
 
         if track_id:
+            if track_id == self.current_music_track:
+                self._pygame.mixer.music.unpause()
+                return
             track = self.tracks.get(track_id)
             if track and track.channel:
                 track.channel.unpause()
@@ -260,7 +316,22 @@ class AudioManager:
             return
 
         if track_id:
+
+            if track_id == self.current_music_track:
+
+                if fade_ms > 0:
+                    self._pygame.mixer.music.fadeout(
+                        int(fade_ms)
+                    )
+                else:
+                    self._pygame.mixer.music.stop()
+
+                self.current_music_track = None
+
+                return
+
             track = self.tracks.get(track_id)
+            
             if not track:
                 return
 
@@ -280,9 +351,18 @@ class AudioManager:
             return
 
         if fade_ms > 0:
+
             self._pygame.mixer.fadeout(int(fade_ms))
+
+            self._pygame.mixer.music.fadeout(
+                int(fade_ms)
+            )
+
         else:
+
             self._pygame.mixer.stop()
+
+            self._pygame.mixer.music.stop()
 
         self.tracks.clear()
 
@@ -295,6 +375,21 @@ class AudioManager:
         if track_id in self.category_volumes:
             self.category_volumes[track_id] = max(0.0, min(1.0, float(volume)))
             self.refresh_volumes()
+            return
+        
+        if track_id == self.current_music_track:
+
+            self.current_music_volume = max(
+                0.0,
+                min(1.0, float(volume))
+            )
+
+            self._pygame.mixer.music.set_volume(
+                self.current_music_volume *
+                self.master_volume *
+                self._get_category_volume("music")
+            )
+
             return
 
         track = self.tracks.get(track_id)
@@ -332,6 +427,14 @@ class AudioManager:
     def refresh_volumes(self):
         for track in self.tracks.values():
             self._apply_track_volume(track)
+
+        if self.current_music_track:
+
+            self._pygame.mixer.music.set_volume(
+                self.current_music_volume *
+                self.master_volume *
+                self._get_category_volume("music")
+            )
 
     def update(self, dt):
         if not self.ready:

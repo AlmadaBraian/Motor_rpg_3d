@@ -13,10 +13,13 @@
                 "scale": 4,
                 "z": 10
             }
-        ],
-        "sprites": []
+        ]
     },
     "script": [
+        {
+            "action": "fade_in",
+            "duration": 0.5
+        },
         {
             "action": "vn_start_animation",
             "text": "textoNuevo",
@@ -28,5 +31,6 @@
             "action": "wait",
             "time": 800
         }
+       
     ]
 }

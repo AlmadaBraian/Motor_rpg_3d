@@ -27,12 +27,21 @@
   },
   "script": [
     {
-    "action": "fade_in",
-    "duration": 1.5
+      "action": "fade_in",
+      "duration": 1.5
     },
-    {"action": "lock_player"},
     {
-    "action": "deploy_party"
+      "action": "audio_fade_volume",
+      "track": "bgm",
+      "volume": 0.0,
+      "duration": 1.0,
+      "stop": true
+    },
+    {
+      "action": "lock_player"
+    },
+    {
+      "action": "deploy_party"
     },
     {
       "action": "wait",
@@ -69,27 +78,25 @@
       "wait": true
     },
     {
-        "action": "camera_move",
-        "x": 10,
-        "z": 15,
-        "duration": 2.0
+      "action": "camera_move",
+      "x": 10,
+      "z": 15,
+      "duration": 2.0
     },
-    
     {
       "action": "camera_look_actor",
-      "actor": "A",
+      "actor": "Anibal",
       "yaw": 90,
       "pitch": 30,
       "distance": 5,
       "duration": 1.5
     },
-   
     {
       "action": "play_animation",
-      "actor_name": "A",
+      "actor_name": "Anibal",
       "animation_clip": "idle"
-      },
-      {
+    },
+    {
       "action": "vn_start_animation",
       "sprite": "Marisa",
       "animation": "entrar_derecha",
@@ -116,20 +123,24 @@
       "speed": 320,
       "wait": true
     },
-
     {
-    "action": "camera_follow_player"
-  },
-    {
-  "action": "withdraw_party"
+      "action": "camera_follow_player"
     },
-    {"action": "unlock_player"},
+    {
+      "action": "withdraw_party"
+    },
+    {
+      "action": "unlock_player"
+    },
     {
       "action": "wait",
       "time": 2500
+    },
+    {
+      "action": "restore_map_music"
+    },
+    {
+      "action": "end_event"
     }
-    ,
-    {"action": "restore_map_music"},
-    {"action": "end_event"}
   ]
 }

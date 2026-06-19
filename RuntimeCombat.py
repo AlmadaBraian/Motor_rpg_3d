@@ -1078,7 +1078,7 @@ class RuntimeCombat:
         dx = tx - ux
         dy = ty - uy
 
-        started = self.runtime_actor.try_start_mantle(
+        started = o.runtime_actor.try_start_mantle(
             user_pack,
             tx - user_pack["gx"],
             ty - user_pack["gy"]
@@ -4093,7 +4093,7 @@ class RuntimeCombat:
         # geometría
         cur_h = self.combat_tile_height(gx, gy)
 
-        if o.runtime_collides(
+        if o.runtime_actor.runtime_collides(
             px,
             py,
             cur_h,
@@ -5190,8 +5190,6 @@ class RuntimeCombat:
         return False
 
     def update_combat_actor_move(self, dt):
-        
-        from RuntimeActor import RuntimeActor
 
         o = self.owner
 
@@ -5203,10 +5201,6 @@ class RuntimeCombat:
 
         pack = o.combat_moving_unit
 
-        if not hasattr(self, "runtime_actor"):
-
-                self.runtime_actor = RuntimeActor(o)
-
         if not pack:
             o.combat_actor_moving = False
             return
@@ -5216,7 +5210,7 @@ class RuntimeCombat:
 
         if getattr(inst, "is_mantling", False):
             if pack["inst"].is_mantling:
-                self.runtime_actor.update_actor_mantle(pack, dt)
+                o.runtime_actor.update_actor_mantle(pack, dt)
             return
         
         # =====================================
@@ -5402,7 +5396,7 @@ class RuntimeCombat:
             self.actor_can_mantle(pack)
         ):
 
-            started = self.runtime_actor.try_start_mantle(
+            started = o.runtime_actor.try_start_mantle(
                 pack,
                 tx - pack["gx"],
                 ty - pack["gy"]
@@ -5506,6 +5500,7 @@ class RuntimeCombat:
         # =====================================
 
         if dist < 0.05:
+            from EventManager import check_runtime_step_events
 
             inst.battle_moved = True
 
@@ -5539,6 +5534,8 @@ class RuntimeCombat:
                 newtile.actors.append(pack)
 
             o.combat_move_queue.pop(0)
+
+            check_runtime_step_events(o)
 
             return
 

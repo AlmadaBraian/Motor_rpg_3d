@@ -10,119 +10,38 @@ class RuntimeActor:
     def __init__(self, toolkit):
         self.toolkit = toolkit
 
-    def update_runtime_mantle(self, dt):
-        m = self.toolkit.runtime_mantle
-        pack = m["pack"]
-        inst = pack["inst"]
-
-        wx = pack["gx"] + 0.5 + inst.offx
-        wy = inst.offz
-        wz = pack["gy"] + 0.5 + inst.offy
-
-        m["timer"] += dt
-
-        # ==========================================
-        # FASE 1 — alinearse al borde
-        # ==========================================
-        if m["phase"] == "align":
-
-            vx = m["align_x"] - wx
-            vz = m["align_y"] - wz
-            dist = math.hypot(vx, vz)
-
-            if dist > 0.02:
-                speed = 4.0 * dt
-                wx += (vx/dist) * speed
-                wz += (vz/dist) * speed
-            else:
-                m["phase"] = "jump"
-                m["timer"] = 0.0
-
-        # ==========================================
-        # FASE 2 — salto vertical corto
-        # ==========================================
-        elif m["phase"] == "jump":
-
-            inst.offz += 2.0 * dt
-
-            if m["timer"] >= 0.22:
-                m["phase"] = "claw"
-                m["timer"] = 0.0
-
-                if inst.animator and "claw" in inst.animator.clips:
-                    inst.animator.play("claw")
-
-        # ==========================================
-        # FASE 3 — arrastre arriba del bloque
-        # ==========================================
-        elif m["phase"] == "claw":
-
-            vx = m["center_x"] - wx
-            vz = m["center_y"] - wz
-            dist = math.hypot(vx, vz)
-
-            if dist > 0.03:
-                speed = 2.2 * dt
-                wx += (vx/dist) * speed
-                wz += (vz/dist) * speed
-
-            # subir verticalmente hacia top_z
-            if inst.offz < m["top_z"]:
-                inst.offz += 2.5 * dt
-
-            if dist <= 0.03 and inst.offz >= m["top_z"] - 0.05:
-                m["phase"] = "land"
-                m["timer"] = 0.0
-
-        # ==========================================
-        # FASE 4 — aterrizaje
-        # ==========================================
-        elif m["phase"] == "land":
-
-            inst.offz = m["top_z"]
-
-            gx = int(wx)
-            gy = int(wz)
-
-            pack["gx"] = gx
-            pack["gy"] = gy
-
-            inst.offx = wx - (gx + 0.5)
-            inst.offy = wz - (gy + 0.5)
-
-            self.toolkit.runtime_mantle = None
-            self.toolkit.world_event_locked = False
-
-            if hasattr(self, "game_view") and self.toolkit.runtime_saved_yaw_game is not None:
-                self.toolkit.game_view.camera.yaw = self.toolkit.runtime_saved_yaw_game
-
-            self.toolkit.viewport.camera.yaw = self.toolkit.runtime_saved_yaw_view
-
-            return
-
-        # actualizar coords runtime mientras se mueve
-        gx = int(wx)
-        gy = int(wz)
-
-        pack["gx"] = gx
-        pack["gy"] = gy
-
-        inst.offx = wx - (gx + 0.5)
-        inst.offy = wz - (gy + 0.5)
-
 
     def update_runtime_actor(self, dt):
+
+        if hasattr(self.toolkit, "audio_manager"):
+            self.toolkit.audio_manager.update(dt)
 
         if self.toolkit.runtime_event_cooldown > 0:
             self.toolkit.runtime_event_cooldown -= dt
 
-        if not hasattr(self, "play_mode"):
+        if hasattr(self.toolkit, "visual_novel_scene"):
+            self.toolkit.visual_novel_scene.update(dt)
+
+        if self.toolkit.world_event_running and (
+            getattr(self.toolkit, "runtime_scene_mode", "world") == "visual_novel"
+            or self.toolkit.runtime_world is None
+        ):
+            update_world_event(self.toolkit, dt)
+
+        if self.toolkit.dialog_visible:
+            self.toolkit.update_runtime_dialog_text(dt)
+
+        if self.toolkit.runtime_climb_action:
+            self.toolkit.update_runtime_climb(dt)
             return
 
-        if not self.toolkitplay_mode:
+        if not hasattr(self.toolkit, "play_mode"):
             return
 
-        if not hasattr(self, "runtime_world"):
+        if not self.toolkit.play_mode:
+            return
+
+        if not hasattr(self.toolkit, "runtime_world"):
             return
 
         if self.toolkit.runtime_world is None:
@@ -132,7 +51,7 @@ class RuntimeActor:
             return
         
         if self.toolkit.world_event_running:
-            update_world_event(self,dt)
+            update_world_event(self.toolkit,dt)
 
         if self.toolkit.battle_input_cooldown > 0:
             self.toolkit.battle_input_cooldown -= dt
@@ -143,14 +62,14 @@ class RuntimeActor:
         if pack["inst"].is_mantling:
             self.update_actor_mantle(pack, dt)
 
-            if hasattr(self, "game_view"):
+            if hasattr(self.toolkit, "game_view"):
                 self.toolkit.game_view.follow_runtime_camera()
 
             self.toolkit.viewport.follow_runtime_camera()
             return
         
         if getattr(inst, "is_falling", False):
-            self.update_actor_fall(pack, dt)
+            self.toolkit.update_actor_fall(pack, dt)
             return
 
         move_speed = 1.5 * dt
@@ -163,7 +82,7 @@ class RuntimeActor:
             self.toolkit.runtime_cam_orbit -= rot_speed
 
 
-            if hasattr(self, "game_view"):
+            if hasattr(self.toolkit, "game_view"):
                 self.toolkit.runtime_cam_orbit -= rot_speed
 
             self.toolkit.viewport.camera.yaw -= rot_speed
@@ -171,16 +90,25 @@ class RuntimeActor:
         if inst.rot_r:
             self.toolkit.runtime_cam_orbit += rot_speed
 
-            if not getattr(self, "runtime_camera_locked", False):
-                if hasattr(self, "game_view"):
+            if hasattr(self.toolkit, "game_view"):
+                self.toolkit.runtime_cam_orbit += rot_speed
+
+            self.toolkit.viewport.camera.yaw += rot_speed
+
+        if inst.rot_l or inst.rot_r:
+
+            if not getattr(self.toolkit, "runtime_camera_locked", False):
+                if hasattr(self.toolkit, "game_view"):
                     self.toolkit.game_view.follow_runtime_camera()
 
                 self.toolkit.viewport.follow_runtime_camera()
 
+            #self.toolkit.update_battle_unit_facings()
+
         # =========================================
         # CAMARA ACTIVA REAL
         # =========================================
-        if self.toolkitplay_mode and hasattr(self, "game_view"):
+        if self.toolkit.play_mode and hasattr(self.toolkit, "game_view"):
             active_cam = self.toolkit.game_view.camera
         else:
             active_cam = self.toolkit.viewport.camera
@@ -217,15 +145,12 @@ class RuntimeActor:
         # =========================================
         moved = self.try_move_runtime_actor(pack, dx, dy)
 
-        if moved:
-            check_runtime_step_events(self)
-
         # =========================================
         # FOLLOW CAMERA DESPUES DE MOVER
         # =========================================
         if not self.toolkit.battle_mode:
 
-            if hasattr(self, "game_view"):
+            if hasattr(self.toolkit, "game_view"):
                 self.toolkit.game_view.follow_runtime_camera()
 
             self.toolkit.viewport.follow_runtime_camera()
@@ -249,7 +174,7 @@ class RuntimeActor:
             if self.toolkit.runtime_message_timer <= 0:
                 self.toolkit.runtime_message = ""
 
-        self.update_runtime_actor_vertical(pack, dt)
+        self.toolkit.update_runtime_actor_vertical(pack, dt)
 
         if self.toolkit.world_event_locked:
             return
@@ -302,7 +227,7 @@ class RuntimeActor:
         
 
     def update_actor_idle_view_by_camera(self, inst, moving=False):
-        if self.toolkit.play_mode and hasattr(self, "game_view"):
+        if self.toolkit.play_mode and hasattr(self.toolkit, "game_view"):
             cam = self.toolkit.game_view.camera
         else:
             cam = self.toolkit.viewport.camera
@@ -459,7 +384,7 @@ class RuntimeActor:
                 inst.animator.play("walk_espalda")
 
     def update_actor_idle_hybrid(self, inst, dt):
-        cam = self.toolkit.game_view.camera if self.toolkit.play_mode and hasattr(self, "game_view") else self.toolkit.viewport.camera
+        cam = self.toolkit.game_view.camera if self.toolkit.play_mode and hasattr(self.toolkit, "game_view") else self.toolkit.viewport.camera
 
         current_yaw = cam.yaw % 360
 
@@ -641,6 +566,18 @@ class RuntimeActor:
         new_world_x = world_x + dx
         new_world_y = world_y + dy
 
+        ignore_tile = getattr(
+            self.toolkit,
+            "runtime_teleport_ignore_tile",
+            None
+        )
+
+        if ignore_tile:
+
+            if (old_gx, old_gy) != ignore_tile:
+
+                self.toolkit.runtime_teleport_ignore_tile = None
+
         # ---------------------------------------------
         # chequeo de colision geometrica REAL
         # ---------------------------------------------
@@ -666,6 +603,8 @@ class RuntimeActor:
         nx = new_world_x - (gx + 0.5)
         ny = new_world_y - (gy + 0.5)
 
+        stepped_tile = None
+
         # ---------------------------------------------
         # si cambió de tile mover pack de celda runtime
         # ---------------------------------------------
@@ -680,16 +619,28 @@ class RuntimeActor:
             if pack not in new_tile.actors:
                 new_tile.actors.append(pack)
 
+            stepped_tile = new_tile
+
         # ---------------------------------------------
         # guardar nueva posicion
         # ---------------------------------------------
         pack["gx"] = gx
         pack["gy"] = gy
 
+        if stepped_tile is not None:
+            self.toolkit.play_runtime_floor_step(stepped_tile, pack)
+
+        if not self.toolkit.battle_mode:
+
+            check_runtime_step_events(self.toolkit)
+
         inst.offx = nx
         inst.offy = ny
 
-        self.check_runtime_fall(pack)
+        inst.last_move_dx = dx
+        inst.last_move_dy = dy
+
+        self.toolkit.check_runtime_fall(pack)
 
     def check_runtime_fall(self, pack):
         inst = pack["inst"]
@@ -940,10 +891,14 @@ class RuntimeActor:
             climb_h
         )
 
+        if climb_h >= 3:
+            return False
 
         if climb_h <= 1.2:
             inst.mantle_low = True
+        
         else:
+        
             inst.mantle_low = False
 
         inst.is_mantling = True
@@ -1024,21 +979,31 @@ class RuntimeActor:
             inst.vspeed = 0
             inst.on_ground = True
 
-    def runtime_can_climb_column(self, gx, gy):
-        if gx < 0 or gy < 0 or gx >= GRID_W or gy >= GRID_H:
-            return None
+    
+    def move_actor_to_tile(
+    self,
+    pack,
+    gx,
+    gy
+    ):
 
-        t = self.toolkit.runtime_world.grid[gy][gx]
+        old_gx = pack["gx"]
+        old_gy = pack["gy"]
 
-        if not getattr(t, "is_column", False):
-            return None
+        old_tile = self.toolkit.runtime_world.grid[old_gy][old_gx]
 
-        h = max(t.wall_n_height, t.wall_s_height, t.wall_e_height, t.wall_w_height)
+        if pack in old_tile.actors:
+            old_tile.actors.remove(pack)
 
-        if h > 2.05:
-            return None
+        pack["gx"] = gx
+        pack["gy"] = gy
 
-        return {
-            "height": h,
-            "top_z": t.block_top
-        }
+        inst = pack["inst"]
+
+        inst.offx = 0
+        inst.offy = 0
+
+        new_tile = self.toolkit.runtime_world.grid[gy][gx]
+
+        if pack not in new_tile.actors:
+            new_tile.actors.append(pack)

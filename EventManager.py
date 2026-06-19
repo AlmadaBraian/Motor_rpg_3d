@@ -10,6 +10,7 @@ from RuntimeMusic import restore_map_music
 from RuntimeMusic import play_runtime_audio, stop_runtime_audio
 from SpriteManager import Animator
 from config import *
+from collections import deque
 
 
 def resolve_runtime_scene_path(scene_file):
@@ -82,6 +83,33 @@ def update_world_event(self, dt):
 
         run_world_event_command(self,cmd)
 
+def world_cell_walkable(
+    self,
+    gx,
+    gy
+):
+
+    if gx < 0 or gy < 0:
+        return False
+
+    if gx >= GRID_W:
+        return False
+
+    if gy >= GRID_H:
+        return False
+
+    world_x = gx + 0.5
+    world_y = gy + 0.5
+
+    blocked = self.runtime_actor.runtime_collides(
+        world_x,
+        world_y,
+        0,
+        radius=0.28
+    )
+
+    return not blocked
+
 def end_world_event(self):
         self.world_event_running = False
         self.world_event_locked = False
@@ -98,6 +126,8 @@ def end_world_event(self):
 
         vn_scene = self.visual_novel_scene
 
+        self.player_input_locked = False
+
         for text in vn_scene.texts.values():
             text.visible = False
 
@@ -109,6 +139,55 @@ def end_world_event(self):
 
         print("WORLD EVENT END")
 
+def build_world_path(
+    self,
+    sx,
+    sy,
+    tx,
+    ty
+):
+
+    visited = set()
+
+    q = deque()
+
+    q.append((sx, sy, []))
+
+    while q:
+
+        x, y, path = q.popleft()
+
+        if (x, y) == (tx, ty):
+            return path
+
+        if (x, y) in visited:
+            continue
+
+        visited.add((x, y))
+
+        for dx, dy in (
+            (1,0),
+            (-1,0),
+            (0,1),
+            (0,-1)
+        ):
+
+            nx = x + dx
+            ny = y + dy
+
+            if not world_cell_walkable(self,nx, ny):
+                continue
+
+            q.append(
+                (
+                    nx,
+                    ny,
+                    path + [(nx, ny)]
+                )
+            )
+
+    return []
+
 def run_world_event_command(self, cmd):
         action = cmd.get("action", "")
 
@@ -117,6 +196,35 @@ def run_world_event_command(self, cmd):
         # ==========================
         if action == "wait":
             self.event_wait_timer = cmd.get("time", 1000) / 1000.0
+            return
+        if action == "call_func":
+
+            fn_name = cmd.get("func", "")
+
+            fn = getattr(
+                self,
+                fn_name,
+                None
+            )
+
+            if not callable(fn):
+                print("FUNCTION NOT FOUND:", fn_name)
+                return
+
+            args = cmd.get("args", [])
+
+            if not isinstance(args, list):
+                args = [args]
+
+            print("CALL FUNC:", fn_name, args)
+
+            result = fn(*args)
+
+            if result == "async":
+
+                self.event_wait_input = True
+                self.event_async = True
+
             return
         
         if action == "restore_map_music":
@@ -197,8 +305,12 @@ def run_world_event_command(self, cmd):
                         []
                     )
 
-                    if target:
-                        target.animations.clear()
+                    if text_name:
+
+                        target = self.visual_novel_scene.texts.get(text_name)
+
+                        if target:
+                            target.animations.clear()
 
                     for anim_name in animations:
 
@@ -241,8 +353,12 @@ def run_world_event_command(self, cmd):
                     )
 
 
-                    if target:
-                        target.animations.clear()
+                    if text_name:
+
+                        target = self.visual_novel_scene.texts.get(text_name)
+
+                        if target:
+                            target.animations.clear()
 
                     self.visual_novel_scene.start_animation(
                         sprite_name,
@@ -273,6 +389,7 @@ def run_world_event_command(self, cmd):
             return
         
         if action == "open_menu":
+            self.show_runtime_options_menu = False
             options = cmd.get(
                         "options",
                         []
@@ -289,6 +406,9 @@ def run_world_event_command(self, cmd):
                 y=y,
                 w=w
             )
+
+            if title == "Options":
+                self.show_runtime_options_menu = True
 
             self.event_wait_input = True
             return
@@ -386,6 +506,20 @@ def run_world_event_command(self, cmd):
         if action == "camera_follow_player":
 
             self.runtime_camera_locked = False
+
+            self.actor_to_follow = None
+
+            return
+        
+        if action == "camera_follow_actor":
+
+            self.runtime_camera_locked = False
+
+            actor_name = cmd.get("actor", "")
+
+            pack = self.find_actor_pack_by_name(actor_name)
+
+            self.actor_to_follow = pack
 
             return
         
@@ -697,7 +831,6 @@ def run_world_event_command(self, cmd):
         # DIALOG
         # ==========================
         if action == "show_dialog":
-            from RuntimeActor import RuntimeActor
             
             self.dialog_visible = True
             self.dialog_pages = cmd.get("text", [""])
@@ -712,7 +845,7 @@ def run_world_event_command(self, cmd):
 
                 spr = self.sprites["botones.png"]
 
-                self.dialog_continue_actor = RuntimeActor(self)
+                self.dialog_continue_actor = self.runtime_actor
 
                 self.dialog_continue_actor.animator = Animator(
                     spr.base_clips
@@ -774,6 +907,45 @@ def run_world_event_command(self, cmd):
         
         if action == "show_ui":
             self.show_ui = True
+
+        if action == "move_actor_to":
+
+            actor_name = cmd.get("actor", "")
+
+            pack = self.find_actor_pack_by_name(actor_name)
+
+            if not pack:
+                return
+
+            sx = pack["gx"]
+            sy = pack["gy"]
+
+            tx = cmd.get("x", sx)
+            ty = cmd.get("y", sy)
+
+            path = build_world_path(
+                self,
+                sx,
+                sy,
+                tx,
+                ty
+            )
+
+            if not path:
+                print("NO PATH")
+                return
+
+            inst = pack["inst"]
+
+            inst.world_move_queue = path
+
+            inst.is_world_moving = True
+
+            inst.event_move_actor = True
+
+            self.event_wait_move = True
+
+            return
 
         # ==========================
         # END EVENT
@@ -1269,10 +1441,24 @@ def check_runtime_step_events(self):
 
         if self.runtime_event_cooldown > 0:
             return
+        
+        if self.battle_mode:
+            pack = self.battle_current_unit
 
-        pack = self.runtime_world.main_actor
+        else:
+
+            pack = self.runtime_world.main_actor
+
         gx = pack["gx"]
         gy = pack["gy"]
+
+        if getattr(
+                self,
+                "runtime_teleport_ignore_tile",
+                None
+            ) == (gx, gy):
+                return
+
 
         t = self.runtime_world.grid[gy][gx]
 
@@ -1303,6 +1489,11 @@ def execute_runtime_tile_event(self, t):
         ed = getattr(t, "event_data", None)
         if not ed:
             return
+        
+        if self.battle_mode:
+        
+            if not ed.get("teleport", None):
+                return
 
         if not ed.get("enabled", False):
             return
@@ -1378,9 +1569,70 @@ def runtime_teleport_player(self, tp):
 
         if nx < 0 or ny < 0 or nx >= GRID_W or ny >= GRID_H:
             return
+        
+        new_tile = self.runtime_world.grid[
+                ny
+            ][
+                nx
+            ]
 
-        self.runtime_world.main_actor["gx"] = nx
-        self.runtime_world.main_actor["gy"] = ny
+        
+        if new_tile.actors:
+            return
+        
+        if self.battle_mode:
+
+            pack = self.battle_current_unit
+
+            old_gx = pack["gx"]
+            old_gy = pack["gy"]
+
+            old_tile = self.runtime_world.grid[
+                old_gy
+            ][
+                old_gx
+            ]
+
+            if pack in old_tile.actors:
+                old_tile.actors.remove(pack)
+
+            pack["gx"] = nx
+            pack["gy"] = ny
+
+            pack["inst"].offx = 0
+            pack["inst"].offy = 0
+
+            if pack not in new_tile.actors:
+                new_tile.actors.append(pack)
+
+        else:
+
+            pack = self.runtime_world.main_actor
+
+            old_gx = pack["gx"]
+            old_gy = pack["gy"]
+
+            old_tile = self.runtime_world.grid[
+                old_gy
+            ][
+                old_gx
+            ]
+
+            if pack in old_tile.actors:
+                old_tile.actors.remove(pack)
+
+            pack["gx"] = nx
+            pack["gy"] = ny
+
+            pack["inst"].offx = 0
+            pack["inst"].offy = 0
+
+            self.runtime_teleport_ignore_tile = (nx,ny)
+
+            if pack not in new_tile.actors:
+                new_tile.actors.append(pack)
+
+        self.player_input_locked = False
 
         print("PLAYER TELEPORTED:", getattr(self.runtime_world, "map_id", "Map001"), nx, ny)
 

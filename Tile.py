@@ -80,3 +80,4 @@ class Tile:
         self.objects = []
         self.sprites = []
         self.actors = []
+        self.decals = []

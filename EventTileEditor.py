@@ -18,7 +18,7 @@ class EventTileEditor:
 
         win = tk.Toplevel()
         win.title("Event Tile Editor")
-        win.geometry("460x700")
+        win.geometry("460x900")
         win.resizable(False, False)
 
         # =====================================================
@@ -47,6 +47,107 @@ class EventTileEditor:
             text="Enabled",
             variable=enabled_var
         ).pack(anchor="w", padx=20)
+
+        use_scene_var = tk.BooleanVar(
+            value=tile.event_data.get(
+                "use_scene",
+                True
+            )
+        )
+
+        tk.Checkbutton(
+            win,
+            text="Use Scene JSON",
+            variable=use_scene_var
+        ).pack(anchor="w", padx=20, pady=(8,0))
+
+        event_type_var = tk.StringVar(
+            value=tile.event_data.get(
+                "event_type",
+                "scene"
+            )
+        )
+
+        tk.Label(
+            win,
+            text="Event Type"
+        ).pack(anchor="w", padx=20)
+
+        event_type_combo = ttk.Combobox(
+            win,
+            state="readonly",
+            textvariable=event_type_var,
+            values=[
+                "scene",
+                "teleport"
+            ]
+        )
+
+        event_type_combo.pack(
+            fill="x",
+            padx=20
+        )
+
+        teleport_frame = tk.LabelFrame(
+            win,
+            text="Teleport"
+        )
+
+        teleport_frame.pack(
+            fill="x",
+            padx=20,
+            pady=10
+        )
+
+        dest_map_var = tk.StringVar(
+            value=tile.event_data.get(
+                "dest_map",
+                ""
+            )
+        )
+
+        tk.Label(
+            teleport_frame,
+            text="Destination Map"
+        ).pack(anchor="w")
+
+        dest_map_combo = ttk.Combobox(
+            teleport_frame,
+            textvariable=dest_map_var,
+            state="readonly"
+        )
+
+        dest_map_combo["values"] = list(
+            o.maps.keys()
+        )
+
+        dest_map_combo.pack(
+            fill="x"
+        )
+
+        dest_x_var = tk.IntVar(
+            value=tile.event_data.get(
+                "dest_x",
+                0
+            )
+        )
+
+        dest_y_var = tk.IntVar(
+            value=tile.event_data.get(
+                "dest_y",
+                0
+            )
+        )
+
+        tk.Entry(
+            teleport_frame,
+            textvariable=dest_x_var
+        ).pack(fill="x")
+
+        tk.Entry(
+            teleport_frame,
+            textvariable=dest_y_var
+        ).pack(fill="x")
 
         # =====================================================
         # TRIGGER
@@ -176,6 +277,30 @@ class EventTileEditor:
             padx=20,
             pady=(8, 0)
         )
+
+        def refresh_event_type():
+
+            if event_type_var.get() == "teleport":
+                teleport_frame.pack(
+                    fill="x",
+                    padx=20,
+                    pady=10
+                )
+            else:
+                teleport_frame.pack_forget()
+
+        def refresh_mode():
+
+            state = "readonly" if use_scene_var.get() else "disabled"
+
+            scene_combo.configure(state=state)
+
+        use_scene_var.trace_add(
+            "write",
+            lambda *args: refresh_mode()
+        )
+
+        refresh_mode()
 
         def refresh_preview():
 
@@ -310,6 +435,28 @@ class EventTileEditor:
             padx=20
         )
 
+        def pick_destination():
+
+            win.withdraw()
+
+            def on_pick(gx, gy):
+
+                dest_x_var.set(gx)
+                dest_y_var.set(gy)
+
+                win.deiconify()
+                win.lift()
+
+            o.begin_pick_tile(
+                on_pick
+            )
+
+        tk.Button(
+            teleport_frame,
+            text="Pick Tile On Map",
+            command=pick_destination
+        ).pack(fill="x")
+
         # =====================================================
         # SAVE
         # =====================================================
@@ -334,6 +481,28 @@ class EventTileEditor:
             except:
                 radius = 3
 
+            scene_path = ""
+
+            if use_scene_var.get():
+
+                evt = scene_combo.get()
+
+                if evt:
+                    scene_path = os.path.join(
+                        "scenes",
+                        evt
+                    )
+
+            teleport_data = None
+
+            if event_type_var.get() == "teleport":
+
+                teleport_data = {
+                    "map": dest_map_var.get(),
+                    "x": dest_x_var.get(),
+                    "y": dest_y_var.get()
+                }
+
             tile.event_data = {
 
                 "enabled":
@@ -341,9 +510,15 @@ class EventTileEditor:
 
                 "trigger":
                     trigger_combo.get(),
+                
+                "use_scene": use_scene_var.get(),
+
+                "event_type": event_type_var.get(),
+
+                "teleport": teleport_data,
 
                 "scene":
-                    fullpath,
+                    scene_path,
 
                 "once":
                     once_var.get(),

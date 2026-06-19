@@ -614,7 +614,20 @@ class RuntimeSystem:
         menu.y = y
         menu.w = w
 
+        menu.on_change = self.on_option_changed
+
         menu.on_select = self.runtime_menu_selected
+
+    def on_option_changed(self, item):
+
+        key = item.get("audio_key")
+
+        if key:
+
+            self.toolkit.audio_manager.set_volume(
+                key,
+                item["value"] / 100.0
+            )
 
     def handle_runtime_menu_input(self, event):
 
@@ -651,6 +664,38 @@ class RuntimeSystem:
 
             return
         
+        elif k in ("left", "a"):
+
+            item = menu.items[menu.index]
+
+            if item.get("type") == "slider":
+
+                item["value"] = max(
+                    item.get("min", 0),
+                    item["value"] - item.get("step", 5)
+                )
+
+                if menu.on_change:
+                    menu.on_change(item)
+
+                return
+            
+        elif k in ("right", "d"):
+
+            item = menu.items[menu.index]
+
+            if item.get("type") == "slider":
+
+                item["value"] = min(
+                    item.get("max", 100),
+                    item["value"] + item.get("step", 5)
+                )
+
+                if menu.on_change:
+                    menu.on_change(item)
+
+                return
+        
         elif k == "space":
 
             if menu.on_select:
@@ -666,24 +711,6 @@ class RuntimeSystem:
 
 
         menu.index %= len(menu.items)
-
-    def main_menu_selected(option):
-
-        if option == "Nuevo Juego":
-            print("nuevo juego")
-            #start_game()
-
-        elif option == "Cargar Partida":
-            print("cargar juego")
-            #load_game()
-
-        elif option == "Opciones":
-            print("menu opciones")
-            #open_options()
-
-        elif option == "Salir":
-            print("salir")
-            #root.destroy()
 
     # =====================================================
     # UPDATE
@@ -799,6 +826,8 @@ class RuntimeSystem:
 
         tkref.dialog_visible = False
         tkref.event_wait_input = False
+
+        tkref.visual_novel_scene.reset()
 
         # =====================================
         # RUNTIME

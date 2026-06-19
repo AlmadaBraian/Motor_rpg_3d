@@ -185,11 +185,14 @@ def update_enemy_ai(self, dt):
     # =====================================
 
     if state == "wait_move_finish":
+        from EventManager import check_runtime_step_events
 
         if o.combat_actor_moving:
             return
 
         print("AI MOVE FINISHED")
+
+        check_runtime_step_events(self)
 
         o.enemy_ai_state = "select_attack"
 
@@ -291,7 +294,9 @@ def update_enemy_ai(self, dt):
                 o.enemy_ai_state = None
 
                 if o.max_actions > 0:
+                    from EventManager import check_runtime_step_events
                     current["inst"].guard_mode = True
+                    check_runtime_step_events(self)
                     self.play_runtime_idle(current["inst"])
 
                 self.end_battle_turn()

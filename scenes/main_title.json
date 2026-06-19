@@ -2,6 +2,13 @@
     "scene": "main_menu",
     "script": [
         {
+            "action": "audio_play",
+            "track": "combat_music",
+            "music": "music/combate_01.mp3",
+            "volume": 1.0,
+            "loop": true
+        },
+        {
             "action": "open_menu",
             "title": "Main Menu",
             "options": [

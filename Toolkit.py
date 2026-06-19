@@ -84,6 +84,7 @@ class Toolkit:
         self.show_object_transform=False
         self.selected_asset=None
         self.selected_instance = None
+        self.teleport_pick_callback = None
         self.obj_offx = tk.DoubleVar(value=0.0)
         self.obj_offy = tk.DoubleVar(value=0.0)
         self.obj_offz = tk.DoubleVar(value=0.0)
@@ -108,6 +109,7 @@ class Toolkit:
         self.actor_cycle_index = {}
         self.runtime_world = None
         self.visual_novel_scene = VisualNovelSceneState()
+        self.runtime_actor = RuntimeActor(self)
         self.runtime_scene_mode = "world"
         self.event_wait_vn_animation = False
         self.runtime_message = ""
@@ -146,7 +148,7 @@ class Toolkit:
         self.floor_audio_links = {}
         self._last_step_audio_tile = None
         self._last_step_audio_time = 0.0
-        self.screen_fade_alpha = 0.0
+        self.screen_fade_alpha = 0
 
         self.screen_fade_active = False
 
@@ -186,6 +188,8 @@ class Toolkit:
         self.event_wait_input = False
         self.event_wait_move = None
 
+        self.runtime_teleport_ignore_tile = None
+
         self.dialog_visible = False
         self.dialog_pages = []
         self.dialog_index = 0
@@ -201,7 +205,7 @@ class Toolkit:
         self.world_actor_moving = False
         self.world_moving_unit = None
         self.event_wait_move = False
-
+        self.actor_to_follow = None
         self.event_wait_camera = False
 
         self.event_text_visible = False
@@ -218,7 +222,7 @@ class Toolkit:
         self.event_text_animation = ""
         self.event_text_speed = 0.04
         self.event_text_distance = 100
-        event_text_strength = 8
+        self.event_text_strength = 8
         self.event_text_pulse_speed = 8
         self.event_text_pulse_amount = 0.15
         self.event_text_elapsed = 0
@@ -272,6 +276,8 @@ class Toolkit:
         self.party = ["Anibal","Brandom","Carlos"]
 
         self.runtime_menu = RuntimeMenu()
+
+        self.show_runtime_options_menu = True
 
         self.battle_hover_unit = None
 
@@ -693,6 +699,15 @@ class Toolkit:
         self.draw_grid()
         self.load_sprite_library()
 
+    def begin_pick_tile(self, callback):
+
+        self.teleport_pick_callback = callback
+
+        messagebox.showinfo(
+            "Pick Tile",
+            "Click destination tile"
+        )
+
     def on_scene_selected(self, event=None):
 
         scene_file = self.scene_var.get()
@@ -910,6 +925,20 @@ class Toolkit:
         return gx, gy
     
     def start_grid_drag(self, event):
+        
+        if self.teleport_pick_callback:
+
+            gx, gy = self.mouse_to_grid(event)
+
+            if gx is not None:
+
+                cb = self.teleport_pick_callback
+
+                self.teleport_pick_callback = None
+
+                cb(gx, gy)
+
+            return
 
         gx, gy = self.mouse_to_grid(event)
 
@@ -1324,7 +1353,7 @@ class Toolkit:
                     if not inst.animator:
                         continue
 
-                    self.update_actor_idle_view_by_camera(inst)
+                    self.runtime_actor.update_actor_idle_view_by_camera(inst)
 
         # =====================================
         # BATTLE UNITS
@@ -1339,7 +1368,7 @@ class Toolkit:
                 if not inst.animator:
                     continue
 
-                self.update_actor_idle_view_by_camera(inst)
+                self.runtime_actor.update_actor_idle_view_by_camera(inst)
 
     def find_actor_pack_by_name(self, actor_name):
 
@@ -2011,6 +2040,8 @@ class Toolkit:
         return False
 
     def try_move_runtime_actor(self, pack, dx, dy):
+        
+        #print("player_input_locked",self.player_input_locked)
         if self.player_input_locked:
             return
         inst = pack["inst"]
@@ -2027,6 +2058,18 @@ class Toolkit:
         # nueva posicion deseada
         new_world_x = world_x + dx
         new_world_y = world_y + dy
+
+        ignore_tile = getattr(
+            self,
+            "runtime_teleport_ignore_tile",
+            None
+        )
+
+        if ignore_tile:
+
+            if (old_gx, old_gy) != ignore_tile:
+
+                self.runtime_teleport_ignore_tile = None
 
         # ---------------------------------------------
         # chequeo de colision geometrica REAL
@@ -2081,7 +2124,9 @@ class Toolkit:
         if stepped_tile is not None:
             self.play_runtime_floor_step(stepped_tile, pack)
 
-        check_runtime_step_events(self)
+        if not self.battle_mode:
+
+            check_runtime_step_events(self)
 
         inst.offx = nx
         inst.offy = ny
@@ -2362,9 +2407,14 @@ class Toolkit:
 
         climb_h = t.block_top - inst.offz
 
+        if climb_h >= 3:
+            return False
+
         if climb_h <= 1.2:
             inst.mantle_low = True
+        
         else:
+        
             inst.mantle_low = False
 
         inst.is_mantling = True
@@ -2683,11 +2733,6 @@ class Toolkit:
             self.camera_preview_index = 0
 
         preset_name = self.camera_preview_presets[self.camera_preview_index]
-
-        apply_camera_preset(
-            self.viewport.camera,
-            preset_name
-        )
 
         apply_camera_preset(
             self.viewport.camera,

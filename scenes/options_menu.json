@@ -1,0 +1,48 @@
+{
+    "scene": "options_menu",
+    "script": [
+        {
+            "action": "open_menu",
+            "title": "Options",
+            "options": [
+                {
+                    "type": "slider",
+                    "text": "Volumen General",
+                    "value": 100,
+                    "max": 100,
+                    "audio_key": "master"
+                },
+                {
+                    "type": "slider",
+                    "text": "Musica",
+                    "value": 80,
+                    "max": 100,
+                    "audio_key": "music"
+                },
+                {
+                    "type": "slider",
+                    "text": "Efectos",
+                    "value": 90,
+                    "max": 100,
+                    "audio_key": "sfx"
+                },
+                {
+                    "text": "Volver",
+                    "event": {
+                        "action": "change_scene",
+                        "scene": "main_title.json"
+                    }
+                }
+            ],
+            "x": 100,
+            "y": 100,
+            "w": 15
+        }
+    ],
+    "type": "visual_novel",
+    "visual_novel": {
+        "enabled": true,
+        "sprites": [],
+        "texts": []
+    }
+}

@@ -537,8 +537,8 @@ class GLViewport(OpenGLFrame):
         # 2. update runtime actor / movimiento / cambio de clips
         # =====================================================
         if hasattr(self, "toolkit_ref"):
-            if hasattr(self.toolkit_ref, "update_runtime_actor"):
-                self.toolkit_ref.update_runtime_actor(dt)
+            if hasattr(self.toolkit_ref.runtime_actor, "update_runtime_actor"):
+                self.toolkit_ref.runtime_actor.update_runtime_actor(dt)
                 HUDManager.update_runtime_hud(self)
 
         # =====================================================
@@ -549,6 +549,20 @@ class GLViewport(OpenGLFrame):
             if not self.toolkit_ref.battle_mode:
 
                 if hasattr(self.toolkit_ref, "runtime_world"):
+                    
+                    print(
+                        "FOLLOW:",
+                        self.toolkit_ref.world_event_running,
+                        self.toolkit_ref.actor_to_follow
+                    )
+
+                    if self.toolkit_ref.actor_to_follow:
+
+                        pack = self.toolkit_ref.actor_to_follow
+
+                    else:
+
+                        pack = self.toolkit_ref.runtime_world.main_actor
 
                     if self.toolkit_ref.runtime_world:
 
@@ -602,6 +616,12 @@ class GLViewport(OpenGLFrame):
     def follow_runtime_camera(self):
         tool = self.toolkit_ref
 
+        print(
+            "FOLLOW:",
+            tool.world_event_running,
+            tool.actor_to_follow
+        )
+
         if not hasattr(tool, "runtime_world"):
             return
 
@@ -610,8 +630,18 @@ class GLViewport(OpenGLFrame):
 
         if not tool.runtime_world.main_actor:
             return
+        
+        if tool.actor_to_follow:
 
-        pack = tool.runtime_world.main_actor
+            pack = tool.actor_to_follow
+
+        else:
+
+            pack = tool.runtime_world.main_actor
+
+            if not pack:
+                return
+
         inst = pack["inst"]
 
         px = pack["gx"] + inst.offx + 0.5
