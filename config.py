@@ -17,7 +17,9 @@ ASSET_CELL = SETTINGS.grid.asset_cell
 
 base_path = str(SETTINGS.paths.root)
 tex_path = str(SETTINGS.paths.textures)
+decals_tex_path = str(SETTINGS.paths.textures)
 TEXTURE_FOLDER = tex_path
+DECAL_TEXTURE_FOLDER = decals_tex_path
 EXPORT_FOLDER = str(SETTINGS.paths.export)
 media_folder = str(SETTINGS.paths.media)
 scene_folder = str(SETTINGS.paths.scenes)

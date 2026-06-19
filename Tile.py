@@ -76,6 +76,13 @@ class Tile:
             "facing_lock": False      # requiere mirar hacia el tile
         }
 
+        self.corner_light = [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ]
+
 
         self.objects = []
         self.sprites = []

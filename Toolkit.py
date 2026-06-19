@@ -14,6 +14,8 @@ import shutil
 import glob
 from ActorAsset import ActorAsset
 from ActorCreatorWindows import open_actor_creator_window
+from Decal import Decal
+from DecalEditor import DecalEditor
 from EventTileEditor import EventTileEditor
 from ItemAsset import ItemAsset
 from ItemCreatorWindows import open_item_editor
@@ -149,6 +151,14 @@ class Toolkit:
         self._last_step_audio_tile = None
         self._last_step_audio_time = 0.0
         self.screen_fade_alpha = 0
+
+        self.selected_decal = None
+
+        self.decal_size = tk.DoubleVar(value=1.0)
+
+        self.decal_rotation = tk.DoubleVar(value=0)
+
+        #self.decal_editor = DecalEditor()
 
         self.screen_fade_active = False
 
@@ -1002,7 +1012,7 @@ class Toolkit:
     def listaHerramientas(self, place):
         tool_defs = [
             ('Pintar Piso','floorpaint'), ('Pintar tapa columna', 'floor_top_paint'),
-            ('Columna', 'blockpaint'), ('Editar Segmento', 'edit_wall_segments'),
+            ('Columna', 'blockpaint'),("Pintar Decal", "decalpaint"), ('Editar Segmento', 'edit_wall_segments'),
             ('Seleccionar mapa','smartselect'),
             ('Colocar Evento', 'place_event_tile')
         ]
@@ -3258,7 +3268,7 @@ class Toolkit:
         self.texture_name_label.config(text=texture_name)
 
     def update_texture_selection(self):
-        texture_names=list(self.texture_manager.previews.keys())
+        texture_names=list(self.texture_manager.texture_previews.keys())
 
         for i,widget in enumerate(self.texture_frame.winfo_children()):
             tex_name=texture_names[i]
@@ -3277,7 +3287,7 @@ class Toolkit:
         cols=2
         size=64
 
-        texture_names=list(self.texture_manager.previews.keys())
+        texture_names=list(self.texture_manager.texture_previews.keys())
 
         for i,tex_name in enumerate(texture_names):
             path=os.path.join(TEXTURE_FOLDER, tex_name)
@@ -3606,6 +3616,10 @@ class Toolkit:
             t.floor_tex = self.selected_texture
             t.floor_height = float(self.current_floor_height.get())
             t.floor_uv_mode = self.uv_mode_combo.get()
+
+        elif self.selected_tool == "decalpaint":
+            t = self.grid[gy][gx]
+            DecalEditor(self.root, t, self)
 
         elif self.selected_tool == 'floor_top_paint':
             #self.texture_assign_mode.set('floor')
@@ -4564,6 +4578,19 @@ class Toolkit:
             "objects": [],
             "sprites": [],
             "actors": [],
+            "decals": [
+                {
+                    "texture": d.texture,
+                    "x": d.x,
+                    "y": d.y,
+                    "width": d.width,
+                    "height": d.height,
+                    "rotation": d.rotation,
+                    "surface": d.surface
+                }
+                for d in getattr(t, "decals", [])
+            ],
+            "corner_light": [],
             "event_data": copy.deepcopy(getattr(t, "event_data", {}))
         }
 
@@ -4669,6 +4696,27 @@ class Toolkit:
         }
         t.event_data = td.get("event_data", default_event.copy())
         t.events = td.get("events", [])
+
+        t.decals = []
+
+        for dd in td.get("decals", []):
+            d = Decal()
+            d.texture = dd.get("texture", "")
+            d.x = dd.get("x", 0.5)
+            d.y = dd.get("y", 0.5)
+            d.width = dd.get("width", 1.0)
+            d.height = dd.get("height", 1.0)
+            d.rotation = dd.get("rotation", 0)
+            d.surface = dd.get("surface", "floor")
+
+            t.decals.append(d)
+
+        t.corner_light = td.get("corner_light", [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ])
 
         if "event_data" not in td:
             if td.get("step_event", ""):

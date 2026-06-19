@@ -37,6 +37,7 @@ class RenderConfig:
 class PathsConfig:
     root: Path
     textures: Path
+    decals: Path
     export: Path
     media: Path
     scenes: Path
@@ -47,6 +48,7 @@ class PathsConfig:
         return cls(
             root=root_path,
             textures=root_path / "textures",
+            decals=root_path / "decals",
             export=root_path / "export_dc",
             media=root_path / "media",
             scenes=root_path / "scenes",

@@ -175,15 +175,15 @@ class GLViewport(OpenGLFrame):
         return (cx, cy, cz)
     
 
-    def resolve_texture(self, tex):
+    def resolve_texture(self, tex, folder="textures"):
         if tex is None:
             return None
 
         if isinstance(tex, AnimatedTexture):
             current = tex.get_current_frame(self.anim_time)
-            return self.local_texture_manager.load_gl_texture(current)
+            return self.local_texture_manager.load_gl_texture(current, folder)
 
-        return self.local_texture_manager.load_gl_texture(tex)
+        return self.local_texture_manager.load_gl_texture(tex, folder)
     
     def parse_texture(data):
         if data is None:
@@ -1053,14 +1053,21 @@ class GLViewport(OpenGLFrame):
         glVertex3f(*v4)
         glEnd()
 
-    def textured_quad(self,p1,p2,p3,p4,texid,uv_scale_x=1,uv_scale_y=1):
+    def textured_quad(self,p1,p2,p3,p4,texid,uv_scale_x=1,uv_scale_y=1,shade=1.0):
         if texid is not None:
             glEnable(GL_TEXTURE_2D)
             glBindTexture(GL_TEXTURE_2D, texid)
             glColor3f(1,1,1)
+            
         else:
             glDisable(GL_TEXTURE_2D)
             glColor3f(1,1,1)
+
+        glColor3f(
+                shade,
+                shade,
+                shade
+            )
 
         glBegin(GL_QUADS)
 
@@ -1640,6 +1647,7 @@ class GLViewport(OpenGLFrame):
     def draw_tile_walls(self, x, y, t, tm):
         directions = ['n', 's', 'e', 'w']
 
+
         for side in directions:
 
             if getattr(t, f"wall_{side}"):
@@ -1647,6 +1655,13 @@ class GLViewport(OpenGLFrame):
                 if not segments:
                     h_simple = getattr(t, f"wall_{side}_height", 1.0)
                     segments = [{"h": h_simple, "tex": t.wall_tex}]
+
+                shade = {
+                    "n":1.0,
+                    "s":0.8,
+                    "e":1.9,
+                    "w":1.7
+                }[side]
                 
                 base = t.floor_height
                 for i, seg in enumerate(segments):
@@ -1748,7 +1763,7 @@ class GLViewport(OpenGLFrame):
                                     (x,h1,y),
                                     texid,
                                     1,
-                                    rv
+                                    rv,shade=shade
                                 )
 
                             if side == 'e':
@@ -1759,7 +1774,7 @@ class GLViewport(OpenGLFrame):
                                     (x+1,h1,y),
                                     texid,
                                     1,
-                                    rv
+                                    rv,shade=shade
                                 )
 
                             if side == 'w':
@@ -1770,7 +1785,7 @@ class GLViewport(OpenGLFrame):
                                     (x,h1,y),
                                     texid,
                                     1,
-                                    rv
+                                    rv,shade=shade
                                 )
                                 
 
@@ -1782,7 +1797,7 @@ class GLViewport(OpenGLFrame):
                                     (x,h1,y+1),
                                     texid,
                                     1,
-                                    rv
+                                    rv,shade=shade
                                 )
 
                             base = h1
@@ -2351,13 +2366,16 @@ class GLViewport(OpenGLFrame):
         glColor4f(0, 0, 0, 0.30)
 
         glBegin(GL_TRIANGLE_FAN)
-        glVertex3f(wx, wy + 0.015, wz)
+
+        glColor4f(0,0,0,0.35)
+        glVertex3f(wx,wy+0.015,wz)
 
         steps = 20
         for i in range(steps + 1):
             ang = math.radians((360 / steps) * i)
             px = wx + math.cos(ang) * size
             pz = wz + math.sin(ang) * size
+            glColor4f(0,0,0,0.0)
             glVertex3f(px, wy + 0.015, pz)
 
         glEnd()
@@ -2389,7 +2407,7 @@ class GLViewport(OpenGLFrame):
                 (x,fh,y+h),
                 texid,
                 ru,
-                rv
+                rv, shade = 0.5
             )
 
         # AUTOTILES
@@ -2528,6 +2546,14 @@ class GLViewport(OpenGLFrame):
             top_ru = top_rv = 1
             side_ru = side_rv = 1
 
+        BLOCK_SHADE = {
+            "north": 2.0,
+            "south": 0.8,
+            "east": 2.9,
+            "west": 2.7,
+            "top": 1.1
+        }
+
         # ==========================
         # TOP FACE
         # ==========================
@@ -2542,7 +2568,8 @@ class GLViewport(OpenGLFrame):
                 (x,   h, y+1),
                 top_tex,
                 top_ru,
-                top_rv
+                top_rv,
+                shade=BLOCK_SHADE["top"]
             )
 
         # helper vecino bloque
@@ -2569,7 +2596,8 @@ class GLViewport(OpenGLFrame):
                 (x,   h, y),
                 side_tex,
                 side_ru,
-                side_rv
+                side_rv,
+                shade=BLOCK_SHADE["north"]
             )
 
         # ==========================
@@ -2583,7 +2611,8 @@ class GLViewport(OpenGLFrame):
                 (x+1, h, y+1),
                 side_tex,
                 side_ru,
-                side_rv
+                side_rv,
+                shade=BLOCK_SHADE["south"]
             )
 
         # ==========================
@@ -2597,7 +2626,8 @@ class GLViewport(OpenGLFrame):
                 (x, h, y+1),
                 side_tex,
                 side_ru,
-                side_rv
+                side_rv,
+                shade=BLOCK_SHADE["west"]
             )
 
         # ==========================
@@ -2611,7 +2641,8 @@ class GLViewport(OpenGLFrame):
                 (x+1, h, y),
                 side_tex,
                 side_ru,
-                side_rv
+                side_rv,
+                shade=BLOCK_SHADE["east"]
             )
 
     def draw_runtime_player(self, p):
@@ -3242,6 +3273,89 @@ class GLViewport(OpenGLFrame):
                 )
 
             y += 30
+
+    def render_decals(self, tool):
+
+        for y in range(GRID_H):
+
+            for x in range(GRID_W):
+
+                tile = tool.grid[y][x]
+
+                for decal in tile.decals:
+
+                    if decal.surface== "floor":
+
+                        self.draw_floor_decal(
+                            x,
+                            y,
+                            tile,
+                            decal
+                        )
+
+    def draw_floor_decal(
+        self,
+        gx,
+        gy,
+        tile,
+        decal
+    ):
+
+        texid = self.resolve_texture(
+            decal.texture, folder= "decals"
+        )
+
+        if not texid:
+            return
+
+        center_x = gx + decal.x
+        center_z = gy + decal.y
+
+        if tile.is_block:
+            h = tile.block_top + 0.01
+        else:
+            h = tile.floor_height + 0.01
+
+        # esquinas sin rotar
+        p1 = (center_x - decal.width * 0.5, center_z - decal.height * 0.5)
+        p2 = (center_x + decal.width * 0.5, center_z - decal.height * 0.5)
+        p3 = (center_x + decal.width * 0.5, center_z + decal.height * 0.5)
+        p4 = (center_x - decal.width * 0.5, center_z + decal.height * 0.5)
+
+        def rotate_point(cx, cz, x, z, angle_deg):
+            a = math.radians(angle_deg)
+
+            dx = x - cx
+            dz = z - cz
+
+            rx = dx * math.cos(a) - dz * math.sin(a)
+            rz = dx * math.sin(a) + dz * math.cos(a)
+
+            return cx + rx, cz + rz
+
+        # rotación
+        p1 = rotate_point(center_x, center_z, *p1, decal.rotation)
+        p2 = rotate_point(center_x, center_z, *p2, decal.rotation)
+        p3 = rotate_point(center_x, center_z, *p3, decal.rotation)
+        p4 = rotate_point(center_x, center_z, *p4, decal.rotation)
+
+        glEnable(GL_BLEND)
+        glBlendFunc(
+            GL_SRC_ALPHA,
+            GL_ONE_MINUS_SRC_ALPHA
+        )
+
+        glDepthMask(GL_FALSE)
+
+        self.textured_quad(
+            (p1[0], h, p1[1]),
+            (p2[0], h, p2[1]),
+            (p3[0], h, p3[1]),
+            (p4[0], h, p4[1]),
+            texid
+        )
+
+        glDepthMask(GL_TRUE)
 
 
     def draw_slider(
@@ -4246,6 +4360,8 @@ class GLViewport(OpenGLFrame):
         self.alpha_wall_queue = []
 
         self.render_tiles(tool)
+
+        self.render_decals(tool)
 
         self.render_meshes(tool)
 

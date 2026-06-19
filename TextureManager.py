@@ -16,31 +16,44 @@ ASSET_CELL = 20
 
 base_path = os.path.dirname(__file__)
 tex_path = os.path.join(base_path, "textures")
+decal_tex_path = os.path.join(base_path, "decals")
+DECAL_TEXTURE_FOLDER = decal_tex_path
 TEXTURE_FOLDER = tex_path
 EXPORT_FOLDER = base_path + "/export_dc"
 
 
 class TextureManager:
-    def __init__(self):
+    def __init__(self, folder = "textures"):
         self.floor_textures = []
         self.wall_textures = []
-        self.previews = {}
-        self.gl_textures = {}
+        self.texture_previews = {}
+        self.decal_previews = {}
         self.gl_textures = {}
         self.texture_alpha = {}
-        self.scan()
+        self.decals = []
+        self.scan(folder)
 
-    def scan(self):
-        if not os.path.exists(TEXTURE_FOLDER):
-            os.makedirs(TEXTURE_FOLDER)
+    
+
+    def scan(self, folder):
+        folder_path = TEXTURE_FOLDER if folder == "textures" else DECAL_TEXTURE_FOLDER
+
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
 
         self.floor_textures.clear()
         self.wall_textures.clear()
-        self.previews.clear()
+        self.decals.clear()
+        self.texture_previews.clear()
+        self.decal_previews.clear()
+        
+        print("Scanning:", folder_path)
 
-        for f in os.listdir(TEXTURE_FOLDER):
+        for f in os.listdir(folder_path):
             if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp")):
-                path = os.path.join(TEXTURE_FOLDER, f)
+                path = os.path.join(folder_path, f)
+
+                print("Found:", f)
 
                 try:
                     img = Image.open(path).convert("RGBA")
@@ -59,34 +72,49 @@ class TextureManager:
                         img = img.crop((cx, cy, cx+tw, cy+th))
 
                     img = img.resize((32,32))
-                    self.previews[f] = ImageTk.PhotoImage(img)
+
+                    if folder == "textures":
+                        self.texture_previews[f] = ImageTk.PhotoImage(img)
+                    else:
+                        self.decal_previews[f] = ImageTk.PhotoImage(img)
+
+                    print(ImageTk.PhotoImage(img))
 
                     low = f.lower()
 
-                    if "wall" in low:
-                        self.wall_textures.append(f)
-                    elif "floor" in low:
-                        self.floor_textures.append(f)
-                    else:
-                        self.floor_textures.append(f)
-                        self.wall_textures.append(f)
+                    if folder=="textures":
 
-                except:
-                    pass
+                        if "wall" in low:
+                            self.wall_textures.append(f)
+                        elif "floor" in low:
+                            self.floor_textures.append(f)
+                        else:
+                            self.floor_textures.append(f)
+                            self.wall_textures.append(f)
+                    else:
+                        self.decals.append(f)
+
+
+                except Exception as e:
+                    print("ERROR loading:", path, e)
 
     def is_alpha_texture(self, name):
         return self.texture_alpha.get(name, False)
     
 
-    def load_gl_texture(self, name):
-        if name in self.gl_textures:
-            return self.gl_textures[name]
+    def load_gl_texture(self, name, folder="textures"):
+        key = f"{folder}:{name}"
+
+        if key in self.gl_textures:
+            return self.gl_textures[key]
 
         if os.path.exists(name):
             path = name
-            
+
         else:
-            path = os.path.join(TEXTURE_FOLDER, name)
+            
+            base = DECAL_TEXTURE_FOLDER if folder == "decals" else TEXTURE_FOLDER
+            path = os.path.join(base, name)
 
         if not os.path.exists(path):
             print("TEXTURE NOT FOUND:", path)
@@ -161,7 +189,7 @@ class TextureManager:
 
         glBindTexture(GL_TEXTURE_2D, 0)
 
-        self.gl_textures[name] = texid
+        self.gl_textures[key] = texid
         return texid
 
 
