@@ -31,7 +31,12 @@ class ActorInstance:
         self.last_move_dx = 0.0
         self.last_move_dy = 0.0
 
+        self.fall_slide_x = 0.0
+        self.fall_slide_y = 0.0
+
         self.state = "idle"
+
+        self.state_counter = 0
 
         self.animator = None
 
@@ -44,6 +49,11 @@ class ActorInstance:
         self.guard_mode = False
 
         self.crit_meter = 0.0
+
+        self.special_meter = 0
+
+        self.interact_tile = False
+        
 
         self.selected_item_index = 0
         self.selected_special_index = 0

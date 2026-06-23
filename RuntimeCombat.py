@@ -95,13 +95,15 @@ class RuntimeCombat:
         self.battle_camera_mode = 0
 
         o.button_A_command = "Seleccionar"
-        o.button_X_command = "Menú"
+        o.button_X_command = ""
         o.button_Y_command = ""
-        o.button_B_command = "Cancelar"
+        o.button_B_command = ""
 
         o.party_menu = o.party.copy()
         o.party_menu_index = 0
         o.battle_state = "party_menu"
+
+        o.show_ui = True
 
         # =====================================
         # PARTY
@@ -161,6 +163,7 @@ class RuntimeCombat:
 
         o.battle_cursor_x = first[0]
         o.battle_cursor_y = first[1]
+        
 
     def finish_combat_victory(self):
 
@@ -1136,6 +1139,11 @@ class RuntimeCombat:
 
         if not action_data:
             return
+        
+        if not inst.special_meter == getattr(user_pack, "max_special_meter", 100):
+            return
+        
+        inst.special_meter = 0
 
         script = self.get_skill_value(
             action_data,
@@ -1565,9 +1573,16 @@ class RuntimeCombat:
 
                 o.battle_state = "deploy_party"
 
+                o.show_ui = True
+                o.button_A_command = "Seleccionar"
+
                 return
             
             if o.battle_state == "deploy_party":
+
+                o.show_ui = True
+
+                o.button_A_command = "Colocar"
 
                 pos = (
                     o.battle_cursor_x,
@@ -1636,6 +1651,8 @@ class RuntimeCombat:
 
                         o.menu_index = 0
                         o.battle_state = "command_menu"
+
+                        o.button_A_command = "Seleccionar"
 
                         #o.button_A_command = "Mover a"
 
@@ -1792,6 +1809,30 @@ class RuntimeCombat:
 
                     o.battle_state = "item_menu"
 
+                elif selected == "Interactuar":
+                    from EventManager import execute_runtime_tile_event, get_near_event_cell
+                    print("battle_interact_event antes", o.battle_interact_event)
+
+                    if not o.battle_interact_event:
+                        old_gx = o.battle_selected_unit["gx"]
+                        old_gy = o.battle_selected_unit["gy"]
+                        
+                        near_evt = get_near_event_cell(o)
+                        if near_evt:
+                            execute_runtime_tile_event(o, near_evt)
+
+                        new_gx = o.battle_selected_unit["gx"]
+                        new_gy = o.battle_selected_unit["gy"]
+
+                        if not (old_gx, old_gy) == (new_gx, new_gy):
+                            o.battle_interact_event = True   
+                            o.battle_selected_unit["inst"].interact_tile = False
+
+                    print("battle_interact_event despues", o.battle_interact_event)
+
+                    o.command_menu = self.build_unit_command_menu(o.battle_selected_unit)
+                
+
                 elif selected == "Guardia":
 
                     o.button_X_command = "Menú"
@@ -1925,6 +1966,7 @@ class RuntimeCombat:
                                 o.battle_attacker_unit,
                                 target
                             )
+                            
                             o.command_menu = self.build_unit_command_menu(o.battle_attacker_unit)
                             #inst.battle_acted = True
                             
@@ -1934,8 +1976,25 @@ class RuntimeCombat:
                     return
 
     def build_unit_command_menu(self, pack):
+        from EventManager import get_near_event_cell
+
+        o = self.owner
 
         inst = pack["inst"]
+
+        print ("pack[inst].interact_tile antes", pack["inst"].interact_tile)
+        print("battle_interact_event en build command menu", o.battle_interact_event)
+        near_evt = get_near_event_cell(o)
+        if near_evt:
+            pack["inst"].interact_tile = True
+            if o.battle_interact_event:
+                pack["inst"].interact_tile = False
+
+        else:
+            pack["inst"].interact_tile = False
+                            
+        print ("pack[inst].interact_tile despues", pack["inst"].interact_tile)                  
+                            
 
         menu = []
 
@@ -1944,6 +2003,7 @@ class RuntimeCombat:
             ("Atacar", not inst.battle_attacked),
             ("Especial", not inst.used_skill_this_turn),
             ("Items", not inst.used_item_this_turn),
+            ("Interactuar", inst.interact_tile),
             ("Guardia", not inst.guard_mode)
         ]
 
@@ -2019,10 +2079,7 @@ class RuntimeCombat:
             )
 
         elif effect == "status":
-            self.apply_item_status(
-                target_pack,
-                item_data
-            )
+            self.apply_status(target_pack,item_data)
 
         elif effect == "script":
             self.run_item_script(
@@ -2048,6 +2105,38 @@ class RuntimeCombat:
             user_pack,
             target_pack,
             combat_result
+        )
+
+        
+    def refesh_status(self,target_pack):
+
+        target = target_pack["inst"]
+
+        if (target.state != "idle"):
+
+            target.state_counter += 1
+
+            if target.state_counter < 3:
+                print(
+                    target.actor_name,
+                    target.state
+                )
+            
+            else:
+                target.state_counter = 0
+                target.state = "idle"
+
+
+    def apply_status(self,
+                    target_pack,
+                    data_effect
+    ):
+        status_effect = data_effect.status_effect
+        target = target_pack["inst"]
+        target.state = status_effect  
+
+        print(target.actor_name,
+            status_effect
         )
 
     def apply_item_heal(
@@ -2970,6 +3059,8 @@ class RuntimeCombat:
         # siguiente turno
         # =========================================
 
+        o.battle_interact_event = False
+
         o.battle_turn_index += 1
 
         o.max_actions = 2
@@ -3107,6 +3198,12 @@ class RuntimeCombat:
 
         self.turn_camera_lock = 0.45
 
+        if inst.state != "idle":
+            self.refesh_status(o.battle_current_unit)
+            self.end_battle_turn()
+            return
+            
+
         # =========================================
         # IA
         # =========================================
@@ -3124,6 +3221,9 @@ class RuntimeCombat:
             self.battle_camera_mode = 0
             o.show_ui = True
             o.button_A_command = "Seleccionar"
+            o.button_X_command = "Menú"
+            o.button_Y_command = ""
+            o.button_B_command = "Cancelar"
             #o.button_X_command = "Menú"
 
             actor_def = o.actors.get(inst.actor_name)
@@ -5049,7 +5149,7 @@ class RuntimeCombat:
             return True
 
         # subida alta requiere mantle
-        if allow_mantle and diff <= 2.5:
+        if allow_mantle and diff <= 2.0:
             return True
 
         return 
@@ -5190,6 +5290,7 @@ class RuntimeCombat:
         return False
 
     def update_combat_actor_move(self, dt):
+        from EventManager import get_near_event_cell
 
         o = self.owner
 
@@ -5500,7 +5601,6 @@ class RuntimeCombat:
         # =====================================
 
         if dist < 0.05:
-            from EventManager import check_runtime_step_events
 
             inst.battle_moved = True
 
@@ -5534,8 +5634,6 @@ class RuntimeCombat:
                 newtile.actors.append(pack)
 
             o.combat_move_queue.pop(0)
-
-            check_runtime_step_events(o)
 
             return
 

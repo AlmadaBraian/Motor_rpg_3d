@@ -243,10 +243,12 @@ class Toolkit:
         self.text_A_button_color = (1, 0.2, 0.2, 1)
         self.button_Y_command = ""
         self.text_Y_button_color = (0.2, 1, 0.2, 1)
-        self.button_B_command = "Cancelar"
+        self.button_B_command = ""
         self.text_B_button_color = (0.2, 0.2, 1, 1)
         self.button_X_command = ""
         self.text_X_button_color = (0.85, 0.75, 0.25, 1)
+
+        self.show_a_button = False
 
         # triggers
         self.tile_events = {}      # (gx,gy) -> json file
@@ -259,6 +261,8 @@ class Toolkit:
         self.battle_selected_tile = None
 
         self.show_ui = False
+
+        self.battle_interact_event = False
 
         self.runtime_cam_target_pitch = 35
         self.runtime_cam_target_distance = 7
@@ -273,6 +277,7 @@ class Toolkit:
         self.battle_input_cooldown = 0
         self.waiting_enemy_turn_start = False
         self.combat_result_scripts = {}
+        self.battle_current_unit = None
 
         self.battle_cursor_x = 0
         self.battle_cursor_y = 0
@@ -323,7 +328,6 @@ class Toolkit:
         self.combat_moving_unit = None
 
         self.battle_turn_index = 0
-        self.battle_current_unit = None
         self.battle_item_index = 0
         self.battle_special_index = 0
         self.current_action_type = ""
@@ -1435,6 +1439,11 @@ class Toolkit:
         ):
             update_world_event(self, dt)
 
+        if self.show_a_button:
+
+            if hasattr(self, "action_button_actor"):
+                self.action_button_actor.animator.update(dt)
+
         if self.dialog_visible:
             self.update_runtime_dialog_text(dt)
 
@@ -1476,9 +1485,7 @@ class Toolkit:
             self.viewport.follow_runtime_camera()
             return
         
-        if getattr(inst, "is_falling", False):
-            self.update_actor_fall(pack, dt)
-            return
+        pack["inst"].is_mantling = False
 
         move_speed = 1.5 * dt
         rot_speed = 40 * dt
@@ -1588,6 +1595,10 @@ class Toolkit:
             inst.animator.frame = 0
             inst.animator.timer = 0
             inst.animator.paused = True # Evita que el update global sume tiempo
+            slide_speed = 0.30
+
+            inst.offx += inst.fall_slide_x * slide_speed * dt
+            inst.offy += inst.fall_slide_y * slide_speed * dt
 
         # 2. MOMENTO DEL IMPACTO: Detectamos suelo
         if inst.offz <= inst.fall_target_z:
@@ -1595,23 +1606,6 @@ class Toolkit:
             inst.ground_z = inst.fall_target_z
 
             if not inst.fall_land_done:
-
-                push = 0.002
-
-                cx = pack["gx"] + 0.5
-                cy = pack["gy"] + 0.5
-
-                dx = cx - inst.fall_start_x
-                dy = cy - inst.fall_start_y
-
-                d = math.hypot(dx, dy)
-
-                if d > 0:
-                    dx /= d
-                    dy /= d
-
-                    inst.offx += dx * push
-                    inst.offy += dy * push
 
                 inst.fall_land_done = True
                 inst.animator.paused = False
@@ -2176,12 +2170,25 @@ class Toolkit:
 
         # si el actor esta mas alto que el suelo actual -> cae
         if inst.ground_z > floor_z + 0.05:
+
+            inst.offx += inst.last_move_dx * 0.15
+            inst.offy += inst.last_move_dy * 0.15
+
+            inst.fall_slide_x = inst.last_move_dx
+            inst.fall_slide_y = inst.last_move_dy
+
+            l = math.hypot(
+                inst.fall_slide_x,
+                inst.fall_slide_y
+            )
+
+            if l > 0:
+                inst.fall_slide_x /= l
+                inst.fall_slide_y /= l
+
             inst.is_falling = True
             inst.fall_target_z = floor_z
             inst.fall_land_done = False
-
-            inst.fall_start_x = world_x
-            inst.fall_start_y = world_y
 
             if inst.animator and "fall" in inst.animator.clips:
                 inst.animator.play("fall")
@@ -2190,11 +2197,13 @@ class Toolkit:
 
     def update_actor_mantle(self, pack, dt):
         inst = pack["inst"]
-        print(inst.animator.current, inst.animator.frame, inst.animator.finished)
+        print("update mantle",inst.animator.current, inst.animator.frame, inst.animator.finished)
         # ==========================================
         # PHASE 0 - GIRAR CAMARA
         # ==========================================
         if inst.mantle_phase == 0:
+            print("mantle fase 0")
+            self.runtime_camera_locked = True
             diff = (inst.target_cam_yaw - self.runtime_cam_orbit + 540) % 360 - 180
             self.runtime_cam_orbit += diff * min(1, dt * 6)
 
@@ -2214,6 +2223,7 @@ class Toolkit:
         # PHASE 1 - JUMP CONTROLADO POR TIMELINE
         # ==========================================
         if inst.mantle_phase == 1:
+            print("fase 1")
             speed = 2.8
             inst.mantle_timer += dt # Usa un timer independiente para el movimiento
             if inst.animator.current != "prepare_to_jump":
@@ -2232,6 +2242,7 @@ class Toolkit:
         # PHASE 2 - SALTO (SUAVIZADO)
         # ==========================================
         if inst.mantle_phase == 2:
+            print("fase 2")
             # 1. Definimos una duración deseada para la subida (ej: 0.5 segundos)
             duration = 0.6 
             inst.mantle_timer += dt
@@ -2266,7 +2277,7 @@ class Toolkit:
         # PHASE 3 - SUBIR (CLAW + MOVIMIENTO)
         # ==========================================
         if inst.mantle_phase == 3:
-
+            print("fase 3")
             # iniciar claw UNA sola vez
             if not getattr(inst, "_claw_started", False):
 
@@ -2284,6 +2295,8 @@ class Toolkit:
 
             clip = inst.animator.clips.get("claw")
 
+            print("mantle update animator: animation clip," )
+
             fps = getattr(clip, "fps", 6)
 
             duration = len(clip.frames) / fps
@@ -2298,7 +2311,12 @@ class Toolkit:
             inst.offy = wy - (inst.mantle_base_gy + 0.5)
             inst.offz = wz
 
+            if inst.animator.current in ["rot_perfil_dere", "rot_perfil_izq"]:
+                print("animator finished")
+                inst.animator.finished = True
+
             if inst.animator.finished:
+                print("fase 3 finished")
 
                 del inst._claw_started
 
@@ -2311,6 +2329,7 @@ class Toolkit:
         # PHASE 5 - SNAP FINAL (SIN DESLIZAMIENTOS)
         # ==========================================
         if inst.mantle_phase == 5:
+            print("mantle fase 5")
             # Actualizamos la posición lógica del actor a la celda final
             inst.mantle_base_gx = int(inst.mantle_end_x)
             inst.mantle_base_gy = int(inst.mantle_end_y)
@@ -2334,6 +2353,8 @@ class Toolkit:
             return
 
         if inst.mantle_phase == 7:
+
+            print("mantle fase 7")
 
             inst.is_mantling = False
 
@@ -2417,7 +2438,7 @@ class Toolkit:
 
         climb_h = t.block_top - inst.offz
 
-        if climb_h >= 3:
+        if climb_h >= 2.1:
             return False
 
         if climb_h <= 1.2:
@@ -5056,6 +5077,7 @@ class Toolkit:
                 # =========================
                 "team" : getattr(a,"team","neutral"),
                 "ai_mode" : getattr(a,"ai_mode","idle"),
+                "critical_chance": getattr(a,"critical_chance",5),
 
                 # =========================
                 # INVENTORY
@@ -5401,6 +5423,8 @@ class Toolkit:
             actor.evasion = ad.get("evasion", 0)
 
             actor.accuracy = ad.get("accuracy", 0)
+
+            actor.critical_chance = ad.get("critical_chance", 5)
 
             actor.move_range = ad.get("move_range", 4)
             actor.attack_range = ad.get("attack_range", 1)

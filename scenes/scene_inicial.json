@@ -6,7 +6,6 @@
     {
       "action": "all_play_idle"
     },
-    {"action": "show_ui"},
 
     {
       "action": "audio_play",

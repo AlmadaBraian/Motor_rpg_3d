@@ -77,6 +77,10 @@ class ActorAsset:
         self.exp_reward = 0
         self.gold_reward = 0
 
+        self.critical_chance = 0.0
+
+        self.max_special_meter = 100
+
         # soporte multiple sprite sheets
         self.sprite_sheets = []
 

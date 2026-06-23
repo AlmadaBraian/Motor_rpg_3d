@@ -174,7 +174,7 @@ class RuntimeActor:
             if self.toolkit.runtime_message_timer <= 0:
                 self.toolkit.runtime_message = ""
 
-        self.toolkit.update_runtime_actor_vertical(pack, dt)
+        self.update_runtime_actor_vertical(pack, dt)
 
         if self.toolkit.world_event_locked:
             return

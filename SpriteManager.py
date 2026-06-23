@@ -40,9 +40,6 @@ class Animator:
 
     def update(self, dt):
 
-        if not self.current or getattr(self, "paused", False):
-            print("paused")
-            return
 
         if not self.current:
             return

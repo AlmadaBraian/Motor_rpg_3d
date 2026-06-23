@@ -61,7 +61,7 @@ class RuntimeSystem:
         tkref.event_wait_input = False
         tkref.dialog_pages = []
         tkref.dialog_index = 0
-        tkref.show_ui = True
+        tkref.show_ui = False
 
         if not hasattr(tkref, "visual_novel_scene"):
             tkref.visual_novel_scene = VisualNovelSceneState()
@@ -485,8 +485,6 @@ class RuntimeSystem:
             if tkref.world_event_running:
                 tkref.show_ui = False
                 return
-            else:
-                tkref.show_ui = True
 
             if tkref.runtime_event_cooldown > 0:
                 return
@@ -500,10 +498,11 @@ class RuntimeSystem:
                     return
 
             # EVENT TILE ACTION
-            near_evt = get_near_event_cell(tkref)
-            if near_evt:
-                execute_runtime_tile_event(tkref, near_evt)
-                return
+            if not tkref.battle_mode:
+                near_evt = get_near_event_cell(tkref)
+                if near_evt:
+                    execute_runtime_tile_event(tkref, near_evt)
+                    return
 
         # =====================================
         # WAIT INPUT EVENT
@@ -769,6 +768,12 @@ class RuntimeSystem:
             cam.pitch,
             cam.distance
         )
+
+        if self.show_a_button:
+
+            if hasattr(tkref, "action_button_actor"):
+                tkref.action_button_actor.animator.update(dt)
+
 
         if tkref.dialog_visible:
 

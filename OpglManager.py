@@ -298,8 +298,8 @@ class GLViewport(OpenGLFrame):
         hp = getattr(actor, "hp", actor_def.hp)
         max_hp = getattr(actor, "max_hp", actor_def.max_hp)
 
-        sp = getattr(actor, "sp", actor_def.sp)
-        max_sp = getattr(actor, "max_sp", actor_def.max_sp)
+        sp = actor.special_meter
+        max_sp = getattr(actor, "max_special_meter", actor_def.max_special_meter)
 
         # texto
         self.draw_ui_text(
@@ -733,6 +733,7 @@ class GLViewport(OpenGLFrame):
             
             if self.toolkit_ref.battle_mode:
                 self.draw_combat_popups()
+                self.draw_combat_popups_state(now)
                 self.draw_command_menu()
                 self.draw_party_menu()
                 hover_unit = None
@@ -1080,11 +1081,17 @@ class GLViewport(OpenGLFrame):
 
         glBindTexture(GL_TEXTURE_2D,0)
 
-    def textured_quad_auto_tile(self, p1, p2, p3, p4, texid, uv1, uv2, uv3, uv4):
+    def textured_quad_auto_tile(self, p1, p2, p3, p4, texid, uv1, uv2, uv3, uv4,shade=1.0):
             if texid is not None:
                 glEnable(GL_TEXTURE_2D)
                 glBindTexture(GL_TEXTURE_2D, texid)
                 glColor3f(1, 1, 1)
+
+            glColor3f(
+                shade,
+                shade,
+                shade
+            )
 
             glBegin(GL_QUADS)
             glTexCoord2f(uv1[0], uv1[1]); glVertex3f(p1[0], p1[1], p1[2]) # Sup-Izq
@@ -1092,6 +1099,8 @@ class GLViewport(OpenGLFrame):
             glTexCoord2f(uv3[0], uv3[1]); glVertex3f(p3[0], p3[1], p3[2]) # Inf-Der
             glTexCoord2f(uv4[0], uv4[1]); glVertex3f(p4[0], p4[1], p4[2]) # Inf-Izq
             glEnd()
+
+            glBindTexture(GL_TEXTURE_2D,0)
 
 
     def cube(self, x, y, z, s=1, h=0.05, toptex=None, sidetex=None, uv_mode="tile"):
@@ -1735,7 +1744,7 @@ class GLViewport(OpenGLFrame):
                                 else:
                                     uvs = [(u0,v1), (u1,v1), (u1,v0), (u0,v0)]
                                 
-                                self.textured_quad_auto_tile(p1, p2, p3, p4, texid, *uvs)
+                                self.textured_quad_auto_tile(p1, p2, p3, p4, texid, *uvs, shade=shade)
 
                             base = h1
                             
@@ -2367,7 +2376,7 @@ class GLViewport(OpenGLFrame):
 
         glBegin(GL_TRIANGLE_FAN)
 
-        glColor4f(0,0,0,0.35)
+        glColor4f(0,0,0,0.85)
         glVertex3f(wx,wy+0.015,wz)
 
         steps = 20
@@ -2382,7 +2391,7 @@ class GLViewport(OpenGLFrame):
 
         glDisable(GL_BLEND)
         glEnable(GL_TEXTURE_2D)
-        glColor3f(1,1,1)
+        glColor3f(0.8,0.8,0.8)
 
 
     
@@ -2416,7 +2425,7 @@ class GLViewport(OpenGLFrame):
                 t = grid[y][x]
 
                 if t.floor_tex and "_auto" in t.floor_tex.lower():
-                    self.draw_auto_floor_tile(x, y, t, tm)
+                    self.draw_auto_floor_tile(x, y, t, tm, shade = 0.5)
 
                 if getattr(t, "is_block", False):
                     #print("RENDER BLOCK", x, y, t.block_top)
@@ -2425,7 +2434,7 @@ class GLViewport(OpenGLFrame):
                 self.draw_tile_walls(x,y,t,tm)
 
 
-    def draw_auto_floor_tile(self, x, y, t, tm):
+    def draw_auto_floor_tile(self, x, y, t, tm,shade=1.0):
         texid = self.resolve_texture(t.floor_tex)
         if texid is None:
             return
@@ -2443,6 +2452,12 @@ class GLViewport(OpenGLFrame):
         glBindTexture(GL_TEXTURE_2D, texid)
         glColor3f(1,1,1)
 
+        glColor3f(
+                shade,
+                shade,
+                shade
+            )
+
 
 
         quads = [
@@ -2480,7 +2495,7 @@ class GLViewport(OpenGLFrame):
 
         glBindTexture(GL_TEXTURE_2D, 0)
 
-    def draw_auto_top_face_tile(self, x, y, fh, t, tm):
+    def draw_auto_top_face_tile(self, x, y, fh, t, tm,shade=1.0):
         texid = self.resolve_texture(t.block_top_tex)
         if texid is None:
             return
@@ -2497,6 +2512,12 @@ class GLViewport(OpenGLFrame):
         glBindTexture(GL_TEXTURE_2D, texid)
         glColor3f(1,1,1)
 
+        glColor3f(
+                shade,
+                shade,
+                shade
+            )
+
         quads = [
             (x,     y,     x+q,   y+q),   # NW
             (x+q,   y,     x+1,   y+q),   # NE
@@ -2530,7 +2551,7 @@ class GLViewport(OpenGLFrame):
 
         glBindTexture(GL_TEXTURE_2D, 0)
 
-    def draw_solid_block(self, x, y, t, grid, tm):
+    def draw_solid_block(self, x, y, t, grid, tm, shade = {"north": 0.6,"south": 0.8,"east": 0.3,"west": 0.5,"top": 1.0}):
         side_tex = self.resolve_texture(t.block_side_tex) if t.block_side_tex else None
         top_tex = self.resolve_texture(t.block_top_tex) if t.block_top_tex else None
 
@@ -2546,19 +2567,17 @@ class GLViewport(OpenGLFrame):
             top_ru = top_rv = 1
             side_ru = side_rv = 1
 
-        BLOCK_SHADE = {
-            "north": 2.0,
-            "south": 0.8,
-            "east": 2.9,
-            "west": 2.7,
-            "top": 1.1
-        }
+        BLOCK_SHADE = shade
 
         # ==========================
         # TOP FACE
         # ==========================
+        top_shade = BLOCK_SHADE["top"]
+
+        if t.block_top >= 2.1:
+            top_shade = 0
         if t.block_top_tex and "_auto" in t.block_top_tex.lower():
-            self.draw_auto_top_face_tile(x, y, h, t, tm)
+            self.draw_auto_top_face_tile(x, y, h, t, tm, top_shade)
 
         else:
             self.textured_quad(
@@ -2569,7 +2588,7 @@ class GLViewport(OpenGLFrame):
                 top_tex,
                 top_ru,
                 top_rv,
-                shade=BLOCK_SHADE["top"]
+                shade=top_shade
             )
 
         # helper vecino bloque
@@ -2911,7 +2930,7 @@ class GLViewport(OpenGLFrame):
                 #dibujo de sombra y actor
 
                 ground_y = grid[pack["gy"]][pack["gx"]].floor_height
-                self.draw_blob_shadow(wx, ground_y, wz, 0.28)
+                self.draw_blob_shadow(wx, ground_y, wz, 0.38)
 
                 self.draw_actor_instance(sprite, inst, wx, wy, wz, cam)
 
@@ -3464,6 +3483,52 @@ class GLViewport(OpenGLFrame):
 
             self.draw_event_text(text)
 
+    def draw_combat_popups_state(self, now):
+
+        o = self.toolkit_ref
+
+        for pack in o.battle_units:
+
+            inst = pack["inst"]
+
+            # =========================
+            # CENTRO REAL DEL ACTOR
+            # =========================
+
+            wx = pack["gx"] + 0.5 + inst.offx
+            wz = pack["gy"] + 0.5 + inst.offy
+
+            wy = inst.ground_z + 2.0
+
+            screen = o.viewport.world_to_screen(wx, wy, wz)
+
+            if not screen:
+                continue
+
+            sx, sy = screen
+
+            #alpha = p["time"] / p["max_time"]
+
+            
+            if inst.state == "idle":
+                continue
+
+            text = {
+            "text": inst.state.upper(),
+            "x": sx,
+            "y": sy + 40,
+            "scale": 0.7,
+            "color": (0.2,1,0.2,1),
+            "visible": True,
+            "elapsed": now,
+            "duration": 999999,
+            "animations": ["ghost"]
+            }
+
+            self.draw_event_text(text)
+
+            
+
     def draw_party_menu(self):
 
         o = self.toolkit_ref
@@ -3501,8 +3566,6 @@ class GLViewport(OpenGLFrame):
             return
 
         sx, sy = screen
-
-        actor_name = pack["inst"].actor_name
 
         #self.draw_actor_hud(pack["inst"],sx,sy)
 
@@ -3876,6 +3939,15 @@ class GLViewport(OpenGLFrame):
                     math.sin(
                         elapsed * 6
                     ) * 0.5
+                )
+
+            elif anim == "status":
+
+                y += math.sin(elapsed * 2) * 3
+
+                scale *= (
+                    1.0 +
+                    math.sin(elapsed * 4) * 0.05
                 )
 
             elif anim == "typewriter":
@@ -4327,6 +4399,54 @@ class GLViewport(OpenGLFrame):
 
     def showUI(self):
         tool = self.toolkit_ref
+
+        if not tool:
+            return
+        
+        if tool.show_a_button:
+
+            spr = tool.sprites.get("botones.png")
+            sw = self.width
+            sh = self.height
+
+            if not tool.runtime_world.main_actor:
+                return
+            else:
+                pack = tool.runtime_world.main_actor
+
+                if not pack:
+                    return
+                
+            screen = tool.viewport.world_to_screen(
+                pack["gx"] + 0.5,
+                pack["inst"].ground_z + 2.5,
+                pack["gy"] + 0.5
+            )
+
+            if not screen:
+                return
+
+            sx, sy = screen
+
+            if spr and hasattr(tool, "action_button_actor"):
+
+                self.begin_ui()
+
+                actor = tool.action_button_actor
+
+                glColor4f(1, 1, 1, 1)
+                glEnable(GL_TEXTURE_2D)
+
+                self.draw_ui_sprite(
+                    spr,
+                    actor,
+                    sx-50,
+                    sy,
+                    64,
+                    64
+                )
+                self.end_ui()
+                self.draw_ui_text(tool.button_A_command,sx,sy + 55,color=tool.text_A_button_color, shadow=False, centered=True, scale=0.9)
         
         if (tool.show_ui):
             self.begin_ui()

@@ -83,6 +83,11 @@ def open_actor_creator_window(self, actor_name=None):
         #spd_entry.insert(0,"5")
         spd_entry.grid(row=3,column=1)
 
+        tk.Label(combat_frame, text="critical_chance").grid(row=2,column=2)
+        critical_chance_entry = tk.Entry(combat_frame,width=6)
+        #spd_entry.insert(0,"5")
+        critical_chance_entry.grid(row=2,column=3)
+
         tk.Label(combat_frame, text="EVASION").grid(row=3,column=4)
         evasion_entry = tk.Entry(combat_frame,width=6)
         #spd_entry.insert(0,"5")
@@ -323,6 +328,7 @@ def open_actor_creator_window(self, actor_name=None):
             type_combo.set(editing_actor.kind)
             hp_entry.insert(0, editing_actor.max_hp)
             sp_entry.insert(0, editing_actor.max_sp)
+            critical_chance_entry.insert(0, editing_actor.critical_chance)
             atk_entry.insert(0, editing_actor.atk)
             mag_entry.insert(0, editing_actor.magic)
             iniciativa.insert(0, editing_actor.initiative)
@@ -442,6 +448,7 @@ def open_actor_creator_window(self, actor_name=None):
             actor.evasion = int(evasion_entry.get())
             actor.accuracy = int(accuracy_entry.get())
             actor.initiative = int(iniciativa.get())
+            actor.critical_chance = int(critical_chance_entry.get())
 
             actor.attack_bonus = int(atk_bonus_entry.get())
             actor.armor_class = int(CA_entry.get())

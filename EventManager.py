@@ -1374,10 +1374,17 @@ def check_runtime_proximity_events(self):
         
 def get_near_event_cell(self):
 
+    self.show_a_button = False
+
     if not self.runtime_world:
         return None
 
-    pack = self.runtime_world.main_actor
+    if self.battle_mode:
+        pack = self.battle_current_unit
+
+    else:
+
+        pack = self.runtime_world.main_actor
 
     if not pack:
         return None
@@ -1385,44 +1392,36 @@ def get_near_event_cell(self):
     gx = pack["gx"]
     gy = pack["gy"]
 
-    inst = pack["inst"]
-
-    dx = 0
-    dy = 0
-
-    if inst.facing == "espalda":
-        dy = -1
-
-    elif inst.facing == "frente":
-        dy = 1
-
-    elif inst.facing == "izquierda":
-        dx = -1
-
-    elif inst.facing == "derecha":
-        dx = 1
-
-    tx = gx + dx
-    ty = gy + dy
-
-    if tx < 0 or ty < 0:
-        return None
-
-    if tx >= GRID_W or ty >= GRID_H:
-        return None
-
-    t = self.runtime_world.grid[ty][tx]
+    t = self.runtime_world.grid[gy][gx]
 
     ed = getattr(t, "event_data", None)
 
     if not ed:
+        pack["inst"].interact_tile = False
         return None
-
+    
     if not ed.get("enabled", False):
         return None
 
     if ed.get("trigger", "") != "action":
         return None
+    
+    pack["inst"].interact_tile = True
+
+    
+    self.show_a_button = True
+    self.button_A_command = "Interactuar"
+    if not hasattr(self, "action_button_actor") and not self.battle_mode:
+
+        spr = self.sprites["botones.png"]
+
+        self.action_button_actor = self.runtime_actor
+
+        self.action_button_actor.animator = Animator(
+        spr.base_clips
+        )
+
+        self.action_button_actor.animator.play("latir_a")
 
     return t
     

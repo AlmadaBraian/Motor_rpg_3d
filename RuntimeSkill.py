@@ -698,6 +698,12 @@ def run_combat_command(
 
             runtime_skill.data["damage_applied"] = True
 
+        target_pack["inst"].special_meter +=50
+
+        if target_pack["inst"].special_meter > getattr(target_pack, "max_special_meter", 100):
+            target_pack["inst"].special_meter = getattr(target_pack, "max_special_meter", 100)
+            
+
         runtime_skill.index += 1
         return
 
@@ -1327,6 +1333,8 @@ def end_runtime_skill(runtime_skill):
         runtime_skill.target_pack
     )
 
+    target = runtime_skill.target_pack["inst"]
+
     parent = runtime_skill.data.get(
         "parent_runtime_skill"
     )
@@ -1373,6 +1381,15 @@ def end_runtime_skill(runtime_skill):
         "effect_type",
         ""
     )
+
+    status_effect = getattr(
+        action_data,
+        "status_effect",
+        ""
+    )
+
+    if status_effect != "":
+         runtime_skill.combat.apply_status(runtime_skill.target_pack, runtime_skill.action_data)
 
     # =====================================
     # FIN TURN

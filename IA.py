@@ -185,7 +185,7 @@ def update_enemy_ai(self, dt):
     # =====================================
 
     if state == "wait_move_finish":
-        from EventManager import check_runtime_step_events
+        from EventManager import check_runtime_step_events, execute_runtime_tile_event, get_near_event_cell
 
         if o.combat_actor_moving:
             return
@@ -193,6 +193,12 @@ def update_enemy_ai(self, dt):
         print("AI MOVE FINISHED")
 
         check_runtime_step_events(self)
+
+        near_evt = get_near_event_cell(o)
+        if near_evt:
+            execute_runtime_tile_event(o, near_evt)
+                        
+        o.battle_selected_unit["inst"].interact_tile = False
 
         o.enemy_ai_state = "select_attack"
 
